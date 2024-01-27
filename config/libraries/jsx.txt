@@ -1,0 +1,15 @@
+axios
+copy-to-clipboard
+react
+clsx
+prop-types
+debounce
+styled-components
+classnames
+react-datepicker
+react-slider
+react-dom
+markdown-to-jsx
+sinon
+moment
+path
