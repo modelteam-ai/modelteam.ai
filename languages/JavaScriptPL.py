@@ -19,11 +19,9 @@ class JavaScriptPL(ProgrammingLanguage):
     def extract_imports(self, lines):
         pattern = r"import\s+(\w+)\s+from\s+'([\w-]+)';"
         libraries = []
-        import_lines = []
         for line in lines:
             if line.startswith("import"):
-                import_lines.append(line)
                 matches = re.findall(pattern, line)
                 library_names = [match[1] for match in matches]
                 libraries.extend(library_names)
-        return libraries, import_lines
+        return libraries

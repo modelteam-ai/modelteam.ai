@@ -40,4 +40,4 @@ class GoPL(ProgrammingLanguage):
                 for lib in lib_only:
                     if lib:
                         imports.append(lib)
-        return imports, import_lines
+        return imports

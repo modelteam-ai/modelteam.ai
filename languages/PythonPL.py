@@ -79,4 +79,4 @@ class PythonPL(ProgrammingLanguage):
                         for name in tokens[index + 1:]:
                             if name:
                                 imports.add(f"{module}.{name}")
-        return list(imports), import_lines
+        return sorted(list(imports))

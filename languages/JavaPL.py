@@ -44,11 +44,9 @@ class JavaPL(ProgrammingLanguage):
         # Find all matches in the Java code
         pattern = r"import\s+([\w.]+(?:\*|[\w*]+)?);"
         libraries = []
-        import_lines = []
         for line in lines:
             if line.startswith("import"):
-                import_lines.append(line)
                 matches = re.findall(pattern, line)
                 library_names = [match for match in matches]
                 libraries.extend(library_names)
-        return libraries, import_lines
+        return libraries
