@@ -81,9 +81,6 @@ class ModelTeamGitParser:
                 if "=>" in file_path:
                     pattern = re.compile(r"(.*){.* => (.*)}(.*)")
                     file_path = pattern.sub(r"\1\2\3", file_path)
-                # ignore if file is not present
-                if not os.path.isfile(f"{repo_path}/{file_path}"):
-                    continue
                 file_extension = get_file_extension(file_path)
                 parser = get_language_parser(file_extension, None, file_path)
                 if not parser:
@@ -220,7 +217,7 @@ class ModelTeamGitParser:
             if not parser:
                 # Not a supported language, so ignoring
                 continue
-            if file_name not in labels[LIBS]:
+            if file_name not in labels[LIBS] and os.path.isfile(f"{repo_path}/{file_name}"):
                 library_names = parser.get_library_names(include_all_libraries=True)
                 if library_names:
                     labels[LIBS][file_name] = library_names
@@ -230,7 +227,7 @@ class ModelTeamGitParser:
                 continue
             lines_added = file_line_stats[filename_with_path][0]
             lines_deleted = file_line_stats[filename_with_path][1]
-            if lines_added - lines_deleted < SIGNIFICANT_CONTRIBUTION_LINE_LIMIT:
+            if lines_added < SIGNIFICANT_CONTRIBUTION_LINE_LIMIT:
                 # Not a significant contribution
                 continue
             num_chars_changed = get_num_chars_changed(file_diff_content)
