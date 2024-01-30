@@ -4,11 +4,11 @@ import os
 import random
 import re
 
-from modelteam.utils.constants import ADDED, DELETED, TIME_SERIES, LANG, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
+from .utils.constants import ADDED, DELETED, TIME_SERIES, LANG, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
     SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO
-from modelteam.utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
+from .utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser
 
 TRAIN_FLAG = False
