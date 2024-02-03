@@ -87,6 +87,10 @@ def get_supported_extensions():
     return ["py", "js", "ts", "jsx", "tsx", "java", "cs", "go", "cpp", "c", "h", "php", "rb"]
 
 
+def get_supported_languages():
+    return ["python", "javascript", "typescript", "java", "csharp", "go", "golang", "c", "c++", "c/c++", "php", "ruby"]
+
+
 # TODO: Supported languages are as follows: c, c++, c-sharp, go, java, javascript, php, python, ruby.
 def get_language_parser(file_extension, file_diff_content, filename):
     if "go" == file_extension:
