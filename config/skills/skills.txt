@@ -1,207 +1,185 @@
-javascript
-html
+css
 node.js
-java
-software
+documentation
 natural language processing
 text processing
 performance
 debugging
 error handling
 mathematics
+3d graphics
 algorithm design
-gpu
-computer graphics
-python
-memory
-concurrency
-algorithms
-code
+openapi
+cloud computing
+shader
 buffer
-c++
-software testing
-problem solving
-linux
-webpack
-environment variables
-testing
-file handling
-code analysis
-parallel computing
-scripting
-api integration
+concurrency
 data structures
-json parsing
-json
+data analysis
+scripting
+code
+server
+embedded systems
+memory
+testing
+problem solving
+linux kernel
+webpack
+file handling
+parallel computing
+api integration
 serialization
 networking
-ui
-audio processing
-file manipulation
-data manipulation
-data mapping
+image processing
+json
+string manipulation
+data
 api
-data parsing
+json parsing
 client server communication
-data serialization
-object oriented design
-http
-data engineering
-software architecture
+database
+signal processing
+design patterns
 web
-storage
+builder pattern
 android
 event handling
 distributed systems
-file system operations
 api design
+architecture
+code refactoring
 version control
+git
 resource
 asynchronous
 troubleshooting
 regular expressions
-pattern matching
-permission
-security
-thread
+thread safety
 cache
-exception handling
-data synchronization
-automated testing
+http
+system
+functional
 metadata
-apache kafka
+hadoop
+file i/o
 configuration
-typescript
-batch processing
-path manipulation
-static analysis
-performance tuning
-url handling
-php
-database
+board specific logic
+multithreading
+cryptography
+request handling
+security
 deep learning
 neural networks
-convolutional neural networks
-machine learning
 pytorch
+machine learning
 shell scripting
-documentation interpretation
-software debugging
+environment variables
 model deployment
-api documentation
-data aggregation
-string manipulation
+aggregation
 data conversion
-schema design
 indexing
 database querying
-model
+data modeling
 data validation
-event driven
-plugin
-schema
-validation
-data retrieval
-yaml
-restful api
-azure cosmos db
-statistical modeling
-event driven architecture
-authentication
-file i/o
-data storage
-rest api
-time
-data encoding
-task scheduling
-data analysis
-tokenization
-sql
-data security
-documentation
-filtering
-multithreading
-environment configuration
-parallel processing
-model evaluation
-pandas
-containerization
+backward compatibility
+azure
+information retrieval
+discord api
 query
-cloud services
-monitoring
+restful api
+async
+rest api
+tokenization
+authentication
+compression algorithms
+event driven
+implementation
+identity and access (iam)
+data storage
+time
+yaml
+data science
+sql
+pandas
+certificate
+containerization
+cloud security
 metrics
 encryption
+type checking
 object oriented
 callback functions
-sqlite
-certificate
-data transformation
-credential
+code generation
 access control
-request handling
-cli (cli)
-cryptography
-message handling
-stream processing
-data
-data modeling
-image processing
-routing
-data preprocessing
-git
-data processing
-data visualization
-package
-queue
-networking protocols
-server
-synchronization
-logging
-dependency
-promise handling
-numpy
-css
-functional
-rendering
-data compression
-dom manipulation
-react
-user interaction
-component
-ui/ux design
-recursion
-data generation
-localization
-caching
-context
-security best practices
-state
-system architecture
-frontend
-tensorflow
-user interface design
-transaction
-computer vision
-parsing
-model training
-tensor manipulation
-numerical computation
-statistical analysis
-data types
-resource allocation
-system
-sorting
-graph theory
-probability theory
-type checking
-concurrent
-data loading
-byte manipulation
-xml
+data engineering
+cli
+project
 annotation processing
-data migration
+logging
+apache spark
+data processing
+localization
+kubernetes
+pagination
+data preprocessing
+blockchain
+data visualization
+unit testing
+c#
+ssl/tls
+dependency
+promise
+graphics
+webgl
+linear algebra
+graph theory
+static analysis
+react
+ui/ux design
+reactive
+symfony
+context
+front end
+user interface design
+ui
+data loading
+frontend
+task
+tensorflow
+computer vision
+exoplayer
+postgresql
+kernel
+model evaluation
+amazon s3
+parallel processing
+numpy
+rtos (real time operating systems)
+microservices
+operating systems
+aws sdk
+uuid generation
+process
+matrix operations
 spring framework
-protobuf
-aws
-aws services
-data streaming
+hardware interfacing
+backend
+device driver
+attention mechanism
+probability theory
+jax
+quantum computing
+arm architecture
+xml
+replication
+user interaction
+data partitioning
+test automation
+autowiring
+immutable objects
+apache camel
+amazon web services (aws)
+google cloud platform
+iam
+board specific initialization
+sapui5
