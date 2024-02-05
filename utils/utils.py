@@ -198,5 +198,25 @@ def load_public_libraries(config_path):
                     pub_libs[language] = set()
                 lines = f.readlines()
                 for line in lines:
-                    pub_libs[language].add(line.strip())
+                    pub_libs[language].add(line.split("\t")[0].strip())
     return pub_libs
+
+
+def load_lib_config(path):
+    files = os.listdir(path)
+    prev_libs = {}
+    for file in files:
+        with open(os.path.join(path, file), "r") as f:
+            lines = f.readlines()
+            language = file.split(".")[0]
+            for line in lines:
+                if language not in prev_libs:
+                    prev_libs[language] = {}
+                    prev_libs[language]["next_id"] = 1
+                    prev_libs[language]["libs"] = {}
+                parts = line.split("\t")
+                id = int(parts[1])
+                prev_libs[language]["libs"][parts[0]] = id
+                if id >= prev_libs[language]["next_id"]:
+                    prev_libs[language]["next_id"] = id + 1
+    return prev_libs

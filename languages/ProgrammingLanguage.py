@@ -1,15 +1,7 @@
 # Abstract class for programming languages
 from abc import ABC, abstractmethod
 
-
-def load_public_libs(extension):
-    libs = set()
-    # FIXME: This is a hack to load public libraries for each language. Its not working when run from subdirectory
-    with open("config/libraries/" + extension + ".txt", "r") as f:
-        lines = f.readlines()
-        for line in lines:
-            libs.add(line.strip())
-    return libs
+from modelteam.utils.utils import load_public_libraries
 
 
 class ProgrammingLanguage(ABC):
@@ -24,18 +16,16 @@ class ProgrammingLanguage(ABC):
         pass
 
     def get_library_names(self, include_all_libraries=False):
-        # TODO: filter out non-public libraries when not running for training
-        # Analyze the snippet to get the libraries
         if include_all_libraries:
-            return self.extract_imports(self.get_code_from_file(self.file_name))
+            lib_list = self.extract_imports(self.get_code_from_file(self.file_name))
         else:
-            return self.extract_imports(self.get_newly_added_lines(self.snippet))
+            lib_list = self.extract_imports(self.get_newly_added_lines(self.snippet))
+        return lib_list
 
-    def filter_non_public_libraries(self):
+    def filter_non_public_libraries(self, libraries):
         if not self.public_libraries:
-            self.public_libraries = load_public_libs(self.extension)
-        libraries = self.get_library_names()
-        return [library for library in libraries if library in self.public_libraries]
+            self.public_libraries = load_public_libraries("config/libraries")
+        return [library for library in libraries if library in self.public_libraries[self.extension]]
 
     def get_name(self):
         return self.extension

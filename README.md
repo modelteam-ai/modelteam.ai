@@ -22,8 +22,8 @@ cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 # Generates venv and installs dependencies. Downloads all the AI models
-./setup.sh ~/modelteam/modelteam.ai/config.ini
+./setup.sh config.ini
 # Beyond this step, internet access is not required
 # Generates your profile
-./build_my_profile.sh ~/modelteam/repos ~/modelteam/modelteam.ai/config.ini
+./build_my_profile.sh ~/modelteam/repos config.ini
 ```

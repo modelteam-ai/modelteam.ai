@@ -13,11 +13,10 @@ def init_model(peft_model_id):
     model = PeftModel.from_pretrained(model, peft_model_id)
     with torch.no_grad():
         inputs = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(device)
-        model.generation_config.length_penalty = 0.0
         outputs = model.generate(**inputs)
         results = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs['sequences']]
-        for res in results:
-            print(res)
+        print("Code:", code)
+        print("Results:", len(results))
 
 
 arg_parser = argparse.ArgumentParser(description="Download models")
