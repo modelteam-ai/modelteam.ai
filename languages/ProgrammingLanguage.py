@@ -5,11 +5,13 @@ from modelteam.utils.utils import load_public_libraries
 
 
 class ProgrammingLanguage(ABC):
-    def __init__(self, extension, snippet, file_name):
+    public_libraries = None
+
+    def __init__(self, extension, snippet, file_name, keep_only_public_libraries=True):
         self.extension = extension
-        self.public_libraries = None
         self.snippet = snippet
         self.file_name = file_name
+        self.keep_only_public_libraries = keep_only_public_libraries
 
     @abstractmethod
     def get_import_prefix(self):
@@ -20,12 +22,14 @@ class ProgrammingLanguage(ABC):
             lib_list = self.extract_imports(self.get_code_from_file(self.file_name))
         else:
             lib_list = self.extract_imports(self.get_newly_added_lines(self.snippet))
+        if self.keep_only_public_libraries:
+            lib_list = self.filter_non_public_libraries(lib_list)
         return lib_list
 
     def filter_non_public_libraries(self, libraries):
-        if not self.public_libraries:
-            self.public_libraries = load_public_libraries("config/libraries")
-        return [library for library in libraries if library in self.public_libraries[self.extension]]
+        if not ProgrammingLanguage.public_libraries:
+            ProgrammingLanguage.public_libraries = load_public_libraries("config/libraries")
+        return [library for library in libraries if library in ProgrammingLanguage.public_libraries[self.extension]]
 
     def get_name(self):
         return self.extension

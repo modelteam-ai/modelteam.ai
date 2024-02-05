@@ -20,6 +20,9 @@ debug = False
 
 
 class ModelTeamGitParser:
+    def __init__(self):
+        self.keep_only_public_libraries = True
+
     @staticmethod
     def add_to_time_series_stats(commits, file_extension, yyyy_mm, key, inc_count):
         if file_extension not in commits[LANG]:
@@ -82,7 +85,7 @@ class ModelTeamGitParser:
                     pattern = re.compile(r"(.*){.* => (.*)}(.*)")
                     file_path = pattern.sub(r"\1\2\3", file_path)
                 file_extension = get_file_extension(file_path)
-                parser = get_language_parser(file_extension, None, file_path)
+                parser = get_language_parser(file_extension, None, file_path, self.keep_only_public_libraries)
                 if not parser:
                     continue
                 added = int(added_lines)
@@ -213,7 +216,8 @@ class ModelTeamGitParser:
                 continue
             file_extension = get_file_extension(filename_with_path)
             file_diff_content = "\n".join(file_lines[5:])  # ignore the first 5 lines. They are usually not code
-            parser = get_language_parser(file_extension, file_diff_content, filename_with_path)
+            parser = get_language_parser(file_extension, file_diff_content, filename_with_path,
+                                         self.keep_only_public_libraries)
             if not parser:
                 # Not a supported language, so ignoring
                 continue

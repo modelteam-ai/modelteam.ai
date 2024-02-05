@@ -92,35 +92,23 @@ def get_supported_languages():
 
 
 # TODO: Supported languages are as follows: c, c++, c-sharp, go, java, javascript, php, python, ruby.
-def get_language_parser(file_extension, file_diff_content, filename):
+def get_language_parser(file_extension, file_diff_content, filename, keep_only_public_libraries):
     if "go" == file_extension:
-        return GoPL(file_extension, file_diff_content, filename)
+        return GoPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "py" == file_extension:
-        return PythonPL("py", file_diff_content, filename)
+        return PythonPL("py", file_diff_content, filename, keep_only_public_libraries)
     elif "js" == file_extension or "jsx" == file_extension or "ts" == file_extension or "tsx" == file_extension:
-        return JavaScriptPL(file_extension, file_diff_content, filename)
+        return JavaScriptPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "java" == file_extension:
-        return JavaPL(file_extension, file_diff_content, filename)
-    # TODO: When adding any new language, update extract_imports to return import_lines
+        return JavaPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "cpp" == file_extension or "c" == file_extension or "h" == file_extension:
-        return CppPL(file_extension, file_diff_content, filename)
+        return CppPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "php" == file_extension:
-        return PhpPL(file_extension, file_diff_content, filename)
+        return PhpPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "rb" == file_extension:
-        return RubyPL(file_extension, file_diff_content, filename)
+        return RubyPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "cs" == file_extension:
-        return CSharpPL(file_extension, file_diff_content, filename)
-    # Following languages are not supported yet in CodeT5
-    # elif "rs" == file_extension:
-    #     return RustPL(file_extension, file_diff_content, filename)
-    # elif "swift" == file_extension:
-    #     return SwiftPL(file_extension, file_diff_content, filename)
-    # elif "kt" == file_extension:
-    #     return KotlinPL(file_extension, file_diff_content, filename)
-    # elif "m" == file_extension:
-    #     return ObjectiveCPL(file_extension, file_diff_content, filename)
-    # elif "scala" == file_extension:
-    #     return ScalaPL(file_extension, file_diff_content, filename)
+        return CSharpPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     else:
         return None
 
@@ -165,7 +153,7 @@ def is_test(user, test_ratio=20):
 # TODO: Try overlapping chunks
 def break_code_snippets_to_chunks(file_name, code, chunk_char_limit):
     file_ext = get_file_extension(file_name)
-    parser = get_language_parser(file_ext, code, file_name)
+    parser = get_language_parser(file_ext, code, file_name, True)
     if not parser:
         print(f"Unknown language {file_ext} for file {file_name}", flush=True)
         return []
