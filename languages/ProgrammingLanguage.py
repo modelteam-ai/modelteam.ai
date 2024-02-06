@@ -1,11 +1,25 @@
 # Abstract class for programming languages
+import os
 from abc import ABC, abstractmethod
-
-from modelteam.utils.utils import load_public_libraries
 
 
 class ProgrammingLanguage(ABC):
     public_libraries = None
+
+    @staticmethod
+    def load_public_libraries(config_path):
+        pub_libs = {}
+        file_list = os.listdir(config_path)
+        for file in file_list:
+            if file.endswith(".txt"):
+                with open(os.path.join(config_path, file), "r") as f:
+                    language = file.replace(".txt", "")
+                    if language not in pub_libs:
+                        pub_libs[language] = set()
+                    lines = f.readlines()
+                    for line in lines:
+                        pub_libs[language].add(line.split("\t")[0].strip())
+        return pub_libs
 
     def __init__(self, extension, snippet, file_name, keep_only_public_libraries=True):
         self.extension = extension

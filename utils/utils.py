@@ -187,21 +187,6 @@ def break_code_snippets_to_chunks(file_name, code, chunk_char_limit, sep=None):
         return [code]
 
 
-def load_public_libraries(config_path):
-    pub_libs = {}
-    file_list = os.listdir(config_path)
-    for file in file_list:
-        if file.endswith(".txt"):
-            with open(os.path.join(config_path, file), "r") as f:
-                language = file.replace(".txt", "")
-                if language not in pub_libs:
-                    pub_libs[language] = set()
-                lines = f.readlines()
-                for line in lines:
-                    pub_libs[language].add(line.split("\t")[0].strip())
-    return pub_libs
-
-
 def load_lib_config(path):
     files = os.listdir(path)
     prev_libs = {}
