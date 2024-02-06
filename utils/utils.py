@@ -13,7 +13,7 @@ from modelteam.languages.JavaScriptPL import JavaScriptPL
 from modelteam.languages.PhpPL import PhpPL
 from modelteam.languages.PythonPL import PythonPL
 from modelteam.languages.RubyPL import RubyPL
-from modelteam.utils.constants import UNKOWN
+from modelteam.utils.constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT
 
 
 def get_edit_distance(s1, s2):
@@ -151,25 +151,37 @@ def is_test(user, test_ratio=20):
 
 
 # TODO: Try overlapping chunks
-def break_code_snippets_to_chunks(file_name, code, chunk_char_limit):
+def break_code_snippets_to_chunks(file_name, code, chunk_char_limit, sep=None):
     file_ext = get_file_extension(file_name)
     parser = get_language_parser(file_ext, code, file_name, True)
     if not parser:
         print(f"Unknown language {file_ext} for file {file_name}", flush=True)
         return []
     output = []
-    sep = parser.get_snippet_seperator()
+    if not sep:
+        sep = parser.get_snippet_seperator()
     if len(code) > chunk_char_limit:
         snippet_parts = code.split(sep)
         str_so_far = ""
         for s in snippet_parts:
-            if len(str_so_far) + len(s) > chunk_char_limit:
+            if len(s) > chunk_char_limit:
+                # Break big chunks using new line and just take the first chunk
+                if sep != "\n":
+                    chunks = break_code_snippets_to_chunks(file_name, s, chunk_char_limit, "\n")
+                    if chunks:
+                        output.append(chunks[0])
+                continue
+            elif len(str_so_far) + len(s) > chunk_char_limit:
                 if str_so_far:
-                    output.append(str_so_far.strip())
+                    if len(str_so_far) > MIN_CHUNK_CHAR_LIMIT:
+                        # ignore very small snippets
+                        output.append(str_so_far.strip())
                     str_so_far = ""
             str_so_far += s + sep
         if str_so_far:
-            output.append(str_so_far.strip())
+            if len(str_so_far) > MIN_CHUNK_CHAR_LIMIT:
+                # ignore very small snippets
+                output.append(str_so_far.strip())
         return output
     else:
         return [code]
