@@ -1,4 +1,5 @@
 import datetime
+import gzip
 import hashlib
 import os
 import re
@@ -205,3 +206,46 @@ def load_lib_config(path):
                 if id >= prev_libs[language]["next_id"]:
                     prev_libs[language]["next_id"] = id + 1
     return prev_libs
+
+
+def load_file_to_set(file_name):
+    """
+    Load the file to a set. Can handle both compressed and uncompressed files
+    :param file_name:
+    :return:
+    """
+    if file_name.endswith(".gz"):
+        with gzip.open(file_name, "rt") as f:
+            return set(f.read().splitlines())
+    else:
+        with open(file_name, "r") as f:
+            return set(f.read().splitlines())
+
+
+def convert_list_to_index(lst, sort_list=True):
+    """
+    Sort a list and return a dictionary with the index of each item
+    :param lst:
+    :param sort_list: If True, sort the list before creating the index
+    :return:
+    """
+    index = {}
+    if sort_list:
+        lst = sorted(lst)
+    for i, item in enumerate(lst):
+        index[item] = i
+    return index, lst
+
+
+def get_only_ones(arr, names):
+    """
+    Given an array of scores, return only the names with score > 0
+    :param arr:
+    :param names:
+    :return:
+    """
+    output = []
+    for i in range(len(arr)):
+        if arr[i] > 0:
+            output.append(names[i])
+    return ",".join(output)

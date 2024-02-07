@@ -294,26 +294,26 @@ class ModelTeamGitParser:
     def get_model_list(self, config_key):
         model_list = []
         mc = self.config[config_key]
-        model_list.append(mc["name"])
-        if "alpha.name" in mc:
-            model_list.append(mc["alpha.name"])
-        if "beta.name" in mc:
-            model_list.append(mc["beta.name"])
+        model_list.append(mc["path"])
+        if "alpha.path" in mc:
+            model_list.append(mc["alpha.path"])
+        if "beta.path" in mc:
+            model_list.append(mc["beta.path"])
         return model_list
 
     def eval_models(self, user_profile, repo_level_data):
         i2s_models = self.get_model_list("i2s")
-        for model_name in i2s_models:
-            self.eval_i2s_model(model_name, user_profile, repo_level_data)
+        for model_path in i2s_models:
+            self.eval_i2s_model(model_path, user_profile, repo_level_data)
         c2s_models = self.get_model_list("c2s")
-        for model_name in c2s_models:
-            self.eval_c2s_model(model_name, user_profile, repo_level_data)
+        for model_path in c2s_models:
+            self.eval_c2s_model(model_path, user_profile, repo_level_data)
         pass
 
-    def eval_i2s_model(self, model_name, user_profile, repo_level_data):
+    def eval_i2s_model(self, model_path, user_profile, repo_level_data):
         pass
 
-    def eval_c2s_model(self, model_name, user_profile, repo_level_data):
+    def eval_c2s_model(self, model_path, user_profile, repo_level_data):
         pass
 
     def generate_pdf_report(self, user_profile):
