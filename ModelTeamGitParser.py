@@ -1,4 +1,5 @@
 import argparse
+import configparser
 import json
 import os
 import random
@@ -20,8 +21,9 @@ debug = False
 
 
 class ModelTeamGitParser:
-    def __init__(self):
+    def __init__(self, config):
         self.keep_only_public_libraries = True
+        self.config = config
 
     @staticmethod
     def add_to_time_series_stats(commits, file_extension, yyyy_mm, key, inc_count):
@@ -271,7 +273,11 @@ class ModelTeamGitParser:
         repo_level_data = {LIBS: {}}
         self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
         # TODO: Email validation, A/B profiles
-        if user_profiles:
+        if user_profiles and username in user_profiles:
+            user_profile = user_profiles[username]
+            self.eval_models(user_profile, repo_level_data)
+            self.generate_pdf_report(user_profile)
+            self.filter_non_public_data(user_profile)
             # Store hash to file
             with open(user_stats_output_file_name, "w") as f:
                 repo_name = repo_path.split("/")[-1]
@@ -285,17 +291,52 @@ class ModelTeamGitParser:
                     f.write(f"{json.dumps(user)}, \"{STATS}\": {json.dumps(user_profiles[user])}")
                     f.write("}\n")
 
+    def get_model_list(self, config_key):
+        model_list = []
+        mc = self.config[config_key]
+        model_list.append(mc["name"])
+        if "alpha.name" in mc:
+            model_list.append(mc["alpha.name"])
+        if "beta.name" in mc:
+            model_list.append(mc["beta.name"])
+        return model_list
+
+    def eval_models(self, user_profile, repo_level_data):
+        i2s_models = self.get_model_list("i2s")
+        for model_name in i2s_models:
+            self.eval_i2s_model(model_name, user_profile, repo_level_data)
+        c2s_models = self.get_model_list("c2s")
+        for model_name in c2s_models:
+            self.eval_c2s_model(model_name, user_profile, repo_level_data)
+        pass
+
+    def eval_i2s_model(self, model_name, user_profile, repo_level_data):
+        pass
+
+    def eval_c2s_model(self, model_name, user_profile, repo_level_data):
+        pass
+
+    def generate_pdf_report(self, user_profile):
+        pass
+
+    def filter_non_public_data(self, user_profile):
+        pass
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
+    parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
 
     args = parser.parse_args()
     input_path = args.input_path
     output_path = args.output_path
     username = args.user_email
+    config_file = args.config
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
     if not input_path or not output_path or not username:
         print("Invalid arguments")
@@ -304,7 +345,7 @@ if __name__ == "__main__":
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
     sorted_folders = sorted(os.listdir(input_path))
-    git_parser = ModelTeamGitParser()
+    git_parser = ModelTeamGitParser(config)
     for folder in sorted_folders:
         if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
             print(f"Processing {folder}", flush=True)
