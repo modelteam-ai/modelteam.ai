@@ -175,32 +175,6 @@ class ModelTeamGitParser:
             snippets.append('\n'.join(snippet))
         return snippets
 
-    def get_commit_history_for_a_file(self, repo_path, filename, commit_hash):
-        command = f"""git -C {repo_path} log --numstat --pretty=format:"%x01%ae%x01%ct%x01%H" {commit_hash}^.. -- {filename}"""
-        result = run_commandline_command(command)
-        if not result:
-            return None
-        file_history_stats = result.strip().split('\n')
-        commit_history = []
-        author_email = None
-        commit_timestamp = 0
-        c_hash = None
-        for line in file_history_stats:
-            if line.startswith('\x01'):
-                parts = line.split('\x01')
-                author_email = parts[1]
-                commit_timestamp = int(parts[2])
-                c_hash = parts[3]
-            elif line.endswith(filename):
-                parts = line.split('\t')
-                if parts[0] == '-':
-                    continue
-                added = int(parts[0])
-                commit_history.append((author_email, commit_timestamp, added, c_hash))
-        if commit_history:
-            commit_history = sorted(commit_history, key=lambda x: x[1])
-        return commit_history
-
     def break_diff_and_process_each_file(self, commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
                                          labels, yyyy_mm, curr_user, src_prefix, dest_prefix):
         file_diffs = re.split(fr'diff --git {src_prefix}/', git_diff)
