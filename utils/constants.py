@@ -37,6 +37,11 @@ COMMIT_HASH = 'commit_hash'
 TEAM = 'team'
 LANGUAGE = 'language'
 
+MAX_SCORE = 'max_score'
+MIN_SCORE = 'min_score'
+SUM_SCORE = 'sum_score'
+COUNT_SCORE = 'count_score'
+
 SKILLS = 'skills'
 SCORES = 'scores'
 MIN_LINES_ADDED = 10

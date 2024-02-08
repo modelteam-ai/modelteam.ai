@@ -7,13 +7,17 @@ import pickle
 import random
 import re
 
-from .utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
+import torch
+from peft import PeftConfig, PeftModel
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+from .utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
-    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS
+    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS
 from .utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, load_file_to_set, convert_list_to_index, \
-    get_multi_label_classification_scores
+    get_multi_label_classification_scores, eval_llm_batch_with_scores
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -21,6 +25,7 @@ ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
 debug = False
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ModelTeamGitParser:
@@ -140,22 +145,9 @@ class ModelTeamGitParser:
             commits[LANGS][file_extension][LIBS] = {}
         if import_type not in commits[LANGS][file_extension][LIBS]:
             commits[LANGS][file_extension][LIBS][import_type] = {}
-        for library in libraries:
-            libraries_added = commits[LANGS][file_extension][LIBS][import_type]
-            if library not in libraries_added:
-                libraries_added[library] = {
-                    TOUCH_COUNT: 1,
-                    TIME_SERIES: [yyyy_mm]
-                }
-            else:
-                libraries_added[library][TOUCH_COUNT] += 1
-                if yyyy_mm not in libraries_added[library][TIME_SERIES]:
-                    libraries_added[library][TIME_SERIES].append(yyyy_mm)
-
-    def eval_code_model(self, original_diff, time_period):
-        # TODO use ml model to predict the change
-        return 0
-        pass
+        if yyyy_mm not in commits[LANGS][file_extension][LIBS][import_type]:
+            commits[LANGS][file_extension][LIBS][import_type][yyyy_mm] = []
+        commits[LANGS][file_extension][LIBS][import_type][yyyy_mm].append(libraries)
 
     @staticmethod
     def get_newly_added_snippets(git_diff):
@@ -219,9 +211,9 @@ class ModelTeamGitParser:
             # Set of files with significant contribution for each month
             if num_chars_changed > SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, 1)
-                has_sig_contr = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
-                                                         file_name, labels, repo_path, user_commit_stats, yyyy_mm)
-                if has_sig_contr:
+                has_sig_contrib = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
+                                                           file_name, labels, repo_path, user_commit_stats, yyyy_mm)
+                if has_sig_contrib:
                     if file_name in labels[LIBS]:
                         self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
                                                       labels[LIBS][file_name], yyyy_mm)
@@ -315,10 +307,10 @@ class ModelTeamGitParser:
             self.eval_i2s_model(model_path, user_profile)
         c2s_models = self.get_model_list("c2s")
         for model_path in c2s_models:
-            self.eval_c2s_model(model_path, user_profile, repo_level_data)
+            self.eval_c2s_model(model_path, user_profile)
         pass
 
-    def eval_i2s_model(self, model_path, user_profile, SKILLS=None):
+    def eval_i2s_model(self, model_path, user_profile):
         libs = load_file_to_set(f"{model_path}/lib_list.txt.gz")
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
         skills = load_file_to_set(f"{model_path}/skill_list.txt.gz")
@@ -336,32 +328,48 @@ class ModelTeamGitParser:
                 continue
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
-            imp_added_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_ADDED)
-            imp_in_file_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
-            imp_added_monthly_skills = self.predict_skills(multi_output_classifier, imp_added_monthly_features,
-                                                           skill_names)
+            imp_added_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_ADDED)
+            imp_in_file_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
+            imp_added_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_added_monthly_features,
+                                                               skill_names)
             self.add_to_skills(lang_stats[lang][SKILLS], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
-            imp_in_file_monthly_skills = self.predict_skills(multi_output_classifier, imp_in_file_monthly_features,
-                                                             skill_names)
+            imp_in_file_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_in_file_monthly_features,
+                                                                 skill_names)
             self.add_to_skills(lang_stats[lang][SKILLS], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
 
-        pass
-
     @staticmethod
-    def gen_monthly_lib_ftrs(lang_stats, lib_index, import_type):
+    def gen_monthly_lib_features(lang_stats, lib_index, import_type):
         monthly_features = {}
         if import_type not in lang_stats[LIBS]:
             return monthly_features
-        for lib in lang_stats[LIBS][import_type]:
-            ts = lang_stats[LIBS][import_type][lib][TIME_SERIES]
-            for month in ts:
+        for month in lang_stats[LIBS][import_type]:
+            for lib_list in lang_stats[LIBS][import_type][month]:
                 if month not in monthly_features:
-                    monthly_features[month] = [0] * len(lib_index)
-                monthly_features[month][lib_index[lib]] = 1
+                    monthly_features[month] = []
+                x = [0] * len(lib_index)
+                for lib in lib_list:
+                    x[lib_index[lib]] = 1
+                monthly_features[month].append(x)
         return monthly_features
 
-    def eval_c2s_model(self, model_path, user_profile, repo_level_data):
-        pass
+    def eval_c2s_model(self, peft_model_id, user_profile):
+        if LANGS not in user_profile:
+            return
+        lang_stats = user_profile[LANGS]
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+        peft_config = PeftConfig.from_pretrained(peft_model_id)
+        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        model = PeftModel.from_pretrained(model, peft_model_id).to(device)
+        model.eval()
+
+        for lang in lang_stats:
+            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                continue
+            if SKILLS not in lang_stats[lang]:
+                lang_stats[lang][SKILLS] = {}
+            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
+            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, lang_stats[lang][SKILLS])
+            self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
     def generate_pdf_report(self, user_profile):
         pass
@@ -370,27 +378,34 @@ class ModelTeamGitParser:
         pass
 
     @staticmethod
-    def predict_skills(multi_output_classifier, monthly_features, skill_names):
-        features = []
-        keys = []
+    def i2s_predict_skills(multi_output_classifier, monthly_features, skill_names):
         output = {}
         for month in monthly_features:
-            features.append(monthly_features[month])
-            keys.append(month)
-        predictions = multi_output_classifier.predict_proba(features)
-        for i in range(len(keys)):
-            skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
-            output[keys[i]] = {"skills": skills, "scores": scores}
+            features = monthly_features[month]
+            predictions = multi_output_classifier.predict_proba(features)
+            skill_map = {}
+            for i in range(len(features)):
+                skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
+                ModelTeamGitParser.accumulate_score(scores[i], skill_map, skills)
+            output[month] = skill_map
         return output
+
+    @staticmethod
+    def accumulate_score(score, skill_map, skills):
+        for s in skills:
+            if s not in skill_map:
+                # max, min, sum, count
+                skill_map[s] = [0, 1, 0, 0]
+            skill_map[s][0] = max(skill_map[s][0], score)
+            skill_map[s][1] = min(skill_map[s][1], score)
+            skill_map[s][2] += score
+            skill_map[s][3] += 1
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
         for month in monthly_skills_and_scores:
-            skills = monthly_skills_and_scores[month]["skills"]
-            scores = monthly_skills_and_scores[month]["scores"]
-            for i in range(len(skills)):
-                skill = skills[i]
-                score = scores[i]
+            skills = monthly_skills_and_scores[month].keys()
+            for skill in skills:
                 if skill not in skill_stats:
                     skill_stats[skill] = {}
                 if model_path not in skill_stats[skill]:
@@ -400,7 +415,20 @@ class ModelTeamGitParser:
                     skill_stats[skill][model_path][score_type][TIME_SERIES] = []
                     skill_stats[skill][model_path][score_type][SCORES] = []
                 skill_stats[skill][model_path][score_type][TIME_SERIES].append(month)
-                skill_stats[skill][model_path][score_type][SCORES].append(score)
+                skill_stats[skill][model_path][score_type][SCORES].append(monthly_skills_and_scores[month][skill])
+
+    @staticmethod
+    def c2s_predict_skills(tokenizer, model, monthly_features, skill_names):
+        output = {}
+        for month in monthly_features:
+            features = monthly_features[month]
+            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, model, features, skill_names)
+            skill_map = {}
+            for i in range(len(features)):
+                skills, scores = skill_list[i], score_list[i]
+                ModelTeamGitParser.accumulate_score(scores[i], skill_map, skills)
+            output[month] = skill_map
+        return output
 
 
 if __name__ == "__main__":

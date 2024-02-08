@@ -6,6 +6,8 @@ import re
 import subprocess
 from calendar import monthrange
 
+import torch
+
 from modelteam.languages.CSharpPL import CSharpPL
 from modelteam.languages.CppPL import CppPL
 from modelteam.languages.GoPL import GoPL
@@ -266,3 +268,34 @@ def get_multi_label_classification_scores(arr, index, names):
         if count == SKILL_PREDICTION_LIMIT:
             break
     return output, scores
+
+
+def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills):
+    skill_list = []
+    score_list = []
+    for code in codes:
+        with torch.no_grad():
+            input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
+                device)
+            output = gen_model.generate(**input_tokens, max_length=10, return_dict_in_generate=True, output_scores=True,
+                                        num_return_sequences=SKILL_PREDICTION_LIMIT, no_repeat_ngram_size=3,
+                                        num_beams=SKILL_PREDICTION_LIMIT, do_sample=False, length_penalty=0.0,
+                                        eos_token_id=16)
+            transition_scores = gen_model.compute_transition_scores(
+                output.sequences, output.scores, beam_indices=output.beam_indices, normalize_logits=True
+            )
+            scores = torch.exp(transition_scores.sum(axis=1))
+            results = [tokenizer.decode(output, skip_special_tokens=True) for output in output['sequences']]
+
+            tmp_results = []
+            tmp_scores = []
+            for s, r in zip(scores, results):
+                norm_skill = str(r).replace(',', '').replace('\n', '').strip().lower()
+                if norm_skill in tmp_results:
+                    continue
+                if norm_skill in repo_skills:
+                    tmp_results.append(norm_skill)
+                    tmp_scores.append(str(s.item()))
+            skill_list.append(tmp_results)
+            score_list.append(tmp_scores)
+    return skill_list, score_list
