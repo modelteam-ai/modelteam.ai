@@ -1,16 +1,19 @@
 import argparse
 import configparser
+import gzip
 import json
 import os
+import pickle
 import random
 import re
 
-from .utils.constants import ADDED, DELETED, TIME_SERIES, LANG, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
+from .utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
     SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH
 from .utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
-    get_num_chars_changed, get_language_parser
+    get_num_chars_changed, get_language_parser, load_file_to_set, convert_list_to_index, \
+    get_multi_label_classification_scores
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -27,15 +30,15 @@ class ModelTeamGitParser:
 
     @staticmethod
     def add_to_time_series_stats(commits, file_extension, yyyy_mm, key, inc_count):
-        if file_extension not in commits[LANG]:
-            commits[LANG][file_extension] = {}
-            commits[LANG][file_extension][TIME_SERIES] = {}
-        if yyyy_mm not in commits[LANG][file_extension][TIME_SERIES]:
-            commits[LANG][file_extension][TIME_SERIES][yyyy_mm] = {}
-        if key not in commits[LANG][file_extension][TIME_SERIES][yyyy_mm]:
-            commits[LANG][file_extension][TIME_SERIES][yyyy_mm][key] = inc_count
+        if file_extension not in commits[LANGS]:
+            commits[LANGS][file_extension] = {}
+            commits[LANGS][file_extension][TIME_SERIES] = {}
+        if yyyy_mm not in commits[LANGS][file_extension][TIME_SERIES]:
+            commits[LANGS][file_extension][TIME_SERIES][yyyy_mm] = {}
+        if key not in commits[LANGS][file_extension][TIME_SERIES][yyyy_mm]:
+            commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] = inc_count
         else:
-            commits[LANG][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
+            commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
     def get_commits_for_each_user(self, repo_path, username=None):
         """
@@ -92,10 +95,10 @@ class ModelTeamGitParser:
                     continue
                 added = int(added_lines)
                 deleted = int(deleted_lines)
-                if file_extension not in user_commit_stats[LANG]:
-                    user_commit_stats[LANG][file_extension] = {}
-                    user_commit_stats[LANG][file_extension][TIME_SERIES] = {}
-                language = user_commit_stats[LANG][file_extension]
+                if file_extension not in user_commit_stats[LANGS]:
+                    user_commit_stats[LANGS][file_extension] = {}
+                    user_commit_stats[LANGS][file_extension][TIME_SERIES] = {}
+                language = user_commit_stats[LANGS][file_extension]
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, ADDED, added)
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, DELETED, deleted)
                 if added > MIN_LINES_ADDED:
@@ -123,7 +126,7 @@ class ModelTeamGitParser:
         if user not in user_stats:
             user_stats[user] = {}
         user_commit_stats = user_stats[user]
-        user_commit_stats[LANG] = {}
+        user_commit_stats[LANGS] = {}
         # iterate through each commit from oldest to newest
         sorted_commits = sorted(commits[COMMITS], key=lambda x: x[1])
         for commit in sorted_commits:
@@ -131,14 +134,14 @@ class ModelTeamGitParser:
 
     @staticmethod
     def aggregate_library_helper(import_type, commits, file_extension, libraries, yyyy_mm):
-        if file_extension not in commits[LANG]:
-            commits[LANG][file_extension] = {}
-        if LIBS not in commits[LANG][file_extension]:
-            commits[LANG][file_extension][LIBS] = {}
-        if import_type not in commits[LANG][file_extension][LIBS]:
-            commits[LANG][file_extension][LIBS][import_type] = {}
+        if file_extension not in commits[LANGS]:
+            commits[LANGS][file_extension] = {}
+        if LIBS not in commits[LANGS][file_extension]:
+            commits[LANGS][file_extension][LIBS] = {}
+        if import_type not in commits[LANGS][file_extension][LIBS]:
+            commits[LANGS][file_extension][LIBS][import_type] = {}
         for library in libraries:
-            libraries_added = commits[LANG][file_extension][LIBS][import_type]
+            libraries_added = commits[LANGS][file_extension][LIBS][import_type]
             if library not in libraries_added:
                 libraries_added[library] = {
                     TOUCH_COUNT: 1,
@@ -304,14 +307,51 @@ class ModelTeamGitParser:
     def eval_models(self, user_profile, repo_level_data):
         i2s_models = self.get_model_list("i2s")
         for model_path in i2s_models:
-            self.eval_i2s_model(model_path, user_profile, repo_level_data)
+            self.eval_i2s_model(model_path, user_profile)
         c2s_models = self.get_model_list("c2s")
         for model_path in c2s_models:
             self.eval_c2s_model(model_path, user_profile, repo_level_data)
         pass
 
-    def eval_i2s_model(self, model_path, user_profile, repo_level_data):
+    def eval_i2s_model(self, model_path, user_profile):
+        libs = load_file_to_set(f"{model_path}/lib_list.txt.gz")
+        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
+        skills = load_file_to_set(f"{model_path}/skill_list.txt.gz")
+        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
+        with gzip.open(f"{output_path}/model.pkl.gz", "rb") as f:
+            multi_output_classifier = pickle.load(f)
+        if not multi_output_classifier:
+            print("Error loading model", flush=True)
+            return
+        if LANGS not in user_profile:
+            return
+        lang_stats = user_profile[LANGS]
+        for lang in lang_stats:
+            if lang not in lib_index or LIBS not in lang_stats[lang]:
+                continue
+            imp_added_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_ADDED)
+            imp_in_file_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
+            imp_added_monthly_skills = self.predict_skills(multi_output_classifier, imp_added_monthly_features,
+                                                           skill_names)
+            self.add_to_skills(lang_stats[lang], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
+            imp_in_file_monthly_skills = self.predict_skills(multi_output_classifier, imp_in_file_monthly_features,
+                                                             skill_names)
+            self.add_to_skills(lang_stats[lang], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
+
         pass
+
+    @staticmethod
+    def gen_monthly_lib_ftrs(lang_stats, lib_index, import_type):
+        monthly_features = {}
+        if import_type not in lang_stats[LIBS]:
+            return monthly_features
+        for lib in lang_stats[LIBS][import_type]:
+            ts = lang_stats[LIBS][import_type][lib][TIME_SERIES]
+            for month in ts:
+                if month not in monthly_features:
+                    monthly_features[month] = [0] * len(lib_index)
+                monthly_features[month][lib_index[lib]] = 1
+        return monthly_features
 
     def eval_c2s_model(self, model_path, user_profile, repo_level_data):
         pass
@@ -320,6 +360,24 @@ class ModelTeamGitParser:
         pass
 
     def filter_non_public_data(self, user_profile):
+        pass
+
+    @staticmethod
+    def predict_skills(multi_output_classifier, monthly_features, skill_names):
+        features = []
+        keys = []
+        output = {}
+        for month in monthly_features:
+            features.append(monthly_features[month])
+            keys.append(month)
+        predictions = multi_output_classifier.predict_proba(features)
+        for i in range(len(keys)):
+            skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
+            output[keys[i]] = {"skills": skills, "scores": scores}
+        return output
+
+    def add_to_skills(self, lang_stats, monthly_skills_and_scores, model_path, sub_type):
+        
         pass
 
 

@@ -222,15 +222,15 @@ def load_file_to_set(file_name):
             return set(f.read().splitlines())
 
 
-def convert_list_to_index(lst, sort_list=True):
+def convert_list_to_index(lst, do_sort=True):
     """
     Sort a list and return a dictionary with the index of each item
     :param lst:
-    :param sort_list: If True, sort the list before creating the index
+    :param do_sort: If True, sort the list before creating the index
     :return:
     """
     index = {}
-    if sort_list:
+    if do_sort:
         lst = sorted(lst)
     for i, item in enumerate(lst):
         index[item] = i
@@ -249,3 +249,20 @@ def get_only_ones(arr, names):
         if arr[i] > 0:
             output.append(names[i])
     return ",".join(output)
+
+
+def get_multi_label_classification_scores(arr, index, names):
+    output = []
+    scores = []
+    score_map = {}
+    for i in range(len(arr)):
+        if arr[i][index][1] > 0:
+            score_map[names[i]] = arr[i][index][1]
+    count = 0
+    for k in sorted(score_map, key=score_map.get, reverse=True):
+        output.append(k)
+        scores.append(score_map[k])
+        count += 1
+        if count == 15:
+            break
+    return ",".join(output), ",".join([str(x) for x in scores])
