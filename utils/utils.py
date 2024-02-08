@@ -8,15 +8,15 @@ from calendar import monthrange
 
 import torch
 
-from modelteam.languages.CSharpPL import CSharpPL
-from modelteam.languages.CppPL import CppPL
-from modelteam.languages.GoPL import GoPL
-from modelteam.languages.JavaPL import JavaPL
-from modelteam.languages.JavaScriptPL import JavaScriptPL
-from modelteam.languages.PhpPL import PhpPL
-from modelteam.languages.PythonPL import PythonPL
-from modelteam.languages.RubyPL import RubyPL
-from modelteam.utils.constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
+from .languages.CSharpPL import CSharpPL
+from .languages.CppPL import CppPL
+from .languages.GoPL import GoPL
+from .languages.JavaPL import JavaPL
+from .languages.JavaScriptPL import JavaScriptPL
+from .languages.PhpPL import PhpPL
+from .languages.PythonPL import PythonPL
+from .languages.RubyPL import RubyPL
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
 
 
 def get_edit_distance(s1, s2):
@@ -224,6 +224,19 @@ def load_file_to_set(file_name):
             return set(f.read().splitlines())
 
 
+def load_file_to_list(file_name):
+    """
+    Load the file to a list. Can handle both compressed and uncompressed files
+    :param file_name:
+    :return:
+    """
+    if file_name.endswith(".gz"):
+        with gzip.open(file_name, "rt") as f:
+            return f.read().splitlines()
+    else:
+        with open(file_name, "r") as f:
+            return f.read().splitlines()
+
 def convert_list_to_index(lst, do_sort=True):
     """
     Sort a list and return a dictionary with the index of each item
@@ -263,7 +276,7 @@ def get_multi_label_classification_scores(arr, index, names):
     count = 0
     for k in sorted(score_map, key=score_map.get, reverse=True):
         output.append(k)
-        scores.append(score_map[k])
+        scores.append(float(score_map[k]))
         count += 1
         if count == SKILL_PREDICTION_LIMIT:
             break
@@ -295,7 +308,7 @@ def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills)
                     continue
                 if norm_skill in repo_skills:
                     tmp_results.append(norm_skill)
-                    tmp_scores.append(str(s.item()))
+                    tmp_scores.append(s.item())
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
     return skill_list, score_list

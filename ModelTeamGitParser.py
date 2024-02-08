@@ -11,13 +11,13 @@ import torch
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from .utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
+from utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
     SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS
-from .utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
-    get_num_chars_changed, get_language_parser, load_file_to_set, convert_list_to_index, \
-    get_multi_label_classification_scores, eval_llm_batch_with_scores
+from utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
+    get_num_chars_changed, get_language_parser, convert_list_to_index, \
+    get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -268,7 +268,9 @@ class ModelTeamGitParser:
     def process_single_repo(self, repo_path, output_path, username):
         os.makedirs(output_path, exist_ok=True)
         os.makedirs(f"{output_path}/stats", exist_ok=True)
+        os.makedirs(f"{output_path}/filt-stats", exist_ok=True)
         user_stats_output_file_name = f"""{output_path}/stats/{repo_path.replace("/", "_")}.jsonl"""
+        filtered_user_stats_output_file_name = f"""{output_path}/filt-stats/{repo_path.replace("/", "_")}.jsonl"""
         user_profiles = {}
         repo_level_data = {LIBS: {}}
         self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
@@ -277,9 +279,20 @@ class ModelTeamGitParser:
             user_profile = user_profiles[username]
             self.eval_models(user_profile)
             self.generate_pdf_report(user_profile)
-            self.filter_non_public_data(user_profile)
             # Store hash to file
             with open(user_stats_output_file_name, "w") as f:
+                repo_name = repo_path.split("/")[-1]
+                for user in user_profiles:
+                    f.write("{")
+                    f.write(f"\"{REPO_PATH}\": ")
+                    f.write(f"{json.dumps(repo_path)}, ")
+                    f.write(f"\"{REPO}\": ")
+                    f.write(f"{json.dumps(repo_name)}, ")
+                    f.write(f"\"{USER}\": ")
+                    f.write(f"{json.dumps(user)}, \"{STATS}\": {json.dumps(user_profiles[user])}")
+                    f.write("}\n")
+            self.filter_non_public_data(user_profile)
+            with open(filtered_user_stats_output_file_name, "w") as f:
                 repo_name = repo_path.split("/")[-1]
                 for user in user_profiles:
                     f.write("{")
@@ -309,14 +322,13 @@ class ModelTeamGitParser:
         skill_names = load_file_to_set(self.config["c2s"]["skill_list"])
         for model_path in c2s_models:
             self.eval_c2s_model(model_path, user_profile, skill_names)
-        pass
 
     def eval_i2s_model(self, model_path, user_profile):
-        libs = load_file_to_set(f"{model_path}/lib_list.txt.gz")
+        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
-        skills = load_file_to_set(f"{model_path}/skill_list.txt.gz")
+        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
         skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
-        with gzip.open(f"{output_path}/model.pkl.gz", "rb") as f:
+        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
             multi_output_classifier = pickle.load(f)
         if not multi_output_classifier:
             print("Error loading model", flush=True)
@@ -357,7 +369,7 @@ class ModelTeamGitParser:
         if LANGS not in user_profile:
             return
         lang_stats = user_profile[LANGS]
-        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(self.config["base_llm_model"]["path"])
         peft_config = PeftConfig.from_pretrained(peft_model_id)
         model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
         model = PeftModel.from_pretrained(model, peft_model_id).to(device)
@@ -375,8 +387,16 @@ class ModelTeamGitParser:
     def generate_pdf_report(self, user_profile):
         pass
 
-    def filter_non_public_data(self, user_profile):
-        pass
+    @staticmethod
+    def filter_non_public_data(user_profile):
+        if LANGS not in user_profile:
+            return
+        lang_stats = user_profile[LANGS]
+        for lang in lang_stats:
+            if SIG_CODE_SNIPPETS in lang_stats[lang]:
+                lang_stats[lang][SIG_CODE_SNIPPETS] = None
+            if LIBS in lang_stats[lang]:
+                lang_stats[lang][LIBS] = None
 
     @staticmethod
     def i2s_predict_skills(multi_output_classifier, monthly_features, skill_names):
@@ -387,13 +407,15 @@ class ModelTeamGitParser:
             skill_map = {}
             for i in range(len(features)):
                 skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
-                ModelTeamGitParser.accumulate_score(scores[i], skill_map, skills)
+                ModelTeamGitParser.accumulate_score(scores, skill_map, skills)
             output[month] = skill_map
         return output
 
     @staticmethod
-    def accumulate_score(score, skill_map, skills):
-        for s in skills:
+    def accumulate_score(scores, skill_map, skills):
+        for i in range(len(skills)):
+            s = skills[i]
+            score = scores[i]
             if s not in skill_map:
                 # max, min, sum, count
                 skill_map[s] = [0, 1, 0, 0]
@@ -427,7 +449,7 @@ class ModelTeamGitParser:
             skill_map = {}
             for i in range(len(features)):
                 skills, scores = skill_list[i], score_list[i]
-                ModelTeamGitParser.accumulate_score(scores[i], skill_map, skills)
+                ModelTeamGitParser.accumulate_score(scores, skill_map, skills)
             output[month] = skill_map
         return output
 

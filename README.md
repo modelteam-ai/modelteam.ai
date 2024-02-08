@@ -7,7 +7,7 @@ Generate your modelteam profile with AI verified skills.
 - Python 3.6 or higher
 - Pip
 - MacOS or Linux
-- 4GB RAM
+- Minimum 8GB RAM
 
 ## Getting Started
 
