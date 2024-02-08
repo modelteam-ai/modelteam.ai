@@ -275,7 +275,7 @@ class ModelTeamGitParser:
         # TODO: Email validation, A/B profiles
         if user_profiles and username in user_profiles:
             user_profile = user_profiles[username]
-            self.eval_models(user_profile, repo_level_data)
+            self.eval_models(user_profile)
             self.generate_pdf_report(user_profile)
             self.filter_non_public_data(user_profile)
             # Store hash to file
@@ -301,13 +301,14 @@ class ModelTeamGitParser:
             model_list.append(mc["beta.path"])
         return model_list
 
-    def eval_models(self, user_profile, repo_level_data):
+    def eval_models(self, user_profile):
         i2s_models = self.get_model_list("i2s")
         for model_path in i2s_models:
             self.eval_i2s_model(model_path, user_profile)
         c2s_models = self.get_model_list("c2s")
+        skill_names = load_file_to_set(self.config["c2s"]["skill_list"])
         for model_path in c2s_models:
-            self.eval_c2s_model(model_path, user_profile)
+            self.eval_c2s_model(model_path, user_profile, skill_names)
         pass
 
     def eval_i2s_model(self, model_path, user_profile):
@@ -352,7 +353,7 @@ class ModelTeamGitParser:
                 monthly_features[month].append(x)
         return monthly_features
 
-    def eval_c2s_model(self, peft_model_id, user_profile):
+    def eval_c2s_model(self, peft_model_id, user_profile, skill_names):
         if LANGS not in user_profile:
             return
         lang_stats = user_profile[LANGS]
@@ -368,7 +369,7 @@ class ModelTeamGitParser:
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
             sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, lang_stats[lang][SKILLS])
+            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names)
             self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
     def generate_pdf_report(self, user_profile):
@@ -422,7 +423,7 @@ class ModelTeamGitParser:
         output = {}
         for month in monthly_features:
             features = monthly_features[month]
-            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, model, features, skill_names)
+            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, device, model, features, skill_names)
             skill_map = {}
             for i in range(len(features)):
                 skills, scores = skill_list[i], score_list[i]
