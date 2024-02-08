@@ -14,7 +14,7 @@ from modelteam.languages.JavaScriptPL import JavaScriptPL
 from modelteam.languages.PhpPL import PhpPL
 from modelteam.languages.PythonPL import PythonPL
 from modelteam.languages.RubyPL import RubyPL
-from modelteam.utils.constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT
+from modelteam.utils.constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
 
 
 def get_edit_distance(s1, s2):
@@ -263,6 +263,6 @@ def get_multi_label_classification_scores(arr, index, names):
         output.append(k)
         scores.append(score_map[k])
         count += 1
-        if count == 15:
+        if count == SKILL_PREDICTION_LIMIT:
             break
-    return ",".join(output), ",".join([str(x) for x in scores])
+    return output, scores

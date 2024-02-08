@@ -10,7 +10,7 @@ import re
 from .utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, TOUCH_COUNT, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
-    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH
+    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS
 from .utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, load_file_to_set, convert_list_to_index, \
     get_multi_label_classification_scores
@@ -219,25 +219,30 @@ class ModelTeamGitParser:
             # Set of files with significant contribution for each month
             if num_chars_changed > SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, 1)
-                self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
-                                         repo_path, user_commit_stats, yyyy_mm)
-                if file_name in labels[LIBS]:
-                    self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
-                                                  labels[LIBS][file_name], yyyy_mm)
-                library_names = parser.get_library_names(include_all_libraries=False)
-                if library_names:
-                    self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names,
-                                                  yyyy_mm)
+                has_sig_contr = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
+                                                         file_name, labels, repo_path, user_commit_stats, yyyy_mm)
+                if has_sig_contr:
+                    if file_name in labels[LIBS]:
+                        self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
+                                                      labels[LIBS][file_name], yyyy_mm)
+                    library_names = parser.get_library_names(include_all_libraries=False)
+                    if library_names:
+                        self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names,
+                                                      yyyy_mm)
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
-                            repo_path, user_commit_stats, yyyy_mm):
+                            repo_path, commits, yyyy_mm):
         snippets = self.get_newly_added_snippets(file_diff_content)
         if snippets:
-            index = 0
-            for snippet in snippets:
-                index += 1
-                # TODO: Eval model to predict skills and other quality scores
-            print(f"Found {len(snippets)} snippets in {file_name}", flush=True)
+            if file_extension not in commits[LANGS]:
+                commits[LANGS][file_extension] = {}
+            if LIBS not in commits[LANGS][file_extension]:
+                commits[LANGS][file_extension][SIG_CODE_SNIPPETS] = {}
+            if yyyy_mm not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
+                commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm] = []
+            commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm].extend(snippets)
+            return True
+        return False
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
@@ -313,7 +318,7 @@ class ModelTeamGitParser:
             self.eval_c2s_model(model_path, user_profile, repo_level_data)
         pass
 
-    def eval_i2s_model(self, model_path, user_profile):
+    def eval_i2s_model(self, model_path, user_profile, SKILLS=None):
         libs = load_file_to_set(f"{model_path}/lib_list.txt.gz")
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
         skills = load_file_to_set(f"{model_path}/skill_list.txt.gz")
@@ -329,14 +334,16 @@ class ModelTeamGitParser:
         for lang in lang_stats:
             if lang not in lib_index or LIBS not in lang_stats[lang]:
                 continue
+            if SKILLS not in lang_stats[lang]:
+                lang_stats[lang][SKILLS] = {}
             imp_added_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_ADDED)
             imp_in_file_monthly_features = self.gen_monthly_lib_ftrs(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
             imp_added_monthly_skills = self.predict_skills(multi_output_classifier, imp_added_monthly_features,
                                                            skill_names)
-            self.add_to_skills(lang_stats[lang], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
+            self.add_to_skills(lang_stats[lang][SKILLS], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
             imp_in_file_monthly_skills = self.predict_skills(multi_output_classifier, imp_in_file_monthly_features,
                                                              skill_names)
-            self.add_to_skills(lang_stats[lang], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
+            self.add_to_skills(lang_stats[lang][SKILLS], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
 
         pass
 
@@ -376,9 +383,24 @@ class ModelTeamGitParser:
             output[keys[i]] = {"skills": skills, "scores": scores}
         return output
 
-    def add_to_skills(self, lang_stats, monthly_skills_and_scores, model_path, sub_type):
-        
-        pass
+    @staticmethod
+    def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
+        for month in monthly_skills_and_scores:
+            skills = monthly_skills_and_scores[month]["skills"]
+            scores = monthly_skills_and_scores[month]["scores"]
+            for i in range(len(skills)):
+                skill = skills[i]
+                score = scores[i]
+                if skill not in skill_stats:
+                    skill_stats[skill] = {}
+                if model_path not in skill_stats[skill]:
+                    skill_stats[skill][model_path] = {}
+                if score_type not in skill_stats[skill][model_path]:
+                    skill_stats[skill][model_path][score_type] = {}
+                    skill_stats[skill][model_path][score_type][TIME_SERIES] = []
+                    skill_stats[skill][model_path][score_type][SCORES] = []
+                skill_stats[skill][model_path][score_type][TIME_SERIES].append(month)
+                skill_stats[skill][model_path][score_type][SCORES].append(score)
 
 
 if __name__ == "__main__":
