@@ -29,11 +29,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-def to_quarter(yyyy_mm):
-    yyyy_mm = str(yyyy_mm)
-    return f"{yyyy_mm[:4]}-Q{int(yyyy_mm[5:7]) // 3 + 1}"
-
-
 class ModelTeamGitParser:
     def __init__(self, config):
         self.keep_only_public_libraries = True
@@ -74,8 +69,14 @@ class ModelTeamGitParser:
                 commits[author_email][COMMITS].append((commit_hash, int(commit_timestamp)))
         return commits
 
-    def get_commit_log_command(self, repo_path, username):
-        return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}"'
+    @staticmethod
+    def get_commit_log_command(repo_path, username):
+        if username:
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}"'
+        else:
+            print("WARNING: Getting commits for all users. This will take a long time. For ModelTeam.AI Use.",
+                  flush=True)
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="36 months ago"'
 
     def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm):
         # Get the line stats for each file in the given commit
@@ -145,16 +146,15 @@ class ModelTeamGitParser:
 
     @staticmethod
     def aggregate_library_helper(import_type, commits, file_extension, libraries, yyyy_mm):
-        quarter = to_quarter(yyyy_mm)
         if file_extension not in commits[LANGS]:
             commits[LANGS][file_extension] = {}
         if LIBS not in commits[LANGS][file_extension]:
             commits[LANGS][file_extension][LIBS] = {}
         if import_type not in commits[LANGS][file_extension][LIBS]:
             commits[LANGS][file_extension][LIBS][import_type] = {}
-        if quarter not in commits[LANGS][file_extension][LIBS][import_type]:
-            commits[LANGS][file_extension][LIBS][import_type][quarter] = []
-        commits[LANGS][file_extension][LIBS][import_type][quarter].append(libraries)
+        if yyyy_mm not in commits[LANGS][file_extension][LIBS][import_type]:
+            commits[LANGS][file_extension][LIBS][import_type][yyyy_mm] = []
+        commits[LANGS][file_extension][LIBS][import_type][yyyy_mm].append(libraries)
 
     @staticmethod
     def get_newly_added_snippets(git_diff):
@@ -231,16 +231,15 @@ class ModelTeamGitParser:
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
                             repo_path, commits, yyyy_mm):
-        quarter = to_quarter(yyyy_mm)
         snippets = self.get_newly_added_snippets(file_diff_content)
         if snippets:
             if file_extension not in commits[LANGS]:
                 commits[LANGS][file_extension] = {}
             if LIBS not in commits[LANGS][file_extension]:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS] = {}
-            if quarter not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
-                commits[LANGS][file_extension][SIG_CODE_SNIPPETS][quarter] = []
-            commits[LANGS][file_extension][SIG_CODE_SNIPPETS][quarter].extend(snippets)
+            if yyyy_mm not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
+                commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm] = []
+            commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm].extend(snippets)
             return True
         return False
 
@@ -275,42 +274,41 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, output_path, username):
         os.makedirs(output_path, exist_ok=True)
-        os.makedirs(f"{output_path}/stats", exist_ok=True)
-        os.makedirs(f"{output_path}/filt-stats", exist_ok=True)
-        user_stats_output_file_name = f"""{output_path}/stats/{repo_path.replace("/", "_")}.jsonl"""
-        filtered_user_stats_output_file_name = f"""{output_path}/filt-stats/{repo_path.replace("/", "_")}.jsonl"""
+        os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
+        os.makedirs(f"{output_path}/final-stats", exist_ok=True)
+        user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
+        filtered_user_stats_output_file_name = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}.jsonl"""
         user_profiles = {}
         repo_level_data = {LIBS: {}}
-        self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
-        # TODO: Email validation, A/B profiles
-        if user_profiles and username in user_profiles:
-            user_profile = user_profiles[username]
-            self.eval_models(user_profile)
-            self.generate_pdf_report(user_profile)
-            # Store hash to file
-            with open(user_stats_output_file_name, "w") as f:
-                repo_name = repo_path.split("/")[-1]
-                for user in user_profiles:
-                    f.write("{")
-                    f.write(f"\"{REPO_PATH}\": ")
-                    f.write(f"{json.dumps(repo_path)}, ")
-                    f.write(f"\"{REPO}\": ")
-                    f.write(f"{json.dumps(repo_name)}, ")
-                    f.write(f"\"{USER}\": ")
-                    f.write(f"{json.dumps(user)}, \"{STATS}\": {json.dumps(user_profiles[user])}")
-                    f.write("}\n")
-            self.filter_non_public_data(user_profile)
-            with open(filtered_user_stats_output_file_name, "w") as f:
-                repo_name = repo_path.split("/")[-1]
-                for user in user_profiles:
-                    f.write("{")
-                    f.write(f"\"{REPO_PATH}\": ")
-                    f.write(f"{json.dumps(repo_path)}, ")
-                    f.write(f"\"{REPO}\": ")
-                    f.write(f"{json.dumps(repo_name)}, ")
-                    f.write(f"\"{USER}\": ")
-                    f.write(f"{json.dumps(user)}, \"{STATS}\": {json.dumps(user_profiles[user])}")
-                    f.write("}\n")
+        repo_name = repo_path.split("/")[-1]
+        if not os.path.exists(user_stats_output_file_name):
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
+            # TODO: Email validation, A/B profiles
+            if user_profiles and username in user_profiles:
+                # Store hash to file
+                with open(user_stats_output_file_name, "w") as f:
+                    for user in user_profiles:
+                        self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles)
+        if not args.skip_model_eval and not os.path.exists(filtered_user_stats_output_file_name):
+            with open(user_stats_output_file_name, "r") as f:
+                with open(filtered_user_stats_output_file_name, "w") as fo:
+                    for line in f:
+                        user_stats = json.loads(line)
+                        user = user_stats[USER]
+                        user_profile = user_stats[STATS]
+                        self.eval_models(user_profile)
+                        self.generate_pdf_report(user_profile)
+                        self.filter_non_public_data(user_profile)
+                        self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+
+    @staticmethod
+    def write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles):
+        f.write("{")
+        f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
+        f.write(f"\"{REPO}\": {json.dumps(repo_name)}, ")
+        f.write(f"\"{USER}\": {json.dumps(user)}, ")
+        f.write(f"\"{STATS}\": {json.dumps(user_profiles[user])}")
+        f.write("}\n")
 
     def get_model_list(self, config_key):
         model_list = []
@@ -349,31 +347,29 @@ class ModelTeamGitParser:
                 continue
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
-            imp_added_quarterly_features = self.gen_quarterly_lib_features(lang_stats[lang], lib_index, IMPORTS_ADDED)
-            imp_in_file_quarterly_features = self.gen_quarterly_lib_features(lang_stats[lang], lib_index,
-                                                                             IMPORTS_IN_FILE)
-            imp_added_quarterly_skills = self.i2s_predict_skills(multi_output_classifier, imp_added_quarterly_features,
-                                                                 skill_names)
-            self.add_to_skills(lang_stats[lang][SKILLS], imp_added_quarterly_skills, model_path, IMPORTS_ADDED)
-            imp_in_file_quarterly_skills = self.i2s_predict_skills(multi_output_classifier,
-                                                                   imp_in_file_quarterly_features,
-                                                                   skill_names)
-            self.add_to_skills(lang_stats[lang][SKILLS], imp_in_file_quarterly_skills, model_path, IMPORTS_IN_FILE)
+            imp_added_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_ADDED)
+            imp_in_file_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
+            imp_added_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_added_monthly_features,
+                                                               skill_names, user_profile)
+            self.add_to_skills(lang_stats[lang][SKILLS], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
+            imp_in_file_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_in_file_monthly_features,
+                                                                 skill_names, user_profile)
+            self.add_to_skills(lang_stats[lang][SKILLS], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
 
     @staticmethod
-    def gen_quarterly_lib_features(lang_stats, lib_index, import_type):
-        quarterly_features = {}
+    def gen_monthly_lib_features(lang_stats, lib_index, import_type):
+        monthly_features = {}
         if import_type not in lang_stats[LIBS]:
-            return quarterly_features
-        for quarter in lang_stats[LIBS][import_type]:
-            for lib_list in lang_stats[LIBS][import_type][quarter]:
-                if quarter not in quarterly_features:
-                    quarterly_features[quarter] = []
+            return monthly_features
+        for month in lang_stats[LIBS][import_type]:
+            for lib_list in lang_stats[LIBS][import_type][month]:
+                if month not in monthly_features:
+                    monthly_features[month] = []
                 x = [0] * len(lib_index)
                 for lib in lib_list:
                     x[lib_index[lib]] = 1
-                quarterly_features[quarter].append(x)
-        return quarterly_features
+                monthly_features[month].append(x)
+        return monthly_features
 
     def eval_c2s_model(self, peft_model_id, user_profile, skill_names):
         if LANGS not in user_profile:
@@ -391,8 +387,8 @@ class ModelTeamGitParser:
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
             sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            c2s_quarterly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names)
-            self.add_to_skills(lang_stats[lang][SKILLS], c2s_quarterly_skills, peft_model_id, SIG_CODE_SNIPPETS)
+            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names, user_profile)
+            self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
     def generate_pdf_report(self, user_profile):
         pass
@@ -404,25 +400,25 @@ class ModelTeamGitParser:
         lang_stats = user_profile[LANGS]
         for lang in lang_stats:
             if SIG_CODE_SNIPPETS in lang_stats[lang]:
-                lang_stats[lang][SIG_CODE_SNIPPETS] = None
+                del lang_stats[lang][SIG_CODE_SNIPPETS]
             if LIBS in lang_stats[lang]:
-                lang_stats[lang][LIBS] = None
+                del lang_stats[lang][LIBS]
 
     @staticmethod
-    def i2s_predict_skills(multi_output_classifier, quarterly_features, skill_names):
+    def i2s_predict_skills(multi_output_classifier, monthly_features, skill_names, user_profile):
         output = {}
-        for quarter in quarterly_features:
-            features = quarterly_features[quarter]
+        for month in monthly_features:
+            features = monthly_features[month]
             predictions = multi_output_classifier.predict_proba(features)
             skill_map = {}
             for i in range(len(features)):
                 skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
-                ModelTeamGitParser.accumulate_score(scores, skill_map, skills)
-            output[quarter] = skill_map
+                ModelTeamGitParser.accumulate_score(user_profile, scores, skill_map, skills)
+            output[month] = skill_map
         return output
 
     @staticmethod
-    def accumulate_score(scores, skill_map, skills):
+    def accumulate_score(user_profile, scores, skill_map, skills, code_len=1):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
@@ -432,12 +428,16 @@ class ModelTeamGitParser:
             skill_map[s][0] = max(skill_map[s][0], score)
             skill_map[s][1] = min(skill_map[s][1], score)
             skill_map[s][2] += score
-            skill_map[s][3] += 1
+            skill_map[s][3] += code_len
+            if s not in user_profile[SKILLS]:
+                user_profile[s] = 1
+            else:
+                user_profile[s] += 1
 
     @staticmethod
-    def add_to_skills(skill_stats, quarterly_skills_and_scores, model_path, score_type):
-        for quarter in quarterly_skills_and_scores:
-            skills = quarterly_skills_and_scores[quarter].keys()
+    def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
+        for month in monthly_skills_and_scores:
+            skills = monthly_skills_and_scores[month].keys()
             for skill in skills:
                 if skill not in skill_stats:
                     skill_stats[skill] = {}
@@ -447,20 +447,20 @@ class ModelTeamGitParser:
                     skill_stats[skill][model_path][score_type] = {}
                     skill_stats[skill][model_path][score_type][TIME_SERIES] = []
                     skill_stats[skill][model_path][score_type][SCORES] = []
-                skill_stats[skill][model_path][score_type][TIME_SERIES].append(quarter)
-                skill_stats[skill][model_path][score_type][SCORES].append(quarterly_skills_and_scores[quarter][skill])
+                skill_stats[skill][model_path][score_type][TIME_SERIES].append(month)
+                skill_stats[skill][model_path][score_type][SCORES].append(monthly_skills_and_scores[month][skill])
 
     @staticmethod
-    def c2s_predict_skills(tokenizer, model, quarterly_features, skill_names):
+    def c2s_predict_skills(tokenizer, model, monthly_features, skill_names, user_profile):
         output = {}
-        for quarter in quarterly_features:
-            features = quarterly_features[quarter]
+        for month in monthly_features:
+            features = monthly_features[month]
             skill_list, score_list = eval_llm_batch_with_scores(tokenizer, device, model, features, skill_names)
             skill_map = {}
             for i in range(len(features)):
-                skills, scores = skill_list[i], score_list[i]
-                ModelTeamGitParser.accumulate_score(scores, skill_map, skills)
-            output[quarter] = skill_map
+                ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i],
+                                                    len(features[i]))
+            output[month] = skill_map
         return output
 
 
@@ -470,6 +470,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
+    parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
