@@ -288,26 +288,28 @@ class ModelTeamGitParser:
                 # Store hash to file
                 with open(user_stats_output_file_name, "w") as f:
                     for user in user_profiles:
-                        self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles)
-        if not args.skip_model_eval and not os.path.exists(filtered_user_stats_output_file_name):
+                        self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles[user])
+        if not args.skip_model_eval and os.path.exists(user_stats_output_file_name) and not os.path.exists(
+                filtered_user_stats_output_file_name):
             with open(user_stats_output_file_name, "r") as f:
                 with open(filtered_user_stats_output_file_name, "w") as fo:
                     for line in f:
                         user_stats = json.loads(line)
                         user = user_stats[USER]
                         user_profile = user_stats[STATS]
+                        user_profile[SKILLS] = {}
                         self.eval_models(user_profile)
                         self.generate_pdf_report(user_profile)
                         self.filter_non_public_data(user_profile)
                         self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     @staticmethod
-    def write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles):
+    def write_user_profile_to_file(f, repo_name, repo_path, user, user_profile):
         f.write("{")
         f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
         f.write(f"\"{REPO}\": {json.dumps(repo_name)}, ")
         f.write(f"\"{USER}\": {json.dumps(user)}, ")
-        f.write(f"\"{STATS}\": {json.dumps(user_profiles[user])}")
+        f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
     def get_model_list(self, config_key):
@@ -430,25 +432,24 @@ class ModelTeamGitParser:
             skill_map[s][2] += score
             skill_map[s][3] += code_len
             if s not in user_profile[SKILLS]:
-                user_profile[s] = 1
+                user_profile[SKILLS][s] = 1
             else:
-                user_profile[s] += 1
+                user_profile[SKILLS][s] += 1
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
+        model_name = f"{model_path}::{score_type}"
         for month in monthly_skills_and_scores:
             skills = monthly_skills_and_scores[month].keys()
             for skill in skills:
-                if skill not in skill_stats:
-                    skill_stats[skill] = {}
-                if model_path not in skill_stats[skill]:
-                    skill_stats[skill][model_path] = {}
-                if score_type not in skill_stats[skill][model_path]:
-                    skill_stats[skill][model_path][score_type] = {}
-                    skill_stats[skill][model_path][score_type][TIME_SERIES] = []
-                    skill_stats[skill][model_path][score_type][SCORES] = []
-                skill_stats[skill][model_path][score_type][TIME_SERIES].append(month)
-                skill_stats[skill][model_path][score_type][SCORES].append(monthly_skills_and_scores[month][skill])
+                if model_name not in skill_stats:
+                    skill_stats[model_name] = {}
+                if skill not in skill_stats[model_name]:
+                    skill_stats[model_name][skill] = {}
+                    skill_stats[model_name][skill][TIME_SERIES] = []
+                    skill_stats[model_name][skill][SCORES] = []
+                skill_stats[model_name][skill][TIME_SERIES].append(month)
+                skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
 
     @staticmethod
     def c2s_predict_skills(tokenizer, model, monthly_features, skill_names, user_profile):
@@ -459,7 +460,7 @@ class ModelTeamGitParser:
             skill_map = {}
             for i in range(len(features)):
                 ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i],
-                                                    len(features[i]))
+                                                    len(features[i].split("\n")))
             output[month] = skill_map
         return output
 
