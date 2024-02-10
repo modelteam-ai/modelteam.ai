@@ -1,0 +1,10 @@
+matplotlib
+numpy
+torch
+transformers
+accelerate
+scikit-learn
+pandas
+configparser
+peft
+xgboost
