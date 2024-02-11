@@ -8,6 +8,7 @@ from calendar import monthrange
 
 import torch
 
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -16,7 +17,6 @@ from .languages.JavaScriptPL import JavaScriptPL
 from .languages.PhpPL import PhpPL
 from .languages.PythonPL import PythonPL
 from .languages.RubyPL import RubyPL
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
 
 
 def get_edit_distance(s1, s2):
@@ -91,7 +91,8 @@ def get_supported_extensions():
 
 
 def get_supported_languages():
-    return ["python", "javascript", "typescript", "java", "csharp", "go", "golang", "c", "c++", "c/c++", "php", "ruby"]
+    return ["python", "javascript", "typescript", "java", "csharp", "go", "golang", "c", "c++", "c/c++", "php", "ruby",
+            "c#"]
 
 
 # TODO: Supported languages are as follows: c, c++, c-sharp, go, java, javascript, php, python, ruby.
@@ -236,6 +237,7 @@ def load_file_to_list(file_name):
     else:
         with open(file_name, "r") as f:
             return f.read().splitlines()
+
 
 def convert_list_to_index(lst, do_sort=True):
     """
