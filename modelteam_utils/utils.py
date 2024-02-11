@@ -195,6 +195,8 @@ def load_lib_config(path):
     files = os.listdir(path)
     prev_libs = {}
     for file in files:
+        if not file.endswith(".txt"):
+            continue
         with open(os.path.join(path, file), "r") as f:
             lines = f.readlines()
             language = file.split(".")[0]
