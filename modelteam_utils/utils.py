@@ -90,6 +90,24 @@ def get_supported_extensions():
     return ["py", "js", "ts", "jsx", "tsx", "java", "cs", "go", "cpp", "c", "h", "php", "rb"]
 
 
+def get_extension_to_language_map():
+    return {
+        "py": "Python",
+        "js": "Javascript",
+        "ts": "Typescript",
+        "jsx": "Javascript",
+        "tsx": "Typescript",
+        "java": "Java",
+        "cs": "C#",
+        "go": "go",
+        "cpp": "C++",
+        "c": "C",
+        "h": "C/C++",
+        "php": "PHP",
+        "rb": "Ruby"
+    }
+
+
 def get_supported_languages():
     return ["python", "javascript", "typescript", "java", "csharp", "go", "golang", "c", "c++", "c/c++", "php", "ruby",
             "c#"]

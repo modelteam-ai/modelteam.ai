@@ -7,9 +7,13 @@ import pickle
 import random
 import re
 
+import matplotlib.pyplot as plt
 import torch
 from peft import PeftConfig, PeftModel
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from wordcloud import WordCloud
 
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
@@ -17,7 +21,8 @@ from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, 
     SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
-    get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set
+    get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set, \
+    get_extension_to_language_map
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -27,6 +32,56 @@ THREE_MONTH = 3 * 30 * 24 * 60 * 60
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+def generate_tag_cloud(skill_map, file_name):
+    if len(skill_map) > 20:
+        skill_map = dict(sorted(skill_map.items(), key=lambda item: item[1], reverse=True)[:20])
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(skill_map)
+    # Display the generated word cloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.title("Top Skills", fontsize=20)
+    plt.savefig(file_name)
+
+
+def generate_ts_plot(ts_stats, file_name):
+    years_months = sorted(ts_stats.keys())
+
+    # Extract added and deleted values
+    added = [ts_stats[key][0] for key in years_months]
+    deleted = [ts_stats[key][1] for key in years_months]
+
+    # Plotting
+    plt.figure(figsize=(10, 5))
+    plt.plot(years_months, added, label='Lines Added')
+    plt.plot(years_months, deleted, label='Lines Deleted')
+
+    plt.xlabel('Year-Month', fontsize=12)
+    plt.ylabel('Count', fontsize=12)
+    plt.title('Code Contribution Over Time', fontsize=20)
+    plt.xticks(rotation=45)
+    plt.legend(fontsize=12)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(file_name)
+
+
+def generate_pdf(output_path, user, repo, languages, image_files):
+    pdf_file = f"{output_path}/{user}.pdf"
+    c = canvas.Canvas(pdf_file, pagesize=letter)
+    c.setFont("Helvetica", 24)
+    c.drawString(50, 700, "ModelTeam.AI")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, 650, f"User: {user}")
+    c.drawString(50, 630, f"Repo: {repo}")
+    c.drawString(50, 610, f"Languages: {','.join(languages)}")
+    top = 400
+    for image_file in image_files:
+        c.drawImage(image_file, 50, top, width=400, height=200)
+        top -= 250
+    c.save()
 
 
 class ModelTeamGitParser:
@@ -289,19 +344,19 @@ class ModelTeamGitParser:
                 with open(user_stats_output_file_name, "w") as f:
                     for user in user_profiles:
                         self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles[user])
-        if not args.skip_model_eval and os.path.exists(user_stats_output_file_name) and not os.path.exists(
-                filtered_user_stats_output_file_name):
-            with open(user_stats_output_file_name, "r") as f:
-                with open(filtered_user_stats_output_file_name, "w") as fo:
-                    for line in f:
-                        user_stats = json.loads(line)
-                        user = user_stats[USER]
-                        user_profile = user_stats[STATS]
-                        user_profile[SKILLS] = {}
-                        self.eval_models(user_profile)
-                        self.generate_pdf_report(user_profile)
-                        self.filter_non_public_data(user_profile)
-                        self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+        if not args.skip_model_eval and os.path.exists(user_stats_output_file_name):
+            if not os.path.exists(filtered_user_stats_output_file_name):
+                with open(user_stats_output_file_name, "r") as f:
+                    with open(filtered_user_stats_output_file_name, "w") as fo:
+                        for line in f:
+                            user_stats = json.loads(line)
+                            user = user_stats[USER]
+                            user_profile = user_stats[STATS]
+                            user_profile[SKILLS] = {}
+                            self.eval_models(user_profile)
+                            self.filter_non_public_data(user_profile)
+                            self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+            self.generate_pdf_report(filtered_user_stats_output_file_name)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
@@ -392,11 +447,39 @@ class ModelTeamGitParser:
             c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names, user_profile)
             self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
-    def generate_pdf_report(self, user_profile):
+    def generate_pdf_report(self, profile_json):
+        lang_map = get_extension_to_language_map()
+        with open(profile_json, "r") as f:
+            for line in f:
+                user_stats = json.loads(line)
+                user = user_stats[USER]
+                repo = user_stats[REPO]
+                user_profile = user_stats[STATS]
+                if SKILLS in user_profile:
+                    skill_list = user_profile[SKILLS]
+                    generate_tag_cloud(skill_list, f"{output_path}/{user}_wordcloud.png")
+                lang_stats = user_profile[LANGS]
+                lang_list = lang_stats.keys()
+                lang_names = [lang_map[lang] for lang in lang_list]
+                for lang in lang_list:
+                    if TIME_SERIES in lang_stats[lang]:
+                        time_series = lang_stats[lang][TIME_SERIES]
+                        ts_stats = {}
+                        for yyyy_mm in time_series:
+                            added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
+                            deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
+                            ts_stats[yyyy_mm] = [added, deleted]
+                        if ts_stats:
+                            generate_ts_plot(ts_stats, f"{output_path}/{user}_{lang}_ts.png")
+                image_files = [f"{output_path}/{user}_wordcloud.png", f"{output_path}/{user}_{lang}_ts.png"]
+                generate_pdf(output_path, user, repo, lang_names, image_files)
+
         pass
 
     @staticmethod
     def filter_non_public_data(user_profile):
+        if REPO_PATH in user_profile:
+            del user_profile[REPO_PATH]
         if LANGS not in user_profile:
             return
         lang_stats = user_profile[LANGS]
@@ -472,6 +555,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
+    parser.add_argument('--skip_pdf', default=False, help='Skip PDF Report Generation', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -489,6 +573,7 @@ if __name__ == "__main__":
     # iterate through all the folders in base_path and use it as repo_path
     sorted_folders = sorted(os.listdir(input_path))
     git_parser = ModelTeamGitParser(config)
+    # TODO: Aggregate stats from all repos for a user
     for folder in sorted_folders:
         if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
             print(f"Processing {folder}", flush=True)

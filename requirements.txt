@@ -8,3 +8,6 @@ pandas
 configparser
 peft
 xgboost
+wordcloud
+reportlab
+
