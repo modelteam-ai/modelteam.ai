@@ -314,7 +314,7 @@ def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills)
                 device)
             output = gen_model.generate(**input_tokens, max_length=10, return_dict_in_generate=True, output_scores=True,
                                         num_return_sequences=SKILL_PREDICTION_LIMIT, no_repeat_ngram_size=3,
-                                        num_beams=SKILL_PREDICTION_LIMIT, do_sample=False, length_penalty=0.0,
+                                        num_beams=SKILL_PREDICTION_LIMIT + 2, do_sample=False, length_penalty=0.0,
                                         eos_token_id=16)
             transition_scores = gen_model.compute_transition_scores(
                 output.sequences, output.scores, beam_indices=output.beam_indices, normalize_logits=True
@@ -328,7 +328,7 @@ def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills)
                 norm_skill = str(r).replace(',', '').replace('\n', '').strip().lower()
                 if norm_skill in tmp_results:
                     continue
-                if norm_skill in repo_skills:
+                if not repo_skills or norm_skill in repo_skills:
                     tmp_results.append(norm_skill)
                     tmp_scores.append(s.item())
             skill_list.append(tmp_results)
