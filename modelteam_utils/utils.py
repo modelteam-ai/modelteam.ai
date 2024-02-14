@@ -7,6 +7,7 @@ import subprocess
 from calendar import monthrange
 
 import torch
+from transformers import AutoTokenizer
 
 from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
 from .languages.CSharpPL import CSharpPL
@@ -305,18 +306,17 @@ def get_multi_label_classification_scores(arr, index, names):
     return output, scores
 
 
-def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, repo_skills):
     skill_list = []
     score_list = []
     for code in codes:
         with torch.no_grad():
             input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
                 device)
-            output = gen_model.generate(**input_tokens, max_length=10, return_dict_in_generate=True, output_scores=True,
-                                        num_return_sequences=SKILL_PREDICTION_LIMIT, no_repeat_ngram_size=3,
-                                        num_beams=SKILL_PREDICTION_LIMIT + 2, do_sample=False, length_penalty=0.0,
-                                        eos_token_id=16)
-            transition_scores = gen_model.compute_transition_scores(
+            output = model.generate(**input_tokens, max_new_tokens=1, return_dict_in_generate=True, output_scores=True,
+                                    num_return_sequences=SKILL_PREDICTION_LIMIT, no_repeat_ngram_size=3,
+                                    num_beams=SKILL_PREDICTION_LIMIT + 2, do_sample=False, length_penalty=0.0)
+            transition_scores = model.compute_transition_scores(
                 output.sequences, output.scores, beam_indices=output.beam_indices, normalize_logits=True
             )
             scores = torch.exp(transition_scores.sum(axis=1))
@@ -334,3 +334,14 @@ def eval_llm_batch_with_scores(tokenizer, device, gen_model, codes, repo_skills)
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
     return skill_list, score_list
+
+
+def load_tokenizer(checkpoint, skills_file, model):
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    new_words = load_file_to_list(skills_file)
+    vocabulary = tokenizer.get_vocab().keys()
+    for word in new_words:
+        if word not in vocabulary:
+            tokenizer.add_tokens(word)
+    model.resize_token_embeddings(len(tokenizer))
+    return tokenizer
