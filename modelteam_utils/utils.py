@@ -336,12 +336,11 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, repo_skills):
     return skill_list, score_list
 
 
-def load_tokenizer(checkpoint, skills_file, model):
+def load_tokenizer(checkpoint, skills_file):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
     vocabulary = tokenizer.get_vocab().keys()
     for word in new_words:
         if word not in vocabulary:
             tokenizer.add_tokens(word)
-    model.resize_token_embeddings(len(tokenizer))
     return tokenizer
