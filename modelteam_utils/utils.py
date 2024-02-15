@@ -6,6 +6,7 @@ import re
 import subprocess
 from calendar import monthrange
 
+import numpy as np
 import torch
 from transformers import AutoTokenizer
 
@@ -306,34 +307,43 @@ def get_multi_label_classification_scores(arr, index, names):
     return output, scores
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, repo_skills):
+def calculate_probabilities(score_map, total_sum):
+    probabilities = {}
+    for k in score_map.keys():
+        probabilities[k] = score_map[k] / total_sum
+    return probabilities
+
+
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
+    token_index = sorted(new_tokens)
     skill_list = []
     score_list = []
+    seq_score_list = []
     for code in codes:
         with torch.no_grad():
             input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
                 device)
-            output = model.generate(**input_tokens, max_new_tokens=1, return_dict_in_generate=True, output_scores=True,
-                                    num_return_sequences=SKILL_PREDICTION_LIMIT, no_repeat_ngram_size=3,
-                                    num_beams=SKILL_PREDICTION_LIMIT + 2, do_sample=False, length_penalty=0.0)
-            transition_scores = model.compute_transition_scores(
-                output.sequences, output.scores, beam_indices=output.beam_indices, normalize_logits=True
-            )
-            scores = torch.exp(transition_scores.sum(axis=1))
-            results = [tokenizer.decode(output, skip_special_tokens=True) for output in output['sequences']]
-
+            output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
+                                    no_repeat_ngram_size=3, do_sample=False)
+            score_map = {}
+            total_sum = 0
+            for i in token_index:
+                word = tokenizer.decode(i)
+                score_map[word] = output.scores[1][0][i].item()
+                total_sum += score_map[word]
+            probabilities = calculate_probabilities(score_map, total_sum)
             tmp_results = []
             tmp_scores = []
-            for s, r in zip(scores, results):
-                norm_skill = str(r).replace(',', '').replace('\n', '').strip().lower()
-                if norm_skill in tmp_results:
-                    continue
-                if not repo_skills or norm_skill in repo_skills:
-                    tmp_results.append(norm_skill)
-                    tmp_scores.append(s.item())
+            tmp_seq_scores = []
+            top_n = sorted(score_map, key=score_map.get, reverse=True)[:SKILL_PREDICTION_LIMIT]
+            for word in top_n:
+                tmp_results.append(word)
+                tmp_scores.append(score_map[word])
+                tmp_seq_scores.append(probabilities[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
-    return skill_list, score_list
+            seq_score_list.append(tmp_seq_scores)
+    return skill_list, score_list, seq_score_list
 
 
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
@@ -344,4 +354,9 @@ def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, mode
         if word not in vocabulary:
             tokenizer.add_tokens(word)
     model.resize_token_embeddings(len(tokenizer))
-    return tokenizer
+    vocabulary = tokenizer.get_vocab()
+    new_token_ids = set()
+    for word in new_words:
+        if word in vocabulary:
+            new_token_ids.add(vocabulary.get(word))
+    return tokenizer, new_token_ids

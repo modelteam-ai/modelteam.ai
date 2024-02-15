@@ -12,7 +12,7 @@ import torch
 from peft import PeftConfig, PeftModel
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM
 from wordcloud import WordCloud
 
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
@@ -22,7 +22,7 @@ from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, 
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
     get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set, \
-    get_extension_to_language_map
+    get_extension_to_language_map, get_tokenizer_with_new_tokens_and_update_model
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -441,9 +441,11 @@ class ModelTeamGitParser:
         if LANGS not in user_profile:
             return
         lang_stats = user_profile[LANGS]
-        tokenizer = AutoTokenizer.from_pretrained(self.config["base_llm_model"]["path"])
         peft_config = PeftConfig.from_pretrained(peft_model_id)
         model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(self.config["base_llm_model"]["path"],
+                                                                               self.config["c2s"]["skill_list"],
+                                                                               model)
         model = PeftModel.from_pretrained(model, peft_model_id).to(device)
         model.eval()
 
@@ -453,7 +455,8 @@ class ModelTeamGitParser:
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
             sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names, user_profile)
+            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names, user_profile,
+                                                         new_tokens)
             self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
     def generate_pdf_report(self, profile_json):
@@ -544,11 +547,11 @@ class ModelTeamGitParser:
                 skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
 
     @staticmethod
-    def c2s_predict_skills(tokenizer, model, monthly_features, skill_names, user_profile):
+    def c2s_predict_skills(tokenizer, model, monthly_features, skill_names, user_profile, new_tokens):
         output = {}
         for month in monthly_features:
             features = monthly_features[month]
-            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, device, model, features, skill_names)
+            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, device, model, features, new_tokens)
             skill_map = {}
             for i in range(len(features)):
                 ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i],
