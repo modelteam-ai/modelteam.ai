@@ -338,14 +338,30 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
             tmp_scores = []
             tmp_seq_scores = []
             top_n = sorted(score_map, key=score_map.get, reverse=True)[:SKILL_PREDICTION_LIMIT]
+            next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)
-                tmp_scores.append(score_map[word])
+                tmp_scores.append(next_best_pr[word])
                 tmp_seq_scores.append(soft_max_map[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
             seq_score_list.append(tmp_seq_scores)
     return skill_list, score_list, seq_score_list
+
+
+def next_best_prob(word_probabilities, top_words):
+    processed_words = set()
+    next_best_words_probabilities = {}
+    for word in top_words:
+        if not next_best_words_probabilities:
+            # The first word is the best word
+            next_best_words_probabilities[word] = word_probabilities[word]
+        else:
+            remaining_words = [w for w in word_probabilities.keys() if w not in processed_words]
+            total_prob = sum(word_probabilities[w] for w in remaining_words)
+            next_best_words_probabilities[word] = word_probabilities[word]/total_prob
+        processed_words.add(word)
+    return next_best_words_probabilities
 
 
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
