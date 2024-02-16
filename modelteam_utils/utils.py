@@ -307,15 +307,12 @@ def get_multi_label_classification_scores(arr, index, names):
     return output, scores
 
 
-def calculate_probabilities(score_map, total_sum):
-    probabilities = {}
-    for k in score_map.keys():
-        probabilities[k] = score_map[k] / total_sum
-    return probabilities
+def softmax(x):
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=0).tolist()
 
 
 def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
-    token_index = sorted(new_tokens)
     skill_list = []
     score_list = []
     seq_score_list = []
@@ -326,12 +323,17 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
             output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
                                     no_repeat_ngram_size=3, do_sample=False)
             score_map = {}
-            total_sum = 0
-            for i in token_index:
+            soft_max_map = {}
+            new_token_scores = []
+            words = []
+            for i in new_tokens:
                 word = tokenizer.decode(i)
                 score_map[word] = output.scores[1][0][i].item()
-                total_sum += score_map[word]
-            probabilities = calculate_probabilities(score_map, total_sum)
+                new_token_scores.append(score_map[word])
+                words.append(word)
+            soft_max_scores = softmax(new_token_scores)
+            for w, s in zip(words, soft_max_scores):
+                soft_max_map[w] = s
             tmp_results = []
             tmp_scores = []
             tmp_seq_scores = []
@@ -339,7 +341,7 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
             for word in top_n:
                 tmp_results.append(word)
                 tmp_scores.append(score_map[word])
-                tmp_seq_scores.append(probabilities[word])
+                tmp_seq_scores.append(soft_max_map[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
             seq_score_list.append(tmp_seq_scores)
