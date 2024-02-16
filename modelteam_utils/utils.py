@@ -357,8 +357,7 @@ def next_best_prob(word_probabilities, top_words):
             # The first word is the best word
             next_best_words_probabilities[word] = word_probabilities[word]
         else:
-            remaining_words = [w for w in word_probabilities.keys() if w not in processed_words]
-            total_prob = sum(word_probabilities[w] for w in remaining_words)
+            total_prob = sum(word_probabilities[w] for w in word_probabilities.keys() if w not in processed_words)
             next_best_words_probabilities[word] = word_probabilities[word]/total_prob
         processed_words.add(word)
     return next_best_words_probabilities
