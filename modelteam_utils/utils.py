@@ -302,7 +302,7 @@ def get_multi_label_classification_scores(arr, index, names):
         output.append(k)
         scores.append(float(score_map[k]))
         count += 1
-        if count == SKILL_PREDICTION_LIMIT:
+        if count == 5:
             break
     return output, scores
 
