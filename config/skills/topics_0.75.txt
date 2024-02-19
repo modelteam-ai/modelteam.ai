@@ -1,0 +1,106 @@
+sql
+aws
+machine learning
+distributed systems
+react
+data structures
+problem solving
+testing
+networking
+css
+data analysis
+html
+object oriented design
+security best practices
+unit testing
+deep learning
+node.js
+software architecture design
+natural language processing (nlp)
+pytorch
+computer vision
+data modeling
+data processing
+api design
+web
+software architecture
+tensorflow
+rest api
+parallel computing
+performance optimization
+restful api
+api
+ui/ux design
+json
+data persistence
+database management
+version control
+data visualization
+data retrieval
+frontend
+performance tuning
+version control systems
+mathematics
+optimization
+functional
+multithreading
+algorithm optimization
+data management
+http
+configuration management
+multi threading
+gpu
+memory management
+authentication
+algorithm design
+user interface design
+neural networks
+numpy
+concurrency
+api integration
+image processing
+network protocols
+system integration
+asynchronous
+parallel processing
+file management
+time management
+authorization
+query optimization
+stream processing
+metrics calculation
+code optimization
+data manipulation
+code documentation
+model training
+event driven
+logging
+caching strategies
+file system operations
+validation
+data encoding
+resource management
+state management
+data transformation
+code refactoring
+software documentation
+data preprocessing
+dependency management
+software best practices
+thread management
+queue management
+software configuration
+access control
+encryption
+cluster management
+data mapping
+data aggregation
+memory optimization
+yaml
+browser compatibility
+code analysis
+task scheduling
+iterators
+certificate management
+server configuration
+sequence processing
