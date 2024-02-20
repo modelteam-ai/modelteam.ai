@@ -1,8 +1,11 @@
 sql
-aws
+aws services
 machine learning
+kubernetes
 distributed systems
 react
+algorithms
+linux kernel
 data structures
 problem solving
 testing
@@ -10,97 +13,119 @@ networking
 css
 data analysis
 html
-object oriented design
+microcontroller
 security best practices
 unit testing
+azure sdk
+cloud computing
 deep learning
 node.js
-software architecture design
+graphql
+object oriented
+software design patterns
 natural language processing (nlp)
+backend
 pytorch
 computer vision
-data modeling
+web
 data processing
 api design
-web
 software architecture
 tensorflow
 rest api
 parallel computing
+data modeling
 performance optimization
+shell scripting
+spring framework
+system
+android
 restful api
+embedded systems
+object oriented design
+redis
 api
 ui/ux design
+software development best practices
 json
 data persistence
+containerization
 database management
-version control
-data visualization
-data retrieval
+monitoring
 frontend
+grpc
+cuda
+data visualization
+version control
+algorithm design
+software testing
+cloud storage
+data retrieval
 performance tuning
+google cloud platform
 version control systems
-mathematics
 optimization
+mathematics
 functional
 multithreading
 algorithm optimization
+statistical analysis
 data management
-http
+amazon web services (aws)
+pandas
+http requests
+rtos (real time operating systems)
+cryptography
 configuration management
 multi threading
 gpu
-memory management
+reinforcement learning
+linear algebra
 authentication
-algorithm design
 user interface design
 neural networks
-numpy
 concurrency
-api integration
+signal processing
+numpy
 image processing
-network protocols
+transport protocols
 system integration
-asynchronous
 parallel processing
 file management
+device driver
 time management
 authorization
 query optimization
 stream processing
-metrics calculation
 code optimization
-data manipulation
-code documentation
+metrics calculation
+model deployment
 model training
+classification
 event driven
-logging
+feature
 caching strategies
+restful api design
 file system operations
-validation
+openapi specification
 data encoding
-resource management
-state management
-data transformation
-code refactoring
-software documentation
-data preprocessing
-dependency management
-software best practices
-thread management
-queue management
-software configuration
-access control
+dependency injection
+message processing
+protocol buffers
+schema design
+synchronization
+routing
 encryption
-cluster management
-data mapping
-data aggregation
-memory optimization
+ssl/tls
+code refactoring
+thread management
+authentication mechanisms
+object detection
+software configuration
+iam policies
+queue management
+time series analysis
 yaml
-browser compatibility
+server side
 code analysis
 task scheduling
-iterators
-certificate management
-server configuration
-sequence processing
