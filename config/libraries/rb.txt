@@ -1,104 +1,234 @@
-test_helper
-stringio
-spec_helper
-json
-simplecov
-pry
-pathname
-uri
-yaml
-rack
-i18n
-active_support
-debug
-active_record
-oj
-erb
-fileutils
-csv
-securerandom
-set
-rake
-concurrent-ruby
-forwardable
-time
-ruby2_keywords
-active_model
-rails
-ostruct
-open-uri
-singleton
-pp
-byebug
-mongoid
-timeout
-action_controller
-bigdecimal
-selenium-webdriver
-English
-nokogiri
-minitest
-benchmark
-coveralls
-rspec
-connection_pool
-logger
-optparse
-simplecov-cobertura
-rubygems
-bundler
-date
-base64
-cgi
-stackprof
-find
-tmpdir
-tempfile
-zlib
-faraday
-rails_helper
-open3
-googleauth
-mini_mime
-etc
-concurrent
-strscan
-rbconfig
-webrick
-monitor
-openssl
-vcr
-ruby-prof
-haml
-thor
-action_view
-socket
-msgpack
-timecop
-ipaddr
-memory_profiler
-sequel
-helper
-coverage
-redis
-sinatra
-digest
-shellwords
-thread
-delegate
-listen
-mkmf
-application_system_test_case
-aws-sdk-s3
-combustion
-rest-client
-sqlite3
-yard
-aws-sdk-sqs
-aws-sdk-core
-resolv
-zip
-kramdown
-simplecov-lcov
-dotenv
-fiber
+json	1
+stringio	2
+rubygems	3
+rack	4
+uri	5
+socket	6
+timeout	7
+ostruct	8
+logger	9
+zlib	10
+forwardable	11
+java	12
+pp	13
+redis	14
+ruby-prof	15
+mongo	16
+thread	17
+set	18
+resolv	19
+singleton	20
+fiber	21
+action_cable	22
+active_job	23
+open3	24
+sinatra	25
+grpc	26
+fileutils	27
+digest	28
+bundler	29
+minitest	30
+curb	31
+haml	32
+sequel	33
+jruby	34
+erb	35
+elasticsearch	36
+action_controller	37
+action_view	38
+active_record	39
+active_support	40
+pg	41
+activerecord-jdbc-adapter	42
+yaml	43
+warning	44
+sidekiq	45
+tmpdir	46
+optparse	47
+rails	48
+stripe	49
+rbconfig	50
+simplecov	51
+time	52
+httparty	53
+date	54
+roda	55
+open-uri	56
+yajl	57
+test_helper	58
+debug	59
+simplecov-lcov	60
+spec_helper	61
+monitor	62
+webrick	63
+bigdecimal	64
+memory_profiler	65
+lite_spec_helper	66
+pathname	67
+ffi	68
+base64	69
+securerandom	70
+tempfile	71
+snappy	72
+byebug	73
+ruby-debug	74
+concurrent-ruby	75
+timeout_interrupt	76
+dotenv	77
+benchmark	78
+etc	79
+ipaddr	80
+openssl	81
+getoptlong	82
+irb	83
+rake	84
+syntax_tree	85
+zeitwerk	86
+foo	87
+bar	88
+strscan	89
+English	90
+dalli	91
+connection_pool	92
+mkmf	93
+pry	94
+codecov	95
+application_system_test_case	96
+vcr	97
+rss	98
+thor	99
+cgi	100
+redis-client	101
+hiredis-client	102
+mysql2	103
+toxiproxy	104
+mocha	105
+test-prof	106
+stackprof	107
+rackup	108
+tilt	109
+sass-embedded	110
+pg_query	111
+factory_bot	112
+rails_helper	113
+action_mailer	114
+capybara	115
+benchmark_helper	116
+csv	117
+faraday	118
+database_cleaner	119
+os	120
+mail	121
+nokogiri	122
+rspec	123
+mini_mime	124
+bcrypt	125
+jwt	126
+rubocop	127
+sorbet-runtime	128
+shellwords	129
+objspace	130
+eventmachine	131
+concurrent	132
+i18n	133
+helper	134
+coveralls	135
+fugit	136
+selenium-webdriver	137
+googleauth	138
+coverage	139
+parallel	140
+tty-spinner	141
+active_model	142
+find	143
+resque	144
+ripper	145
+rainbow	146
+listen	147
+language_server-protocol	148
+terminal-table	149
+msgpack	150
+a	151
+delegate	152
+pry-byebug	153
+openai	154
+mongoid	155
+mongo_mapper	156
+user	157
+kramdown	158
+shoulda	159
+amazing_print	160
+puma	161
+gems	162
+ruby2_keywords	163
+oj	164
+parser	165
+timecop	166
+faraday_middleware	167
+colored2	168
+json-schema	169
+octokit	170
+xmlsimple	171
+pty	172
+addressable	173
+chunky_png	174
+aws-sdk-cloudwatchlogs	175
+aws-sdk-dynamodb	176
+aws-sdk-lambda	177
+aws-sdk-s3	178
+aws-sdk-sts	179
+aws-sdk-sns	180
+aws-sdk-sqs	181
+sqlite3	182
+execjs	183
+yard	184
+request_store	185
+win32ole	186
+ruby-progressbar	187
+retriable	188
+psych	189
+diffy	190
+mechanize	191
+erubi	192
+http	193
+rugged	194
+rufus-scheduler	195
+optimist	196
+ipaddress	197
+excon	198
+ffaker	199
+babosa	200
+rest-client	201
+zip	202
+combustion	203
+httpclient	204
+rouge	205
+cocoapods	206
+active_model_serializers	207
+kaminari	208
+vite_rails	209
+multi_json	210
+prettyprint	211
+rails-controller-testing	212
+globalid	213
+simplecov-cobertura	214
+async	215
+mini_magick	216
+jquery-rails	217
+sass-rails	218
+shopify_api	219
+complex	220
+colorize	221
+gemojione	222
+braintree	223
+aws-sdk	224
+aws-sdk-ec2	225
+aws-sdk-cloudwatch	226
+aws-sdk-core	227
+tsort	228
+fcntl	229
+readline	230
+plist	231
+rbnacl	232
+git	233
+padrino-helpers	234
