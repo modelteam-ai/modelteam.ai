@@ -1,7 +1,21 @@
-react
-clsx
-axios
-classnames
-react-dom
-prop-types
-styled-components
+react	1
+clsx	2
+styled-components	3
+html2canvas	4
+axios	5
+prop-types	6
+memoize-one	7
+debounce	8
+classnames	9
+react-dom	10
+moment	11
+lodash	12
+leaflet	13
+markdown-to-jsx	14
+copy-to-clipboard	15
+query-string	16
+sinon	17
+dayjs	18
+react-datepicker	19
+react-slider	20
+path	21
