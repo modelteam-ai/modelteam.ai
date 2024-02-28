@@ -36,6 +36,7 @@ SIG_CODE_SNIPPETS = 'sig_code_snippets'
 COMMIT_HASH = 'commit_hash'
 TEAM = 'team'
 LANGUAGE = 'language'
+LABEL = 'label'
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'
