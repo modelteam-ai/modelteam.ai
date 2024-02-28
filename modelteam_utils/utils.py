@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -366,6 +366,22 @@ def next_best_prob(word_probabilities, top_words):
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
+    vocabulary = tokenizer.get_vocab().keys()
+    for word in new_words:
+        if word not in vocabulary:
+            tokenizer.add_tokens(word)
+    model.resize_token_embeddings(len(tokenizer))
+    vocabulary = tokenizer.get_vocab()
+    new_token_ids = set()
+    for word in new_words:
+        if word in vocabulary:
+            new_token_ids.add(vocabulary.get(word))
+    return tokenizer, new_token_ids
+
+
+def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model, life_of_py_bucket_count):
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    new_words = [f"{LIFE_OF_PY}_{i}" for i in range(life_of_py_bucket_count + 1)]
     vocabulary = tokenizer.get_vocab().keys()
     for word in new_words:
         if word not in vocabulary:
