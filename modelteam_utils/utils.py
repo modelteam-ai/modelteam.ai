@@ -370,9 +370,6 @@ def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, mode
     for word in new_words:
         if word not in vocabulary:
             tokenizer.add_tokens(word)
-    curr_model_len = model.config.vocab_size
-    if len(tokenizer) > curr_model_len:
-        model.resize_token_embeddings(len(tokenizer))
     vocabulary = tokenizer.get_vocab()
     new_token_ids = set()
     for word in new_words:
