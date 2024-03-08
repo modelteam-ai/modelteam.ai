@@ -17,7 +17,7 @@ from wordcloud import WordCloud
 
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
-    SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT, TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
+    TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
     SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
@@ -224,7 +224,7 @@ class ModelTeamGitParser:
     def get_newly_added_snippets(git_diff):
         """
         Given a git diff, return the newly added snippets. These snippets should be continuous chunks of code that got added
-        It can be a new function. It should be a minimum of 5 lines of code
+        It can be a new function. It should be a minimum of 10 lines of code
         :param git_diff:
         :return:
         """
@@ -235,11 +235,11 @@ class ModelTeamGitParser:
             if line.startswith('+'):
                 snippet.append(line[1:])  # remove '+' sign
             else:
-                if len(snippet) >= 5:  # minimum lines of code
+                if len(snippet) >= 10:  # minimum lines of code
                     snippets.append('\n'.join(snippet))
                 snippet = []  # reset snippet
         # check for the last snippet
-        if len(snippet) >= 5:
+        if len(snippet) >= 10:
             snippets.append('\n'.join(snippet))
         return snippets
 
@@ -266,7 +266,7 @@ class ModelTeamGitParser:
                 if library_names:
                     labels[LIBS][file_name] = library_names
             if len(file_diff) > TOO_BIG_TO_ANALYZE_LIMIT:
-                # Any single file diff with more than 20000 chars changed is too big to analyze
+                # Any single file diff with more than 10000 chars changed is too big to analyze
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, TOO_BIG_TO_ANALYZE, 1)
                 continue
             lines_added = file_line_stats[filename_with_path][0]
@@ -280,18 +280,17 @@ class ModelTeamGitParser:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, DELETED, -1 * lines_deleted)
                 continue
             # Set of files with significant contribution for each month
-            if num_chars_changed > SIGNIFICANT_CONTRIBUTION_CHAR_LIMIT:
+            has_sig_contrib = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
+                                                       file_name, labels, repo_path, user_commit_stats, yyyy_mm)
+            if has_sig_contrib:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, 1)
-                has_sig_contrib = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
-                                                           file_name, labels, repo_path, user_commit_stats, yyyy_mm)
-                if has_sig_contrib:
-                    if file_name in labels[LIBS]:
-                        self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
-                                                      labels[LIBS][file_name], yyyy_mm)
-                    library_names = parser.get_library_names(include_all_libraries=False)
-                    if library_names:
-                        self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names,
-                                                      yyyy_mm)
+                if file_name in labels[LIBS]:
+                    self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
+                                                  labels[LIBS][file_name], yyyy_mm)
+                library_names = parser.get_library_names(include_all_libraries=False)
+                if library_names:
+                    self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names,
+                                                  yyyy_mm)
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
                             repo_path, commits, yyyy_mm):
