@@ -1,4 +1,3 @@
 autoload.php	1
-vendor/autoload.php	2
-bootstrap.php	3
-config.php	4
+config.php	2
+vendor/autoload.php	3
