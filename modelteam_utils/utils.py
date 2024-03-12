@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -379,17 +379,25 @@ def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, mode
     return tokenizer, new_token_ids
 
 
-def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model, life_of_py_bucket_count):
+def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    new_words = [f"{LIFE_OF_PY}_{i}" for i in range(life_of_py_bucket_count + 1)]
     vocabulary = tokenizer.get_vocab().keys()
-    for word in new_words:
+    for word in LIFE_OF_PY_BUCKETS:
         if word not in vocabulary:
             tokenizer.add_tokens(word)
     model.resize_token_embeddings(len(tokenizer))
     vocabulary = tokenizer.get_vocab()
     new_token_ids = set()
-    for word in new_words:
+    for word in LIFE_OF_PY_BUCKETS:
         if word in vocabulary:
             new_token_ids.add(vocabulary.get(word))
     return tokenizer, new_token_ids
+
+
+def get_life_of_py_bucket(change):
+    if change < 0:
+        return LIFE_OF_PY_BUCKETS[0]
+    if change > 100:
+        return LIFE_OF_PY_BUCKETS[-1]
+    bucket = LIFE_OF_PY_BUCKETS[change // 10]
+    return bucket
