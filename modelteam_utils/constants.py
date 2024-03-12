@@ -38,7 +38,6 @@ TEAM = 'team'
 LANGUAGE = 'language'
 LABEL = 'label'
 LIFE_OF_PY = 'life_of_py'
-LIFE_OF_PY_BUCKET_COUNT = 100
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'
