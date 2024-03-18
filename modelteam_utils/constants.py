@@ -38,6 +38,7 @@ TEAM = 'team'
 LANGUAGE = 'language'
 LABEL = 'label'
 LIFE_OF_PY = 'life_of_py'
+LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_{i}" for i in range(0, 100, 10)]
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'
@@ -56,6 +57,6 @@ REFORMAT_CHAR_LIMIT = 50
 MAX_USERS = 1001
 MAX_DIFF_SIZE = 5000
 GIT_DIFF_BATCH_SIZE = 100
-T5_CHUNK_CHAR_LIMIT = 1000
+T5_CHUNK_CHAR_LIMIT = 1500
 
 SKILL_PREDICTION_LIMIT = 10
