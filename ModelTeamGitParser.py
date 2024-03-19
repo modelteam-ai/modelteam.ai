@@ -283,7 +283,6 @@ class ModelTeamGitParser:
             has_sig_contrib = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
                                                        file_name, labels, repo_path, user_commit_stats, yyyy_mm)
             if has_sig_contrib:
-                self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, 1)
                 if file_name in labels[LIBS]:
                     self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
                                                   labels[LIBS][file_name], yyyy_mm)
@@ -296,6 +295,7 @@ class ModelTeamGitParser:
                             repo_path, commits, yyyy_mm):
         snippets = self.get_newly_added_snippets(file_diff_content)
         if snippets:
+            self.add_to_time_series_stats(commits, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, len(snippets))
             if file_extension not in commits[LANGS]:
                 commits[LANGS][file_extension] = {}
             if LIBS not in commits[LANGS][file_extension]:
@@ -500,6 +500,7 @@ class ModelTeamGitParser:
             if LIBS in lang_stats[lang]:
                 del lang_stats[lang][LIBS]
 
+    # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
     def i2s_predict_skills(multi_output_classifier, monthly_features, skill_names, user_profile):
         output = {}
@@ -509,22 +510,23 @@ class ModelTeamGitParser:
             skill_map = {}
             for i in range(len(features)):
                 skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
-                ModelTeamGitParser.accumulate_score(user_profile, scores, skill_map, skills)
+                ModelTeamGitParser.accumulate_score(user_profile, scores, skill_map, skills, len(features[i]))
             output[month] = skill_map
         return output
 
     @staticmethod
-    def accumulate_score(user_profile, scores, skill_map, skills, code_len=1):
+    def accumulate_score(user_profile, scores, skill_map, skills, code_len):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
             if s not in skill_map:
-                # max, min, sum, count
-                skill_map[s] = [0, 1, 0, 0]
+                # max, min, sum, count, line_count
+                skill_map[s] = [0, 1, 0, 0, 0]
             skill_map[s][0] = max(skill_map[s][0], score)
             skill_map[s][1] = min(skill_map[s][1], score)
             skill_map[s][2] += score
-            skill_map[s][3] += code_len
+            skill_map[s][3] += 1
+            skill_map[s][4] += code_len
             if s not in user_profile[SKILLS]:
                 user_profile[SKILLS][s] = 1
             else:
