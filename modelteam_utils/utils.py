@@ -315,7 +315,6 @@ def softmax(x):
 def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
     skill_list = []
     score_list = []
-    seq_score_list = []
     for code in codes:
         with torch.no_grad():
             input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
@@ -336,17 +335,14 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
                 soft_max_map[w] = s
             tmp_results = []
             tmp_scores = []
-            tmp_seq_scores = []
             top_n = sorted(score_map, key=score_map.get, reverse=True)[:SKILL_PREDICTION_LIMIT]
             next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)
                 tmp_scores.append(next_best_pr[word])
-                tmp_seq_scores.append(soft_max_map[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
-            seq_score_list.append(tmp_seq_scores)
-    return skill_list, score_list, seq_score_list
+    return skill_list, score_list
 
 
 def next_best_prob(word_probabilities, top_words):
