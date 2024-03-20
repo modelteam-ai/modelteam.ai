@@ -361,7 +361,7 @@ class ModelTeamGitParser:
                             user = user_stats[USER]
                             user_profile = user_stats[STATS]
                             user_profile[SKILLS] = {}
-                            self.eval_models(user_profile)
+                            self.extract_features(user_profile)
                             self.filter_non_public_data(user_profile)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
             self.generate_pdf_report(filtered_user_stats_output_file_name)
@@ -385,7 +385,7 @@ class ModelTeamGitParser:
             model_list.append(mc["beta.path"])
         return model_list
 
-    def eval_models(self, user_profile):
+    def extract_features(self, user_profile):
         i2s_models = self.get_model_list("i2s")
         for model_path in i2s_models:
             self.eval_i2s_model(model_path, user_profile)

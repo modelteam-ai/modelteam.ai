@@ -401,3 +401,33 @@ def get_life_of_py_bucket(change):
         return LIFE_OF_PY_BUCKETS[-1]
     bucket = LIFE_OF_PY_BUCKETS[change // 10]
     return bucket
+
+
+def is_documentation(input_string):
+    # Count the number of spaces in the input string
+    num_spaces = input_string.count(' ')
+    num_lines = input_string.count('\n')
+    if num_spaces >= num_lines * 5:
+        return True
+    else:
+        return False
+
+
+def normalize_docstring(comment):
+    if 'license' in comment or 'License' in comment or 'LICENSE' in comment:
+        return None
+    if not is_documentation(comment):
+        return None
+    comment = comment.replace("\t", " ")
+    comment = comment.replace("\r", " ")
+    lines = comment.split("\n")
+    filtered_lines = []
+    keywords_to_skip = ["author ", "param "]
+    for line in lines:
+        if line.startswith("http") or line.startswith("www"):
+            continue
+        if any(keyword in line for keyword in keywords_to_skip):
+            continue
+        filtered_lines.append(line)
+    comment = "\n".join(filtered_lines)
+    return comment
