@@ -18,7 +18,8 @@ from wordcloud import WordCloud
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
-    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS
+    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS, \
+    FILE, IMPORTS
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
     get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set, \
@@ -280,16 +281,8 @@ class ModelTeamGitParser:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, DELETED, -1 * lines_deleted)
                 continue
             # Set of files with significant contribution for each month
-            has_sig_contrib = self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension,
-                                                       file_name, labels, repo_path, user_commit_stats, yyyy_mm)
-            if has_sig_contrib:
-                if file_name in labels[LIBS]:
-                    self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension,
-                                                  labels[LIBS][file_name], yyyy_mm)
-                library_names = parser.get_library_names(include_all_libraries=False)
-                if library_names:
-                    self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names,
-                                                  yyyy_mm)
+            self.process_sig_contrib(commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
+                                     repo_path, user_commit_stats, yyyy_mm)
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
                             repo_path, commits, yyyy_mm):
@@ -298,13 +291,11 @@ class ModelTeamGitParser:
             self.add_to_time_series_stats(commits, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, len(snippets))
             if file_extension not in commits[LANGS]:
                 commits[LANGS][file_extension] = {}
-            if LIBS not in commits[LANGS][file_extension]:
+            if SIG_CODE_SNIPPETS not in commits[LANGS][file_extension]:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS] = {}
             if yyyy_mm not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm] = []
             commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm].extend(snippets)
-            return True
-        return False
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
@@ -335,17 +326,33 @@ class ModelTeamGitParser:
                 self.deep_analysis_of_a_commit(repo_path, commit_hash, file_list_with_sig_change, user_commit_stats,
                                                labels, yyyy_mm, curr_user)
 
+    def save_libraries(self, label_data, libraries_file_name, repo_name, repo_path):
+        with open(libraries_file_name, "w") as f:
+            for file_name in label_data[LIBS].keys():
+                f.write("{")
+                f.write(f"\"{REPO_PATH}\": ")
+                f.write(f"{json.dumps(repo_path)}, ")
+                f.write(f"\"{REPO}\": ")
+                f.write(f"{json.dumps(repo_name)}, ")
+                f.write(f"\"{FILE}\": ")
+                f.write(
+                    f"{json.dumps(file_name)}, \"{IMPORTS}\": {json.dumps(label_data[LIBS][file_name])}")
+                f.write("}\n")
+
     def process_single_repo(self, repo_path, output_path, username):
         os.makedirs(output_path, exist_ok=True)
         os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
         os.makedirs(f"{output_path}/final-stats", exist_ok=True)
         user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
-        filtered_user_stats_output_file_name = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}.jsonl"""
+        repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
+        filtered_user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
         user_profiles = {}
         repo_level_data = {LIBS: {}}
         repo_name = repo_path.split("/")[-1]
         if not os.path.exists(user_stats_output_file_name):
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
+            if repo_level_data[LIBS]:
+                self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
             if user_profiles and username in user_profiles:
                 # Store hash to file
@@ -384,6 +391,17 @@ class ModelTeamGitParser:
         if "beta.path" in mc:
             model_list.append(mc["beta.path"])
         return model_list
+
+    def extract_skills(self, user_profile, repo_libs):
+        skill_features = user_profile[SKILLS]
+
+    def process_libs(self, user_profile, repo_libs, file_name, parser, user_commit_stats, yyyy_mm, file_extension):
+        if file_name in repo_libs:
+            self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension, repo_libs[file_name],
+                                          yyyy_mm)
+        library_names = parser.get_library_names(include_all_libraries=False)
+        if library_names:
+            self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names, yyyy_mm)
 
     def extract_features(self, user_profile):
         i2s_models = self.get_model_list("i2s")
