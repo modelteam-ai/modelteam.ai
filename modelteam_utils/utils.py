@@ -425,5 +425,4 @@ def normalize_docstring(comment):
         if any(keyword in line for keyword in keywords_to_skip):
             continue
         filtered_lines.append(line)
-    comment = "\n".join(filtered_lines)
-    return comment
+    return filtered_lines

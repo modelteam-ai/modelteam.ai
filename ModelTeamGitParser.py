@@ -23,7 +23,7 @@ from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, 
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
     get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set, \
-    get_extension_to_language_map, get_tokenizer_with_new_tokens_and_update_model
+    get_extension_to_language_map, get_tokenizer_with_new_tokens_and_update_model, normalize_docstring
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -295,7 +295,7 @@ class ModelTeamGitParser:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS] = {}
             if yyyy_mm not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm] = []
-            commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm].extend(snippets)
+            commits[LANGS][file_extension][SIG_CODE_SNIPPETS].extend((file_name, snippets))
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
@@ -393,15 +393,48 @@ class ModelTeamGitParser:
         return model_list
 
     def extract_skills(self, user_profile, repo_libs):
+        if LANGS not in user_profile:
+            return
         skill_features = user_profile[SKILLS]
+        lang_stats = user_profile[LANGS]
+        for lang in lang_stats:
+            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                continue
+            if SKILLS not in lang_stats[lang]:
+                lang_stats[lang][SKILLS] = {}
+            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
+            for yyyy_mm in sig_code_snippets.keys():
+                snippets = sig_code_snippets[yyyy_mm]
+                for snippet in snippets:
+                    file_name = snippet[0]
+                    snippet = snippet[1]
+                    file_extension = get_file_extension(file_name)
+                    parser = get_language_parser(file_extension, snippet, file_name, self.keep_only_public_libraries)
+                    if not parser:
+                        continue
+                    lines = snippet.split("\n")
+                    line_count = len(lines)
+                    doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                    libs_in_file, libs_added = self.get_libs(repo_libs, file_name, parser)
 
-    def process_libs(self, user_profile, repo_libs, file_name, parser, user_commit_stats, yyyy_mm, file_extension):
+    @staticmethod
+    def get_docstring_line_count(lines, parser):
+        docstrings = parser.extract_documentation(lines)
+        docstring_line_count = 0
+        if docstrings:
+            for docstring in docstrings:
+                norm_docstrings = normalize_docstring(docstring)
+                if norm_docstrings:
+                    docstring_line_count += len(norm_docstrings)
+        return docstring_line_count
+
+    @staticmethod
+    def get_libs(repo_libs, file_name, parser):
+        libs_in_file = None
         if file_name in repo_libs:
-            self.aggregate_library_helper(IMPORTS_IN_FILE, user_commit_stats, file_extension, repo_libs[file_name],
-                                          yyyy_mm)
-        library_names = parser.get_library_names(include_all_libraries=False)
-        if library_names:
-            self.aggregate_library_helper(IMPORTS_ADDED, user_commit_stats, file_extension, library_names, yyyy_mm)
+            libs_in_file = repo_libs[file_name]
+        libs_added = parser.get_library_names(include_all_libraries=False)
+        return libs_in_file, libs_added
 
     def extract_features(self, user_profile):
         i2s_models = self.get_model_list("i2s")
@@ -539,7 +572,7 @@ class ModelTeamGitParser:
             score = scores[i]
             if s not in skill_map:
                 # max, min, sum, count, line_count
-                skill_map[s] = [0, 1, 0, 0, 0]
+                skill_map[s] = [score, score, 0, 0, 0]
             skill_map[s][0] = max(skill_map[s][0], score)
             skill_map[s][1] = min(skill_map[s][1], score)
             skill_map[s][2] += score
