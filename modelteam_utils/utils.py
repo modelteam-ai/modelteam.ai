@@ -312,7 +312,7 @@ def softmax(x):
     return exp_x / np.sum(exp_x, axis=0).tolist()
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
     skill_list = []
     score_list = []
     for code in codes:
@@ -335,7 +335,7 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
                 soft_max_map[w] = s
             tmp_results = []
             tmp_scores = []
-            top_n = sorted(score_map, key=score_map.get, reverse=True)[:SKILL_PREDICTION_LIMIT]
+            top_n = sorted(score_map, key=score_map.get, reverse=True)[:limit]
             next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)

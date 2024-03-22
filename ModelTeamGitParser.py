@@ -15,6 +15,9 @@ from reportlab.pdfgen import canvas
 from transformers import AutoModelForSeq2SeqLM
 from wordcloud import WordCloud
 
+from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT
+from modelteam.modelteam_utils.utils import get_life_of_py_tokenizer_with_new_tokens_and_update_model, \
+    eval_llm_batch_with_scores
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
     IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
     TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
@@ -22,7 +25,7 @@ from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, 
     FILE, IMPORTS
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, convert_list_to_index, \
-    get_multi_label_classification_scores, eval_llm_batch_with_scores, load_file_to_list, load_file_to_set, \
+    get_multi_label_classification_scores, load_file_to_list, load_file_to_set, \
     get_extension_to_language_map, get_tokenizer_with_new_tokens_and_update_model, normalize_docstring
 
 TRAIN_FLAG = False
@@ -30,7 +33,12 @@ ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
-MODEL_TYPES = ["i2s", "c2s", "mlc", "life_of_py"]
+I2S = "i2s"
+C2S = "c2s"
+MLC = "mlc"
+LIFE_OF_PY = "life_of_py"
+
+MODEL_TYPES = [I2S, C2S, MLC, LIFE_OF_PY]
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -95,7 +103,34 @@ def generate_pdf(output_path, user, repo, languages, image_files):
     c.save()
 
 
-def eval_models_and_update_profile(features, repo_level_data, user_profiles):
+def init_model(model_path, model_type, config):
+    base_llm = config["base_llm_model"]["path"]
+    model_data = {"model_type": model_type, "model_path": model_path}
+    if model_type == C2S or model_type == I2S or model_type == LIFE_OF_PY:
+        skill_list = config["c2s"]["skill_list"]
+        peft_config = PeftConfig.from_pretrained(model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        if model_type == LIFE_OF_PY:
+            tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
+        else:
+            tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
+        model = PeftModel.from_pretrained(model, model_path).to(device)
+        model.eval()
+        model_data["model"] = model
+        model_data["tokenizer"] = tokenizer
+        model_data["new_tokens"] = new_tokens
+    elif model_type == MLC:
+        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
+            model = pickle.load(f)
+            model_data["model"] = model
+            model.eval()
+        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
+        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
+        model_data["lib_index"] = lib_index
+        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
+        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
+        model_data["skill_names"] = skill_names
+    return model_data
     pass
 
 
@@ -425,20 +460,39 @@ class ModelTeamGitParser:
                     lang_stats[lang][SKILLS] = {}
                 sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
                 for yyyy_mm in sig_code_snippets.keys():
-                    snippets = sig_code_snippets[yyyy_mm]
-                    for snippet in snippets:
-                        file_name = snippet[0]
-                        snippet = snippet[1]
-                        file_extension = get_file_extension(file_name)
-                        parser = get_language_parser(file_extension, snippet, file_name, self.keep_only_public_libraries)
-                        if not parser:
-                            continue
-                        lines = snippet.split("\n")
-                        line_count = len(lines)
-                        doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                        libs_added = parser.get_library_names(include_all_libraries=False)
-                        features.append([user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
-            eval_models_and_update_profile(features, repo_level_data, user_profiles)
+                    monthly_snippets = sig_code_snippets[yyyy_mm]
+                    for i in range(len(monthly_snippets)):
+                        snippets = monthly_snippets[i]
+                        file_name = snippets[0]
+                        snippet_list = snippets[1]
+                        for snippet in snippet_list:
+                            file_extension = get_file_extension(file_name)
+                            parser = get_language_parser(file_extension, snippet, file_name,
+                                                         self.keep_only_public_libraries)
+                            if not parser:
+                                continue
+                            lines = snippet.split("\n")
+                            line_count = len(lines)
+                            doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                            libs_added = parser.get_library_names(include_all_libraries=False)
+                            features.append(
+                                [user, lang, file_name, yyyy_mm, snippet, libs_added, line_count,
+                                 doc_string_line_count])
+                            # TODO: Group at user level
+                            if len(features) > 1000:
+                                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
+                                features = []
+            if features:
+                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
+
+    def eval_models_and_update_profile(self, features, repo_level_data, user_profiles):
+        for model_type in MODEL_TYPES:
+            models = self.get_model_list(model_type)
+            for model_path in models:
+                model_data = init_model(model_path, model_type, self.config)
+                if model_type == C2S:
+                    self.eval_c2s_model(model_data, features, user_profiles)
+        pass
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
@@ -502,27 +556,18 @@ class ModelTeamGitParser:
                 monthly_features[month].append(x)
         return monthly_features
 
-    def eval_c2s_model(self, peft_model_id, user_profile, skill_names):
-        if LANGS not in user_profile:
-            return
-        lang_stats = user_profile[LANGS]
-        peft_config = PeftConfig.from_pretrained(peft_model_id)
-        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
-        tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(self.config["base_llm_model"]["path"],
-                                                                               self.config["c2s"]["skill_list"],
-                                                                               model)
-        model = PeftModel.from_pretrained(model, peft_model_id).to(device)
-        model.eval()
-
-        for lang in lang_stats:
-            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
-                continue
-            if SKILLS not in lang_stats[lang]:
-                lang_stats[lang][SKILLS] = {}
-            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            c2s_monthly_skills = self.c2s_predict_skills(tokenizer, model, sig_code_snippets, skill_names, user_profile,
-                                                         new_tokens)
-            self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
+    def eval_c2s_model(self, model_data, features, user_profiles):
+        snippets = [feature[4] for feature in features]
+        skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
+                                                            snippets, SKILL_PREDICTION_LIMIT)
+        skill_map = {}
+        for i in range(len(features)):
+            user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
+            user_profile = user_profiles[user]
+            ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i], line_count,
+                                                doc_string_line_count)
+        output[month] = skill_map
+        self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
 
     def generate_pdf_report(self, profile_json):
         lang_map = get_extension_to_language_map()
@@ -581,18 +626,19 @@ class ModelTeamGitParser:
         return output
 
     @staticmethod
-    def accumulate_score(user_profile, scores, skill_map, skills, code_len):
+    def accumulate_score(user_profile, scores, skill_map, skills, code_len, doc_string_len):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
             if s not in skill_map:
-                # max, min, sum, count, line_count
-                skill_map[s] = [score, score, 0, 0, 0]
+                # max, min, sum, count, line_count, doc_string_count
+                skill_map[s] = [score, score, 0, 0, 0, 0]
             skill_map[s][0] = max(skill_map[s][0], score)
             skill_map[s][1] = min(skill_map[s][1], score)
             skill_map[s][2] += score
             skill_map[s][3] += 1
             skill_map[s][4] += code_len
+            skill_map[s][5] += doc_string_len
             if s not in user_profile[SKILLS]:
                 user_profile[SKILLS][s] = 1
             else:
@@ -612,19 +658,6 @@ class ModelTeamGitParser:
                     skill_stats[model_name][skill][SCORES] = []
                 skill_stats[model_name][skill][TIME_SERIES].append(month)
                 skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
-
-    @staticmethod
-    def c2s_predict_skills(tokenizer, model, monthly_features, skill_names, user_profile, new_tokens):
-        output = {}
-        for month in monthly_features:
-            features = monthly_features[month]
-            skill_list, score_list = eval_llm_batch_with_scores(tokenizer, device, model, features, new_tokens)
-            skill_map = {}
-            for i in range(len(features)):
-                ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i],
-                                                    len(features[i].split("\n")))
-            output[month] = skill_map
-        return output
 
 
 if __name__ == "__main__":
