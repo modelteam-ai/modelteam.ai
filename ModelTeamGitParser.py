@@ -599,7 +599,6 @@ class ModelTeamGitParser:
                             generate_ts_plot(ts_stats, f"{output_path}/{user}_{lang}_ts.png")
                 image_files = [f"{output_path}/{user}_wordcloud.png", f"{output_path}/{user}_{lang}_ts.png"]
                 generate_pdf(output_path, user, repo, lang_names, image_files)
-
         pass
 
     @staticmethod
