@@ -30,6 +30,7 @@ ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
+MODEL_TYPES = ["i2s", "c2s", "mlc", "life_of_py"]
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -92,6 +93,10 @@ def generate_pdf(output_path, user, repo, languages, image_files):
         c.drawImage(image_file, 50, top, width=500, height=200)
         top -= 250
     c.save()
+
+
+def eval_models_and_update_profile(features, repo_level_data, user_profiles):
+    pass
 
 
 class ModelTeamGitParser:
@@ -326,9 +331,9 @@ class ModelTeamGitParser:
                 self.deep_analysis_of_a_commit(repo_path, commit_hash, file_list_with_sig_change, user_commit_stats,
                                                labels, yyyy_mm, curr_user)
 
-    def save_libraries(self, label_data, libraries_file_name, repo_name, repo_path):
+    def save_libraries(self, repo_level_data, libraries_file_name, repo_name, repo_path):
         with open(libraries_file_name, "w") as f:
-            for file_name in label_data[LIBS].keys():
+            for file_name in repo_level_data[LIBS].keys():
                 f.write("{")
                 f.write(f"\"{REPO_PATH}\": ")
                 f.write(f"{json.dumps(repo_path)}, ")
@@ -336,8 +341,16 @@ class ModelTeamGitParser:
                 f.write(f"{json.dumps(repo_name)}, ")
                 f.write(f"\"{FILE}\": ")
                 f.write(
-                    f"{json.dumps(file_name)}, \"{IMPORTS}\": {json.dumps(label_data[LIBS][file_name])}")
+                    f"{json.dumps(file_name)}, \"{IMPORTS}\": {json.dumps(repo_level_data[LIBS][file_name])}")
                 f.write("}\n")
+
+    def load_library_data(self, libraries_file_name, repo_level_data):
+        if os.path.exists(libraries_file_name):
+            with open(libraries_file_name, "r") as f:
+                for line in f:
+                    lib_data = json.loads(line)
+                    file_name = lib_data[FILE]
+                    repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, output_path, username):
         os.makedirs(output_path, exist_ok=True)
@@ -347,30 +360,35 @@ class ModelTeamGitParser:
         repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
         filtered_user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
         user_profiles = {}
-        repo_level_data = {LIBS: {}}
+        repo_level_data = {LIBS: {}, SKILLS: {}}
         repo_name = repo_path.split("/")[-1]
         if not os.path.exists(user_stats_output_file_name):
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
-            if user_profiles and username in user_profiles:
+            if user_profiles:
                 # Store hash to file
                 with open(user_stats_output_file_name, "w") as f:
                     for user in user_profiles:
                         self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles[user])
         if not args.skip_model_eval and os.path.exists(user_stats_output_file_name):
             if not os.path.exists(filtered_user_stats_output_file_name):
-                with open(user_stats_output_file_name, "r") as f:
-                    with open(filtered_user_stats_output_file_name, "w") as fo:
+                if not repo_level_data[LIBS]:
+                    self.load_library_data(repo_lib_output_file_name, repo_level_data)
+                if not user_profiles:
+                    with open(user_stats_output_file_name, "r") as f:
                         for line in f:
                             user_stats = json.loads(line)
-                            user = user_stats[USER]
-                            user_profile = user_stats[STATS]
-                            user_profile[SKILLS] = {}
-                            self.extract_features(user_profile)
-                            self.filter_non_public_data(user_profile)
-                            self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+                            user_profiles[user_stats[USER]] = user_stats[STATS]
+                with open(filtered_user_stats_output_file_name, "w") as fo:
+                    for user in user_profiles:
+                        user = user_stats[USER]
+                        user_profile = user_stats[STATS]
+                        user_profile[SKILLS] = {}
+                        self.extract_features(user_profile)
+                        self.filter_non_public_data(user_profile)
+                        self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
             self.generate_pdf_report(filtered_user_stats_output_file_name)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
@@ -392,30 +410,35 @@ class ModelTeamGitParser:
             model_list.append(mc["beta.path"])
         return model_list
 
-    def extract_skills(self, user_profile, repo_libs):
-        if LANGS not in user_profile:
-            return
-        skill_features = user_profile[SKILLS]
-        lang_stats = user_profile[LANGS]
-        for lang in lang_stats:
-            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
-                continue
-            if SKILLS not in lang_stats[lang]:
-                lang_stats[lang][SKILLS] = {}
-            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            for yyyy_mm in sig_code_snippets.keys():
-                snippets = sig_code_snippets[yyyy_mm]
-                for snippet in snippets:
-                    file_name = snippet[0]
-                    snippet = snippet[1]
-                    file_extension = get_file_extension(file_name)
-                    parser = get_language_parser(file_extension, snippet, file_name, self.keep_only_public_libraries)
-                    if not parser:
-                        continue
-                    lines = snippet.split("\n")
-                    line_count = len(lines)
-                    doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                    libs_in_file, libs_added = self.get_libs(repo_libs, file_name, parser)
+    def extract_skills(self, user_profiles, repo_level_data):
+        for user in user_profiles:
+            user_profile = user_profiles[user]
+            if LANGS not in user_profile:
+                return
+            lang_stats = user_profile[LANGS]
+            # user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
+            features = []
+            for lang in lang_stats:
+                if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                    continue
+                if SKILLS not in lang_stats[lang]:
+                    lang_stats[lang][SKILLS] = {}
+                sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
+                for yyyy_mm in sig_code_snippets.keys():
+                    snippets = sig_code_snippets[yyyy_mm]
+                    for snippet in snippets:
+                        file_name = snippet[0]
+                        snippet = snippet[1]
+                        file_extension = get_file_extension(file_name)
+                        parser = get_language_parser(file_extension, snippet, file_name, self.keep_only_public_libraries)
+                        if not parser:
+                            continue
+                        lines = snippet.split("\n")
+                        line_count = len(lines)
+                        doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                        libs_added = parser.get_library_names(include_all_libraries=False)
+                        features.append([user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
+            eval_models_and_update_profile(features, repo_level_data, user_profiles)
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
@@ -427,14 +450,6 @@ class ModelTeamGitParser:
                 if norm_docstrings:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
-
-    @staticmethod
-    def get_libs(repo_libs, file_name, parser):
-        libs_in_file = None
-        if file_name in repo_libs:
-            libs_in_file = repo_libs[file_name]
-        libs_added = parser.get_library_names(include_all_libraries=False)
-        return libs_in_file, libs_added
 
     def extract_features(self, user_profile):
         i2s_models = self.get_model_list("i2s")
