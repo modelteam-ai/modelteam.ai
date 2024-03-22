@@ -2,7 +2,7 @@ IMPORTS_ADDED = 'imp_add'
 IMPORTS_IN_FILE = 'imp_all'
 
 TOTAL = 'total'
-TIME_SERIES = 'ts'
+TIME_SERIES = 'yyyymm'
 FILES = 'files'
 LANGS = 'langs'
 ADDED = 'add'

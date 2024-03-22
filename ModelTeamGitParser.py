@@ -15,7 +15,7 @@ from reportlab.pdfgen import canvas
 from transformers import AutoModelForSeq2SeqLM
 from wordcloud import WordCloud
 
-from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT
+from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT
 from modelteam.modelteam_utils.utils import get_life_of_py_tokenizer_with_new_tokens_and_update_model, \
     eval_llm_batch_with_scores
 from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
@@ -105,7 +105,7 @@ def generate_pdf(output_path, user, repo, languages, image_files):
 
 def init_model(model_path, model_type, config):
     base_llm = config["base_llm_model"]["path"]
-    model_data = {"model_type": model_type, "model_path": model_path}
+    model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == I2S or model_type == LIFE_OF_PY:
         skill_list = config["c2s"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
@@ -131,6 +131,10 @@ def init_model(model_path, model_type, config):
         skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
         model_data["skill_names"] = skill_names
     return model_data
+    pass
+
+
+def prep_i2s_label(libs, parser):
     pass
 
 
@@ -418,10 +422,9 @@ class ModelTeamGitParser:
                             user_profiles[user_stats[USER]] = user_stats[STATS]
                 with open(filtered_user_stats_output_file_name, "w") as fo:
                     for user in user_profiles:
-                        user = user_stats[USER]
-                        user_profile = user_stats[STATS]
+                        user_profile = user_profiles[user]
                         user_profile[SKILLS] = {}
-                        self.extract_features(user_profile)
+                        self.extract_skills(user_profiles, repo_level_data)
                         self.filter_non_public_data(user_profile)
                         self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
             self.generate_pdf_report(filtered_user_stats_output_file_name)
@@ -446,13 +449,17 @@ class ModelTeamGitParser:
         return model_list
 
     def extract_skills(self, user_profiles, repo_level_data):
+        features = []
         for user in user_profiles:
             user_profile = user_profiles[user]
+            # do in beginning so single user is not split across multiple batches and batch is not very large
+            if len(features) > 1000:
+                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
+                features = []
             if LANGS not in user_profile:
                 return
             lang_stats = user_profile[LANGS]
             # user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
-            features = []
             for lang in lang_stats:
                 if SIG_CODE_SNIPPETS not in lang_stats[lang]:
                     continue
@@ -478,20 +485,17 @@ class ModelTeamGitParser:
                             features.append(
                                 [user, lang, file_name, yyyy_mm, snippet, libs_added, line_count,
                                  doc_string_line_count])
-                            # TODO: Group at user level
-                            if len(features) > 1000:
-                                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
-                                features = []
-            if features:
-                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
+        if features:
+            self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
 
     def eval_models_and_update_profile(self, features, repo_level_data, user_profiles):
         for model_type in MODEL_TYPES:
             models = self.get_model_list(model_type)
             for model_path in models:
                 model_data = init_model(model_path, model_type, self.config)
-                if model_type == C2S:
-                    self.eval_c2s_model(model_data, features, user_profiles)
+                if model_type == C2S or model_type == LIFE_OF_PY:
+                    self.eval_llm_model(model_data, features, user_profiles)
+                # TODO Handle I2S if we are not using I2S as label extension
         pass
 
     @staticmethod
@@ -512,9 +516,9 @@ class ModelTeamGitParser:
         c2s_models = self.get_model_list("c2s")
         skill_names = load_file_to_set(self.config["c2s"]["skill_list"])
         for model_path in c2s_models:
-            self.eval_c2s_model(model_path, user_profile, skill_names)
+            self.eval_llm_model(model_path, user_profile, skill_names)
 
-    def eval_i2s_model(self, model_path, user_profile):
+    def eval_mlc_model(self, model_path, user_profile):
         libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
         skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
@@ -556,18 +560,18 @@ class ModelTeamGitParser:
                 monthly_features[month].append(x)
         return monthly_features
 
-    def eval_c2s_model(self, model_data, features, user_profiles):
+    def eval_llm_model(self, model_data, features, user_profiles):
         snippets = [feature[4] for feature in features]
+        if model_data['model_type'] == LIFE_OF_PY:
+            limit = LIFE_OF_PY_PREDICTION_LIMIT
+        else:
+            limit = SKILL_PREDICTION_LIMIT
         skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
-                                                            snippets, SKILL_PREDICTION_LIMIT)
-        skill_map = {}
+                                                            snippets, limit)
         for i in range(len(features)):
             user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
-            user_profile = user_profiles[user]
-            ModelTeamGitParser.accumulate_score(user_profile, score_list[i], skill_map, skill_list[i], line_count,
-                                                doc_string_line_count)
-        output[month] = skill_map
-        self.add_to_skills(lang_stats[lang][SKILLS], c2s_monthly_skills, peft_model_id, SIG_CODE_SNIPPETS)
+            ModelTeamGitParser.accumulate_score(user_profiles[user], lang, yyyy_mm, score_list[i], skill_list[i],
+                                                line_count, doc_string_line_count, model_data['model_tag'])
 
     def generate_pdf_report(self, profile_json):
         lang_map = get_extension_to_language_map()
@@ -626,23 +630,23 @@ class ModelTeamGitParser:
         return output
 
     @staticmethod
-    def accumulate_score(user_profile, scores, skill_map, skills, code_len, doc_string_len):
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
-            if s not in skill_map:
-                # max, min, sum, count, line_count, doc_string_count
-                skill_map[s] = [score, score, 0, 0, 0, 0]
+            if s not in user_profile[SKILLS]:
+                user_profile[SKILLS][s] = 0
+            user_profile[SKILLS][s] += score
+            user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = [score, code_len, doc_string_len]
+            if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = [score, score, 0, 0, 0, 0]
+            skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]
             skill_map[s][0] = max(skill_map[s][0], score)
             skill_map[s][1] = min(skill_map[s][1], score)
             skill_map[s][2] += score
             skill_map[s][3] += 1
             skill_map[s][4] += code_len
             skill_map[s][5] += doc_string_len
-            if s not in user_profile[SKILLS]:
-                user_profile[SKILLS][s] = 1
-            else:
-                user_profile[SKILLS][s] += 1
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
