@@ -106,7 +106,7 @@ def generate_pdf(output_path, user, repo, languages, image_files):
 def init_model(model_path, model_type, config):
     base_llm = config["base_llm_model"]["path"]
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
-    if model_type == C2S or model_type == I2S or model_type == LIFE_OF_PY:
+    if model_type == C2S or model_type == LIFE_OF_PY:
         skill_list = config["c2s"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
@@ -339,7 +339,7 @@ class ModelTeamGitParser:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS] = {}
             if yyyy_mm not in commits[LANGS][file_extension][SIG_CODE_SNIPPETS]:
                 commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm] = []
-            commits[LANGS][file_extension][SIG_CODE_SNIPPETS].extend((file_name, snippets))
+            commits[LANGS][file_extension][SIG_CODE_SNIPPETS][yyyy_mm].append((file_name, snippets))
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
@@ -567,11 +567,12 @@ class ModelTeamGitParser:
         else:
             limit = SKILL_PREDICTION_LIMIT
         skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
-                                                            snippets, limit)
+                                                            snippets, model_data['new_tokens'], limit)
         for i in range(len(features)):
             user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
             ModelTeamGitParser.accumulate_score(user_profiles[user], lang, yyyy_mm, score_list[i], skill_list[i],
-                                                line_count, doc_string_line_count, model_data['model_tag'])
+                                                line_count, doc_string_line_count, model_data['model_tag'],
+                                                model_data['model_type'] == C2S)
 
     def generate_pdf_report(self, profile_json):
         lang_map = get_extension_to_language_map()
@@ -629,23 +630,26 @@ class ModelTeamGitParser:
         return output
 
     @staticmethod
-    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag):
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_skill_pred):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
-            if s not in user_profile[SKILLS]:
-                user_profile[SKILLS][s] = 0
-            user_profile[SKILLS][s] += score
+            if is_skill_pred:
+                if s not in user_profile[SKILLS]:
+                    user_profile[SKILLS][s] = 0
+                user_profile[SKILLS][s] += score
             user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = [score, code_len, doc_string_len]
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
-                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = [score, score, 0, 0, 0, 0]
-            skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]
-            skill_map[s][0] = max(skill_map[s][0], score)
-            skill_map[s][1] = min(skill_map[s][1], score)
-            skill_map[s][2] += score
-            skill_map[s][3] += 1
-            skill_map[s][4] += code_len
-            skill_map[s][5] += doc_string_len
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
+            if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0]
+            skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s]
+            skill_map[0] = max(skill_map[0], score)
+            skill_map[1] = min(skill_map[1], score)
+            skill_map[2] += score
+            skill_map[3] += 1
+            skill_map[4] += code_len
+            skill_map[5] += doc_string_len
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
