@@ -397,7 +397,7 @@ class ModelTeamGitParser:
         os.makedirs(f"{output_path}/final-stats", exist_ok=True)
         user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
         repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
-        filtered_user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
+        filtered_user_stats_output_file_name = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         repo_name = repo_path.split("/")[-1]
@@ -440,6 +440,8 @@ class ModelTeamGitParser:
 
     def get_model_list(self, config_key):
         model_list = []
+        if config_key not in self.config:
+            return model_list
         mc = self.config[config_key]
         model_list.append(mc["path"])
         if "alpha.path" in mc:
@@ -638,7 +640,6 @@ class ModelTeamGitParser:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
                 user_profile[SKILLS][s] += score
-            user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = [score, code_len, doc_string_len]
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
