@@ -357,7 +357,7 @@ def next_best_prob(word_probabilities, top_words):
             next_best_words_probabilities[word] = word_probabilities[word]
         else:
             total_prob = sum(word_probabilities[w] for w in word_probabilities.keys() if w not in processed_words)
-            next_best_words_probabilities[word] = word_probabilities[word]/total_prob
+            next_best_words_probabilities[word] = word_probabilities[word] / total_prob
         processed_words.add(word)
     return next_best_words_probabilities
 
@@ -429,6 +429,19 @@ def normalize_docstring(comment):
             continue
         filtered_lines.append(line)
     return filtered_lines
+
+
+def get_model_list(config, config_key):
+    model_list = []
+    if config_key not in config:
+        return model_list
+    mc = config[config_key]
+    model_list.append(mc["path"])
+    if "alpha.path" in mc:
+        model_list.append(mc["alpha.path"])
+    if "beta.path" in mc:
+        model_list.append(mc["beta.path"])
+    return model_list
 
 
 def init_model(model_path, model_type, config):

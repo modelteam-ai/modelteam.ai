@@ -13,7 +13,7 @@ from wordcloud import WordCloud
 
 from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES
-from modelteam.modelteam_utils.utils import eval_llm_batch_with_scores, init_model
+from modelteam.modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -393,18 +393,6 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def get_model_list(self, config_key):
-        model_list = []
-        if config_key not in self.config:
-            return model_list
-        mc = self.config[config_key]
-        model_list.append(mc["path"])
-        if "alpha.path" in mc:
-            model_list.append(mc["alpha.path"])
-        if "beta.path" in mc:
-            model_list.append(mc["beta.path"])
-        return model_list
-
     def extract_skills(self, user_profiles, repo_level_data):
         features = []
         for user in user_profiles:
@@ -447,7 +435,7 @@ class ModelTeamGitParser:
 
     def eval_models_and_update_profile(self, features, repo_level_data, user_profiles):
         for model_type in MODEL_TYPES:
-            models = self.get_model_list(model_type)
+            models = get_model_list(self.config, model_type)
             for model_path in models:
                 model_data = init_model(model_path, model_type, self.config)
                 if model_type == C2S or model_type == LIFE_OF_PY:
