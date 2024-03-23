@@ -10,6 +10,7 @@ Generate your modelteam profile with AI verified skills.
 - Git (command line)
 - MacOS or Linux
 - Minimum 8GB RAM
+- ~15GB free disk space
 
 ## Getting Started
 
