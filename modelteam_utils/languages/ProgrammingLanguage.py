@@ -35,7 +35,7 @@ class ProgrammingLanguage(ABC):
         if include_all_libraries:
             lib_list = self.extract_imports(self.get_code_from_file(self.file_name))
         else:
-            lib_list = self.extract_imports(self.get_newly_added_lines(self.snippet))
+            lib_list = self.extract_imports(self.snippet)
         if self.keep_only_public_libraries:
             lib_list = self.filter_non_public_libraries(lib_list)
         return lib_list
@@ -86,14 +86,6 @@ class ProgrammingLanguage(ABC):
     @abstractmethod
     def get_snippet_seperator(self):
         pass
-
-    @staticmethod
-    def get_newly_added_lines(snippet):
-        lines = snippet.split("\n")
-        filtered_lines = [line for line in lines if line.startswith('+')]
-        # remove + at the beginning of the line
-        filtered_lines = [line[1:] for line in filtered_lines]
-        return filtered_lines
 
     @staticmethod
     def get_code_from_file(file_name):

@@ -2,15 +2,17 @@ import datetime
 import gzip
 import hashlib
 import os
+import pickle
 import re
 import subprocess
 from calendar import monthrange
 
 import numpy as np
 import torch
-from transformers import AutoTokenizer
+from peft import PeftConfig, PeftModel
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -312,10 +314,9 @@ def softmax(x):
     return exp_x / np.sum(exp_x, axis=0).tolist()
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
     skill_list = []
     score_list = []
-    seq_score_list = []
     for code in codes:
         with torch.no_grad():
             input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
@@ -336,17 +337,14 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens):
                 soft_max_map[w] = s
             tmp_results = []
             tmp_scores = []
-            tmp_seq_scores = []
-            top_n = sorted(score_map, key=score_map.get, reverse=True)[:SKILL_PREDICTION_LIMIT]
+            top_n = sorted(score_map, key=score_map.get, reverse=True)[:limit]
             next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)
                 tmp_scores.append(next_best_pr[word])
-                tmp_seq_scores.append(soft_max_map[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
-            seq_score_list.append(tmp_seq_scores)
-    return skill_list, score_list, seq_score_list
+    return skill_list, score_list
 
 
 def next_best_prob(word_probabilities, top_words):
@@ -358,7 +356,7 @@ def next_best_prob(word_probabilities, top_words):
             next_best_words_probabilities[word] = word_probabilities[word]
         else:
             total_prob = sum(word_probabilities[w] for w in word_probabilities.keys() if w not in processed_words)
-            next_best_words_probabilities[word] = word_probabilities[word]/total_prob
+            next_best_words_probabilities[word] = word_probabilities[word] / total_prob
         processed_words.add(word)
     return next_best_words_probabilities
 
@@ -401,3 +399,76 @@ def get_life_of_py_bucket(change):
         return LIFE_OF_PY_BUCKETS[-1]
     bucket = LIFE_OF_PY_BUCKETS[change // 10]
     return bucket
+
+
+def is_documentation(input_string):
+    # Count the number of spaces in the input string
+    num_spaces = input_string.count(' ')
+    num_lines = input_string.count('\n')
+    if num_spaces >= num_lines * 5:
+        return True
+    else:
+        return False
+
+
+def normalize_docstring(comment):
+    if 'license' in comment or 'License' in comment or 'LICENSE' in comment:
+        return None
+    if not is_documentation(comment):
+        return None
+    comment = comment.replace("\t", " ")
+    comment = comment.replace("\r", " ")
+    lines = comment.split("\n")
+    filtered_lines = []
+    keywords_to_skip = ["author ", "param "]
+    for line in lines:
+        if line.startswith("http") or line.startswith("www"):
+            continue
+        if any(keyword in line for keyword in keywords_to_skip):
+            continue
+        filtered_lines.append(line)
+    return filtered_lines
+
+
+def get_model_list(config, config_key):
+    model_list = []
+    if config_key not in config:
+        return model_list
+    mc = config[config_key]
+    model_list.append(mc["path"])
+    if "alpha.path" in mc:
+        model_list.append(mc["alpha.path"])
+    if "beta.path" in mc:
+        model_list.append(mc["beta.path"])
+    return model_list
+
+
+def init_model(model_path, model_type, config, device):
+    base_llm = config["base_llm_model"]["path"]
+    model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
+    if model_type == C2S or model_type == LIFE_OF_PY:
+        skill_list = config["c2s"]["skill_list"]
+        peft_config = PeftConfig.from_pretrained(model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        if model_type == LIFE_OF_PY:
+            tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
+        else:
+            tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
+        model = PeftModel.from_pretrained(model, model_path).to(device)
+        model.eval()
+        model_data["model"] = model
+        model_data["tokenizer"] = tokenizer
+        model_data["new_tokens"] = new_tokens
+    elif model_type == MLC:
+        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
+            model = pickle.load(f)
+            model_data["model"] = model
+            model.eval()
+        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
+        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
+        model_data["lib_index"] = lib_index
+        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
+        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
+        model_data["skill_names"] = skill_names
+    return model_data
+    pass

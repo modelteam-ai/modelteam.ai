@@ -1,36 +1,25 @@
 import argparse
 from configparser import ConfigParser
 
-import torch
-from peft import PeftConfig, PeftModel
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
-
-def init_model(peft_model_id):
-    tokenizer = AutoTokenizer.from_pretrained(base_model)
-    config = PeftConfig.from_pretrained(peft_model_id)
-    model = AutoModelForSeq2SeqLM.from_pretrained(config.base_model_name_or_path)
-    model = PeftModel.from_pretrained(model, peft_model_id)
-    with torch.no_grad():
-        inputs = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(device)
-        outputs = model.generate(**inputs)
-        results = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs['sequences']]
-        print("Code:", code)
-        print("Results:", len(results))
-
+from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY
+from modelteam_utils.utils import get_model_list, eval_llm_batch_with_scores, init_model
 
 arg_parser = argparse.ArgumentParser(description="Download models")
 arg_parser.add_argument("--config", type=str, help="config file")
 args = arg_parser.parse_args()
 model_team_config = ConfigParser()
 model_team_config.read(args.config)
-base_model = model_team_config.get("base_model", "name")
-c2s_model = model_team_config.get("c2s", "name")
 device = "cpu"  # for GPU usage or "cpu" for CPU usage
 
 code = """
-def hello():
-    print("Hello! Welcome to Model Team!, We appreciate your contribution to your team!")
-    return 0
+def hello_world():
+    print("Hello World! Thanks for using ModelTeam.AI!")
 """
-init_model(c2s_model)
+for model_type in MODEL_TYPES:
+    models = get_model_list(model_team_config, model_type)
+    for model_path in models:
+        model_data = init_model(model_path, model_type, model_team_config, device)
+        if model_type == C2S or model_type == LIFE_OF_PY:
+            skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
+                                                                [code], model_data['new_tokens'], 3)
+        print(f"Downloaded {model_path} with {model_type} model type")

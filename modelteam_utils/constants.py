@@ -2,7 +2,7 @@ IMPORTS_ADDED = 'imp_add'
 IMPORTS_IN_FILE = 'imp_all'
 
 TOTAL = 'total'
-TIME_SERIES = 'ts'
+TIME_SERIES = 'yyyymm'
 FILES = 'files'
 LANGS = 'langs'
 ADDED = 'add'
@@ -60,3 +60,9 @@ GIT_DIFF_BATCH_SIZE = 100
 T5_CHUNK_CHAR_LIMIT = 1500
 
 SKILL_PREDICTION_LIMIT = 10
+LIFE_OF_PY_PREDICTION_LIMIT = 3
+
+I2S = 'i2s'
+C2S = 'c2s'
+MLC = 'mlc'
+MODEL_TYPES = [I2S, C2S, MLC, LIFE_OF_PY]
