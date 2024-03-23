@@ -18,7 +18,7 @@ def hello_world():
 for model_type in MODEL_TYPES:
     models = get_model_list(model_team_config, model_type)
     for model_path in models:
-        model_data = init_model(model_path, model_type, model_team_config)
+        model_data = init_model(model_path, model_type, model_team_config, device)
         if model_type == C2S or model_type == LIFE_OF_PY:
             skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
                                                                 [code], model_data['new_tokens'], 3)

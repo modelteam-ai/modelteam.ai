@@ -21,7 +21,6 @@ from .languages.JavaScriptPL import JavaScriptPL
 from .languages.PhpPL import PhpPL
 from .languages.PythonPL import PythonPL
 from .languages.RubyPL import RubyPL
-from ..ModelTeamGitParser import device
 
 
 def get_edit_distance(s1, s2):
@@ -444,7 +443,7 @@ def get_model_list(config, config_key):
     return model_list
 
 
-def init_model(model_path, model_type, config):
+def init_model(model_path, model_type, config, device):
     base_llm = config["base_llm_model"]["path"]
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY:

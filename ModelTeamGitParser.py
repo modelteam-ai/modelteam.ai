@@ -437,7 +437,7 @@ class ModelTeamGitParser:
         for model_type in MODEL_TYPES:
             models = get_model_list(self.config, model_type)
             for model_path in models:
-                model_data = init_model(model_path, model_type, self.config)
+                model_data = init_model(model_path, model_type, self.config, device)
                 if model_type == C2S or model_type == LIFE_OF_PY:
                     self.eval_llm_model(model_data, features, user_profiles)
                 # TODO Handle I2S if we are not using I2S as label extension
