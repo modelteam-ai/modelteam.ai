@@ -8,5 +8,5 @@ fi
 input_path=$1
 email_id=$2
 
-python3 ModelTeamGitParser.py --input_path $input_path --output_path model_team_profile --config config.ini --user_email $email_id
+python3 -m ModelTeamGitParser --input_path $input_path --output_path model_team_profile --config config.ini --user_email $email_id
 echo "ModelTeam profile created in model_team_profile directory"

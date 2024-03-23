@@ -11,15 +11,15 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
-    MODEL_TYPES
-from modelteam.modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
                                        SKILLS, FILE, IMPORTS)
+from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
+    MODEL_TYPES
+from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
 
