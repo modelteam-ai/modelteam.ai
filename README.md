@@ -13,7 +13,7 @@ Generate your modelteam profile with AI verified skills.
 
 - Create a folder `modelteam` and navigate to it. (Th)
 - Create `modelteam/repos` folder
-- Clone all the repositories you want to include in your profile to `modelteam\repos`
+- Clone all the repositories you want to include in your profile to `modelteam/repos`
 - Run the following command to generate your profile
     - Generates PDF profile for your personal use and a JSON file for uploading to your modelteam.ai profile
 

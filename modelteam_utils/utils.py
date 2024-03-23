@@ -2,15 +2,17 @@ import datetime
 import gzip
 import hashlib
 import os
+import pickle
 import re
 import subprocess
 from calendar import monthrange
 
 import numpy as np
 import torch
-from transformers import AutoTokenizer
+from peft import PeftConfig, PeftModel
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -19,6 +21,7 @@ from .languages.JavaScriptPL import JavaScriptPL
 from .languages.PhpPL import PhpPL
 from .languages.PythonPL import PythonPL
 from .languages.RubyPL import RubyPL
+from ..ModelTeamGitParser import device
 
 
 def get_edit_distance(s1, s2):
@@ -426,3 +429,34 @@ def normalize_docstring(comment):
             continue
         filtered_lines.append(line)
     return filtered_lines
+
+
+def init_model(model_path, model_type, config):
+    base_llm = config["base_llm_model"]["path"]
+    model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
+    if model_type == C2S or model_type == LIFE_OF_PY:
+        skill_list = config["c2s"]["skill_list"]
+        peft_config = PeftConfig.from_pretrained(model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        if model_type == LIFE_OF_PY:
+            tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
+        else:
+            tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
+        model = PeftModel.from_pretrained(model, model_path).to(device)
+        model.eval()
+        model_data["model"] = model
+        model_data["tokenizer"] = tokenizer
+        model_data["new_tokens"] = new_tokens
+    elif model_type == MLC:
+        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
+            model = pickle.load(f)
+            model_data["model"] = model
+            model.eval()
+        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
+        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
+        model_data["lib_index"] = lib_index
+        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
+        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
+        model_data["skill_names"] = skill_names
+    return model_data
+    pass

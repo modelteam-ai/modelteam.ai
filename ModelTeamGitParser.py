@@ -1,44 +1,33 @@
 import argparse
 import configparser
-import gzip
 import json
 import os
-import pickle
 import random
 import re
 
 import matplotlib.pyplot as plt
 import torch
-from peft import PeftConfig, PeftModel
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from transformers import AutoModelForSeq2SeqLM
 from wordcloud import WordCloud
 
-from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT
-from modelteam.modelteam_utils.utils import get_life_of_py_tokenizer_with_new_tokens_and_update_model, \
-    eval_llm_batch_with_scores
-from modelteam_utils.constants import ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, \
-    IMPORTS_ADDED, END_TIME, IMPORTS_IN_FILE, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT, \
-    TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE, \
-    SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH, SCORES, SIG_CODE_SNIPPETS, SKILLS, \
-    FILE, IMPORTS
+from modelteam.modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
+    MODEL_TYPES
+from modelteam.modelteam_utils.utils import eval_llm_batch_with_scores, init_model
+from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
+                                       END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
+                                       TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
+                                       SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
+                                       SCORES, SIG_CODE_SNIPPETS,
+                                       SKILLS, FILE, IMPORTS)
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
-    get_num_chars_changed, get_language_parser, convert_list_to_index, \
-    get_multi_label_classification_scores, load_file_to_list, load_file_to_set, \
-    get_extension_to_language_map, get_tokenizer_with_new_tokens_and_update_model, normalize_docstring
+    get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
-I2S = "i2s"
-C2S = "c2s"
-MLC = "mlc"
-LIFE_OF_PY = "life_of_py"
-
-MODEL_TYPES = [I2S, C2S, MLC, LIFE_OF_PY]
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -101,41 +90,6 @@ def generate_pdf(output_path, user, repo, languages, image_files):
         c.drawImage(image_file, 50, top, width=500, height=200)
         top -= 250
     c.save()
-
-
-def init_model(model_path, model_type, config):
-    base_llm = config["base_llm_model"]["path"]
-    model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
-    if model_type == C2S or model_type == LIFE_OF_PY:
-        skill_list = config["c2s"]["skill_list"]
-        peft_config = PeftConfig.from_pretrained(model_path)
-        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
-        if model_type == LIFE_OF_PY:
-            tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
-        else:
-            tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
-        model = PeftModel.from_pretrained(model, model_path).to(device)
-        model.eval()
-        model_data["model"] = model
-        model_data["tokenizer"] = tokenizer
-        model_data["new_tokens"] = new_tokens
-    elif model_type == MLC:
-        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
-            model = pickle.load(f)
-            model_data["model"] = model
-            model.eval()
-        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
-        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
-        model_data["lib_index"] = lib_index
-        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
-        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
-        model_data["skill_names"] = skill_names
-    return model_data
-    pass
-
-
-def prep_i2s_label(libs, parser):
-    pass
 
 
 class ModelTeamGitParser:
@@ -255,6 +209,7 @@ class ModelTeamGitParser:
 
     @staticmethod
     def aggregate_library_helper(import_type, commits, file_extension, libraries, yyyy_mm):
+        # TODO change this to bucketize the libs
         if file_extension not in commits[LANGS]:
             commits[LANGS][file_extension] = {}
         if LIBS not in commits[LANGS][file_extension]:
@@ -397,7 +352,7 @@ class ModelTeamGitParser:
         os.makedirs(f"{output_path}/final-stats", exist_ok=True)
         user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
         repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
-        filtered_user_stats_output_file_name = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
+        final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         repo_name = repo_path.split("/")[-1]
@@ -412,7 +367,7 @@ class ModelTeamGitParser:
                     for user in user_profiles:
                         self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles[user])
         if not args.skip_model_eval and os.path.exists(user_stats_output_file_name):
-            if not os.path.exists(filtered_user_stats_output_file_name):
+            if not os.path.exists(final_output):
                 if not repo_level_data[LIBS]:
                     self.load_library_data(repo_lib_output_file_name, repo_level_data)
                 if not user_profiles:
@@ -420,14 +375,14 @@ class ModelTeamGitParser:
                         for line in f:
                             user_stats = json.loads(line)
                             user_profiles[user_stats[USER]] = user_stats[STATS]
-                with open(filtered_user_stats_output_file_name, "w") as fo:
+                with open(final_output, "w") as fo:
                     for user in user_profiles:
                         user_profile = user_profiles[user]
                         user_profile[SKILLS] = {}
                         self.extract_skills(user_profiles, repo_level_data)
                         self.filter_non_public_data(user_profile)
                         self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
-            self.generate_pdf_report(filtered_user_stats_output_file_name)
+            self.generate_pdf_report(final_output)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
@@ -511,57 +466,6 @@ class ModelTeamGitParser:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
 
-    def extract_features(self, user_profile):
-        i2s_models = self.get_model_list("i2s")
-        for model_path in i2s_models:
-            self.eval_i2s_model(model_path, user_profile)
-        c2s_models = self.get_model_list("c2s")
-        skill_names = load_file_to_set(self.config["c2s"]["skill_list"])
-        for model_path in c2s_models:
-            self.eval_llm_model(model_path, user_profile, skill_names)
-
-    def eval_mlc_model(self, model_path, user_profile):
-        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
-        lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
-        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
-        skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
-        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
-            multi_output_classifier = pickle.load(f)
-        if not multi_output_classifier:
-            print("Error loading model", flush=True)
-            return
-        if LANGS not in user_profile:
-            return
-        lang_stats = user_profile[LANGS]
-        for lang in lang_stats:
-            if lang not in lib_index or LIBS not in lang_stats[lang]:
-                continue
-            if SKILLS not in lang_stats[lang]:
-                lang_stats[lang][SKILLS] = {}
-            imp_added_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_ADDED)
-            imp_in_file_monthly_features = self.gen_monthly_lib_features(lang_stats[lang], lib_index, IMPORTS_IN_FILE)
-            imp_added_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_added_monthly_features,
-                                                               skill_names, user_profile)
-            self.add_to_skills(lang_stats[lang][SKILLS], imp_added_monthly_skills, model_path, IMPORTS_ADDED)
-            imp_in_file_monthly_skills = self.i2s_predict_skills(multi_output_classifier, imp_in_file_monthly_features,
-                                                                 skill_names, user_profile)
-            self.add_to_skills(lang_stats[lang][SKILLS], imp_in_file_monthly_skills, model_path, IMPORTS_IN_FILE)
-
-    @staticmethod
-    def gen_monthly_lib_features(lang_stats, lib_index, import_type):
-        monthly_features = {}
-        if import_type not in lang_stats[LIBS]:
-            return monthly_features
-        for month in lang_stats[LIBS][import_type]:
-            for lib_list in lang_stats[LIBS][import_type][month]:
-                if month not in monthly_features:
-                    monthly_features[month] = []
-                x = [0] * len(lib_index)
-                for lib in lib_list:
-                    x[lib_index[lib]] = 1
-                monthly_features[month].append(x)
-        return monthly_features
-
     def eval_llm_model(self, model_data, features, user_profiles):
         snippets = [feature[4] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
@@ -619,19 +523,6 @@ class ModelTeamGitParser:
 
     # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
-    def i2s_predict_skills(multi_output_classifier, monthly_features, skill_names, user_profile):
-        output = {}
-        for month in monthly_features:
-            features = monthly_features[month]
-            predictions = multi_output_classifier.predict_proba(features)
-            skill_map = {}
-            for i in range(len(features)):
-                skills, scores = get_multi_label_classification_scores(predictions, i, skill_names)
-                ModelTeamGitParser.accumulate_score(user_profile, scores, skill_map, skills, len(features[i]))
-            output[month] = skill_map
-        return output
-
-    @staticmethod
     def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_skill_pred):
         for i in range(len(skills)):
             s = skills[i]
@@ -643,6 +534,7 @@ class ModelTeamGitParser:
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
+                # min, max, sum, count, code_line_count, doc_string_line_count
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0]
             skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s]
             skill_map[0] = max(skill_map[0], score)
