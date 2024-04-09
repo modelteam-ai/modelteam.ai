@@ -396,15 +396,14 @@ class ModelTeamGitParser:
 
     def extract_skills(self, user_profile, repo_level_data, min_months):
         features = []
-        # do in beginning so single user is not split across multiple batches and batch is not very large
         if LANGS not in user_profile:
-            return 0
-        if TIME_SERIES not in user_profile[LANGS] or len(user_profile[LANGS][TIME_SERIES]) < min_months:
             return 0
         lang_stats = user_profile[LANGS]
         # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
         for lang in lang_stats:
             if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                continue
+            if TIME_SERIES not in lang_stats[lang] or len(lang_stats[lang][TIME_SERIES]) < min_months:
                 continue
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
