@@ -137,8 +137,6 @@ class ModelTeamGitParser:
         if username:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}"'
         else:
-            print("WARNING: Getting commits for all users. This will take a long time. For ModelTeam.AI Use.",
-                  flush=True)
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="36 months ago"'
 
     def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm):
@@ -555,6 +553,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
+    parser.add_argument('--part', type=int, help='Part number to process', default=-1)
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--skip_pdf', default=False, help='Skip PDF Report Generation', action='store_true')
 
@@ -565,10 +564,28 @@ if __name__ == "__main__":
     config_file = args.config
     config = configparser.ConfigParser()
     config.read(config_file)
+    part = args.part
 
-    if not input_path or not output_path or not username:
+    max_parallelism = 4
+
+    if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
+    if part is not None:
+        if part < 0 or part > max_parallelism - 1:
+            print("Invalid part")
+            exit(1)
+        print(f"Running part {part}")
+    else:
+        part = -1
+
+    if not username:
+        print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
+              flush=True)
+        if part == -1:
+            print("Do you want to continue? (y/n)")
+            if input().lower() != 'y':
+                exit(0)
 
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
@@ -578,6 +595,11 @@ if __name__ == "__main__":
     for folder in sorted_folders:
         if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
             print(f"Processing {folder}", flush=True)
+            cnt += 1
+            if part != -1:
+                curr_part = int(folder.encode("utf-8").hex(), 16) % max_parallelism
+                if curr_part != part:
+                    continue
             repo_path = f"{input_path}/{folder}"
             run_commandline_command(f"git -C {repo_path} pull")
             git_parser.process_single_repo(repo_path, output_path, username)
