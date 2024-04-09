@@ -382,7 +382,8 @@ class ModelTeamGitParser:
                         self.extract_skills(user_profiles, repo_level_data)
                         self.filter_non_public_data(user_profile)
                         self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
-            self.generate_pdf_report(final_output)
+            if not args.skip_pdf:
+                self.generate_pdf_report(final_output)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
