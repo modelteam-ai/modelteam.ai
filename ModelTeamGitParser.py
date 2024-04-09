@@ -345,6 +345,7 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, output_path, username):
+        min_months = self.config['modelteam.ai']['min_months']
         os.makedirs(output_path, exist_ok=True)
         os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
         os.makedirs(f"{output_path}/final-stats", exist_ok=True)
@@ -377,9 +378,10 @@ class ModelTeamGitParser:
                     for user in user_profiles:
                         user_profile = user_profiles[user]
                         user_profile[SKILLS] = {}
-                        self.extract_skills(user_profiles, repo_level_data)
-                        self.filter_non_public_data(user_profile)
-                        self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+                        num_skills = self.extract_skills(user_profile, repo_level_data, min_months)
+                        if num_skills > 0:
+                            self.filter_non_public_data(user_profile)
+                            self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
             if not args.skip_pdf:
                 self.generate_pdf_report(final_output)
 
@@ -392,53 +394,50 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profiles, repo_level_data):
+    def extract_skills(self, user_profile, repo_level_data, min_months):
         features = []
-        for user in user_profiles:
-            user_profile = user_profiles[user]
-            # do in beginning so single user is not split across multiple batches and batch is not very large
-            if len(features) > 1000:
-                self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
-                features = []
-            if LANGS not in user_profile:
-                return
-            lang_stats = user_profile[LANGS]
-            # user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
-            for lang in lang_stats:
-                if SIG_CODE_SNIPPETS not in lang_stats[lang]:
-                    continue
-                if SKILLS not in lang_stats[lang]:
-                    lang_stats[lang][SKILLS] = {}
-                sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-                for yyyy_mm in sig_code_snippets.keys():
-                    monthly_snippets = sig_code_snippets[yyyy_mm]
-                    for i in range(len(monthly_snippets)):
-                        snippets = monthly_snippets[i]
-                        file_name = snippets[0]
-                        snippet_list = snippets[1]
-                        for snippet in snippet_list:
-                            file_extension = get_file_extension(file_name)
-                            parser = get_language_parser(file_extension, snippet, file_name,
-                                                         self.keep_only_public_libraries)
-                            if not parser:
-                                continue
-                            lines = snippet.split("\n")
-                            line_count = len(lines)
-                            doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                            libs_added = parser.get_library_names(include_all_libraries=False)
-                            features.append(
-                                [user, lang, file_name, yyyy_mm, snippet, libs_added, line_count,
-                                 doc_string_line_count])
+        # do in beginning so single user is not split across multiple batches and batch is not very large
+        if LANGS not in user_profile:
+            return 0
+        if TIME_SERIES not in user_profile[LANGS] or len(user_profile[LANGS][TIME_SERIES]) < min_months:
+            return 0
+        lang_stats = user_profile[LANGS]
+        # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
+        for lang in lang_stats:
+            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                continue
+            if SKILLS not in lang_stats[lang]:
+                lang_stats[lang][SKILLS] = {}
+            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
+            for yyyy_mm in sig_code_snippets.keys():
+                monthly_snippets = sig_code_snippets[yyyy_mm]
+                for i in range(len(monthly_snippets)):
+                    snippets = monthly_snippets[i]
+                    file_name = snippets[0]
+                    snippet_list = snippets[1]
+                    for snippet in snippet_list:
+                        file_extension = get_file_extension(file_name)
+                        parser = get_language_parser(file_extension, snippet, file_name,
+                                                     self.keep_only_public_libraries)
+                        if not parser:
+                            continue
+                        lines = snippet.split("\n")
+                        line_count = len(lines)
+                        doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                        libs_added = parser.get_library_names(include_all_libraries=False)
+                        features.append(
+                            [lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
         if features:
-            self.eval_models_and_update_profile(features, repo_level_data, user_profiles)
+            self.eval_models_and_update_profile(features, repo_level_data, user_profile)
+        return len(features)
 
-    def eval_models_and_update_profile(self, features, repo_level_data, user_profiles):
+    def eval_models_and_update_profile(self, features, repo_level_data, user_profile):
         for model_type in MODEL_TYPES:
             models = get_model_list(self.config, model_type)
             for model_path in models:
                 model_data = init_model(model_path, model_type, self.config, device)
                 if model_type == C2S or model_type == LIFE_OF_PY:
-                    self.eval_llm_model(model_data, features, user_profiles)
+                    self.eval_llm_model(model_data, features, user_profile)
                 # TODO Handle I2S if we are not using I2S as label extension
         pass
 
@@ -453,7 +452,7 @@ class ModelTeamGitParser:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
 
-    def eval_llm_model(self, model_data, features, user_profiles):
+    def eval_llm_model(self, model_data, features, user_profile):
         snippets = [feature[4] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
@@ -462,8 +461,8 @@ class ModelTeamGitParser:
         skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
                                                             snippets, model_data['new_tokens'], limit)
         for i in range(len(features)):
-            user, lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
-            ModelTeamGitParser.accumulate_score(user_profiles[user], lang, yyyy_mm, score_list[i], skill_list[i],
+            lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
+            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
                                                 line_count, doc_string_line_count, model_data['model_tag'],
                                                 model_data['model_type'] == C2S)
 
