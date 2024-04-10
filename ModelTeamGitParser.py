@@ -579,7 +579,7 @@ if __name__ == "__main__":
     config.read(config_file)
     part = args.part
 
-    max_parallelism = 4
+    max_parallelism = 2
 
     if not input_path or not output_path:
         print("Invalid arguments")
