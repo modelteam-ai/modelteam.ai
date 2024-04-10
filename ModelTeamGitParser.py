@@ -396,6 +396,7 @@ class ModelTeamGitParser:
                     return
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
+                        user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
@@ -613,6 +614,11 @@ if __name__ == "__main__":
                 if curr_part != part:
                     continue
             repo_path = f"{input_path}/{folder}"
+            # check if the repo is no longer open. Ignore if it asks for password
+            result = run_commandline_command(f"git -C {repo_path} pull")
+            if "Username for" in result:
+                print(f"Skipping {folder}")
+                continue
             run_commandline_command(f"git -C {repo_path} pull")
             git_parser.process_single_repo(repo_path, output_path, username)
         else:

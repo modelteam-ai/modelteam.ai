@@ -55,9 +55,22 @@ def get_file_extension(file_path):
     return ext
 
 
+def check_for_unsafe_command(command):
+    cmd_parts = command.split(";")
+    cmd_parts.extend(command.split("&&"))
+    cmd_parts.extend(command.split("||"))
+    cmd_parts.extend(command.split("|"))
+    cmd_parts.extend(command.split("&"))
+    for cmd in cmd_parts:
+        cmd = cmd.strip()
+        if not cmd.startswith("git "):
+            raise Exception(f"Unsafe command {command} found")
+
+
 def run_commandline_command(command):
     try:
-        result = subprocess.check_output(command, shell=True, universal_newlines=True)
+        check_for_unsafe_command(command)
+        result = subprocess.check_output(command, shell=False, universal_newlines=True)
         return result
     except Exception as e:
         print(f"Error running command: {command} with error {e}", flush=True)
