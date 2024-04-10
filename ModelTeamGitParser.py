@@ -345,7 +345,7 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, output_path, username):
-        min_months = self.config['modelteam.ai']['min_months']
+        min_months = int(self.config['modelteam.ai']['min_months'])
         os.makedirs(output_path, exist_ok=True)
         os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
         os.makedirs(f"{output_path}/final-stats", exist_ok=True)
