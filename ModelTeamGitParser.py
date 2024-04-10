@@ -376,7 +376,7 @@ class ModelTeamGitParser:
                         for line in f:
                             user_stats = json.loads(line)
                             user_profiles[user_stats[USER]] = user_stats[STATS]
-                has_new_data = False
+                has_new_data = 0
                 for model_type in MODEL_TYPES:
                     models = get_model_list(self.config, model_type)
                     for model_path in models:
@@ -389,10 +389,9 @@ class ModelTeamGitParser:
                                     user_profile[SKILLS] = {}
                                 if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
                                     continue
-                                has_new_data = True
-                                self.extract_skills(user_profile, repo_level_data, min_months, model_data)
-                if not has_new_data:
-                    print(f"No users with {min_months} found for {repo_path}")
+                                has_new_data += self.extract_skills(user_profile, repo_level_data, min_months, model_data)
+                if has_new_data == 0:
+                    print(f"No users with {min_months} found for {repo_path}", flush=True)
                     return
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
@@ -415,7 +414,7 @@ class ModelTeamGitParser:
     def extract_skills(self, user_profile, repo_level_data, min_months, model_data):
         features = []
         if LANGS not in user_profile:
-            return
+            return 0
         lang_stats = user_profile[LANGS]
         # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
         for lang in lang_stats:
@@ -451,6 +450,7 @@ class ModelTeamGitParser:
                             [lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
         if features:
             self.eval_llm_model(model_data, features, user_profile)
+            return len(features)
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
