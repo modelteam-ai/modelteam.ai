@@ -465,7 +465,7 @@ class ModelTeamGitParser:
 
     def eval_llm_model(self, model_data, features, user_profile):
         # TODO: Change this. Its fragile to rely on the order of the features
-        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']} user {user_profile[USER]}",
+        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}",
               flush=True)
         snippets = [feature[3] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
