@@ -32,6 +32,8 @@ debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
+
 
 def generate_tag_cloud(skill_map, file_name):
     if len(skill_map) > 20:
@@ -374,16 +376,26 @@ class ModelTeamGitParser:
                         for line in f:
                             user_stats = json.loads(line)
                             user_profiles[user_stats[USER]] = user_stats[STATS]
+                for model_type in MODEL_TYPES:
+                    models = get_model_list(self.config, model_type)
+                    for model_path in models:
+                        # Evaluate 1 model at a time to avoid memory issues
+                        model_data = init_model(model_path, model_type, self.config, device)
+                        if model_type == C2S or model_type == LIFE_OF_PY:
+                            for user in user_profiles:
+                                user_profile = user_profiles[user]
+                                if SKILLS not in user_profile:
+                                    user_profile[SKILLS] = {}
+                                if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
+                                    continue
+                                self.extract_skills(user_profile, repo_level_data, min_months, model_data)
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
-                        user_profile = user_profiles[user]
-                        user_profile[SKILLS] = {}
-                        num_skills = self.extract_skills(user_profile, repo_level_data, min_months)
-                        if num_skills > 0:
+                        if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
-            if not args.skip_pdf:
-                self.generate_pdf_report(final_output)
+        if not args.skip_pdf and args.user_email:
+            self.generate_pdf_report(final_output)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
@@ -394,15 +406,16 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profile, repo_level_data, min_months):
+    def extract_skills(self, user_profile, repo_level_data, min_months, model_data):
         features = []
         if LANGS not in user_profile:
-            return 0
+            return
         lang_stats = user_profile[LANGS]
         # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
         for lang in lang_stats:
             if SIG_CODE_SNIPPETS not in lang_stats[lang]:
                 continue
+            user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], len(lang_stats[lang][TIME_SERIES]))
             if TIME_SERIES not in lang_stats[lang] or len(lang_stats[lang][TIME_SERIES]) < min_months:
                 continue
             if SKILLS not in lang_stats[lang]:
@@ -427,18 +440,7 @@ class ModelTeamGitParser:
                         features.append(
                             [lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
         if features:
-            self.eval_models_and_update_profile(features, repo_level_data, user_profile)
-        return len(features)
-
-    def eval_models_and_update_profile(self, features, repo_level_data, user_profile):
-        for model_type in MODEL_TYPES:
-            models = get_model_list(self.config, model_type)
-            for model_path in models:
-                model_data = init_model(model_path, model_type, self.config, device)
-                if model_type == C2S or model_type == LIFE_OF_PY:
-                    self.eval_llm_model(model_data, features, user_profile)
-                # TODO Handle I2S if we are not using I2S as label extension
-        pass
+            self.eval_llm_model(model_data, features, user_profile)
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
@@ -452,7 +454,8 @@ class ModelTeamGitParser:
         return docstring_line_count
 
     def eval_llm_model(self, model_data, features, user_profile):
-        snippets = [feature[4] for feature in features]
+        # TODO: Change this. Its fragile to rely on the order of the features
+        snippets = [feature[3] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
@@ -497,6 +500,8 @@ class ModelTeamGitParser:
     def filter_non_public_data(user_profile):
         if REPO_PATH in user_profile:
             del user_profile[REPO_PATH]
+        if TMP_MAX_YYYY_MM in user_profile:
+            del user_profile[TMP_MAX_YYYY_MM]
         if LANGS not in user_profile:
             return
         lang_stats = user_profile[LANGS]
