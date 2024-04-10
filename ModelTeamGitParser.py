@@ -465,6 +465,8 @@ class ModelTeamGitParser:
 
     def eval_llm_model(self, model_data, features, user_profile):
         # TODO: Change this. Its fragile to rely on the order of the features
+        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']} user {user_profile[USER]}",
+              flush=True)
         snippets = [feature[3] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
@@ -607,12 +609,12 @@ if __name__ == "__main__":
     # TODO: Aggregate stats from all repos for a user
     for folder in sorted_folders:
         if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
-            print(f"Processing {folder}", flush=True)
             cnt += 1
             if part != -1:
                 curr_part = int(folder.encode("utf-8").hex(), 16) % max_parallelism
                 if curr_part != part:
                     continue
+            print(f"Processing {folder}", flush=True)
             repo_path = f"{input_path}/{folder}"
             # check if the repo is no longer open. Ignore if it asks for password
             result = run_commandline_command(f"git -C {repo_path} pull")
