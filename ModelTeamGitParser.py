@@ -616,10 +616,9 @@ if __name__ == "__main__":
             repo_path = f"{input_path}/{folder}"
             # check if the repo is no longer open. Ignore if it asks for password
             result = run_commandline_command(f"git -C {repo_path} pull")
-            if "Username for" in result:
-                print(f"Skipping {folder}")
+            if not result:
+                print(f"Skipping {folder} as it is no longer open")
                 continue
-            run_commandline_command(f"git -C {repo_path} pull")
             git_parser.process_single_repo(repo_path, output_path, username)
         else:
             print(f"Skipping {folder}")
