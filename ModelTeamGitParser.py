@@ -389,7 +389,8 @@ class ModelTeamGitParser:
                                     user_profile[SKILLS] = {}
                                 if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
                                     continue
-                                has_new_data += self.extract_skills(user_profile, repo_level_data, min_months, model_data)
+                                has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
+                                                                    model_data)
                 if has_new_data == 0:
                     print(f"No users with {min_months} found for {repo_path}", flush=True)
                     return
@@ -451,6 +452,7 @@ class ModelTeamGitParser:
         if features:
             self.eval_llm_model(model_data, features, user_profile)
             return len(features)
+        return 0
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
