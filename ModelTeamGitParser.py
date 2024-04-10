@@ -376,6 +376,7 @@ class ModelTeamGitParser:
                         for line in f:
                             user_stats = json.loads(line)
                             user_profiles[user_stats[USER]] = user_stats[STATS]
+                has_new_data = False
                 for model_type in MODEL_TYPES:
                     models = get_model_list(self.config, model_type)
                     for model_path in models:
@@ -388,7 +389,11 @@ class ModelTeamGitParser:
                                     user_profile[SKILLS] = {}
                                 if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
                                     continue
+                                has_new_data = True
                                 self.extract_skills(user_profile, repo_level_data, min_months, model_data)
+                if not has_new_data:
+                    print(f"No users with {min_months} found for {repo_path}")
+                    return
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
@@ -415,8 +420,12 @@ class ModelTeamGitParser:
         for lang in lang_stats:
             if SIG_CODE_SNIPPETS not in lang_stats[lang]:
                 continue
-            user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], len(lang_stats[lang][TIME_SERIES]))
-            if TIME_SERIES not in lang_stats[lang] or len(lang_stats[lang][TIME_SERIES]) < min_months:
+            num_months = len(lang_stats[lang][TIME_SERIES])
+            if TMP_MAX_YYYY_MM not in user_profile:
+                user_profile[TMP_MAX_YYYY_MM] = num_months
+            else:
+                user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], num_months)
+            if TIME_SERIES not in lang_stats[lang] or num_months < min_months:
                 continue
             if SKILLS not in lang_stats[lang]:
                 lang_stats[lang][SKILLS] = {}
