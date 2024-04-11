@@ -174,6 +174,29 @@ def get_team_mates_key(u1, u2):
         return f"{u2}:{u1}"
 
 
+def anonymize(input_string):
+    """
+    Keep first, middle and last character and replace all characters in between with ?.
+    if the string is less than 4 characters, keep only the first character and replace the rest with ?.
+    if its single change it to ?.
+    Args:
+        input_string:
+
+    Returns:
+        anonymized string
+    """
+    if len(input_string) <= 1:
+        return "?"
+    if len(input_string) <= 3:
+        return input_string[0] + "?" * (len(input_string) - 1)
+    return input_string[0] + "?" * (len(input_string) - 2) + input_string[-1]
+
+
+def sha1_hash(input_string):
+    sha1_hash = hashlib.sha1(input_string.encode()).hexdigest()
+    return sha1_hash
+
+
 def consistent_hash_code(input_string):
     sha256_hash = hashlib.sha256(input_string.encode()).hexdigest()
     return int(sha256_hash, 16)

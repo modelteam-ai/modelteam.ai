@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import datetime
 import json
 import os
 import random
@@ -11,6 +12,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
+from modelteam.modelteam_utils.utils import sha1_hash, anonymize
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -27,6 +29,9 @@ TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
+
+# Use GMT Date yyyy-mm-dd
+profile_generation_date = datetime.datetime.utcnow().strftime("%Y_%m_%d")
 
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -346,14 +351,8 @@ class ModelTeamGitParser:
                     file_name = lib_data[FILE]
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
-    def process_single_repo(self, repo_path, output_path, username):
-        min_months = int(self.config['modelteam.ai']['min_months'])
-        os.makedirs(output_path, exist_ok=True)
-        os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
-        os.makedirs(f"{output_path}/final-stats", exist_ok=True)
-        user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
-        repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
-        final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
+    def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
+                            final_output, username, min_months):
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         repo_name = repo_path.split("/")[-1]
@@ -400,10 +399,11 @@ class ModelTeamGitParser:
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
-        if not args.skip_pdf and args.user_email:
-            self.generate_pdf_report(final_output)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
+        if not args.keep_repo_name:
+            repo_path = sha1_hash(repo_name)
+            repo_name = anonymize(repo_name)
         f.write("{")
         f.write(f"\"version\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
         f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
@@ -482,10 +482,11 @@ class ModelTeamGitParser:
                                                 line_count, doc_string_line_count, model_data['model_tag'],
                                                 model_data['model_type'] == C2S)
 
-    def generate_pdf_report(self, profile_json):
+    def generate_pdf_report(self, profile_json, merged_jsonl_writer):
         lang_map = get_extension_to_language_map()
         with open(profile_json, "r") as f:
             for line in f:
+                merged_jsonl_writer.write(line)
                 user_stats = json.loads(line)
                 user = user_stats[USER]
                 repo = user_stats[REPO]
@@ -512,8 +513,6 @@ class ModelTeamGitParser:
 
     @staticmethod
     def filter_non_public_data(user_profile):
-        if REPO_PATH in user_profile:
-            del user_profile[REPO_PATH]
         if TMP_MAX_YYYY_MM in user_profile:
             del user_profile[TMP_MAX_YYYY_MM]
         if LANGS not in user_profile:
@@ -572,7 +571,7 @@ if __name__ == "__main__":
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
     parser.add_argument('--part', type=int, help='Part number to process', default=-1)
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
-    parser.add_argument('--skip_pdf', default=False, help='Skip PDF Report Generation', action='store_true')
+    parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -581,6 +580,7 @@ if __name__ == "__main__":
     config_file = args.config
     config = configparser.ConfigParser()
     config.read(config_file)
+    min_months = int(config['modelteam.ai']['min_months'])
     part = args.part
 
     max_parallelism = 2
@@ -608,6 +608,11 @@ if __name__ == "__main__":
     # iterate through all the folders in base_path and use it as repo_path
     sorted_folders = sorted(os.listdir(input_path))
     git_parser = ModelTeamGitParser(config)
+    os.makedirs(output_path, exist_ok=True)
+    os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
+    os.makedirs(f"{output_path}/final-stats", exist_ok=True)
+    merged_jsonl = f"{output_path}/mt_profile_{profile_generation_date}.jsonl"
+    merged_jsonl_writer = open(merged_jsonl, "w")
     # TODO: Aggregate stats from all repos for a user
     for folder in sorted_folders:
         if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
@@ -623,7 +628,16 @@ if __name__ == "__main__":
             if not result:
                 print(f"Skipping {folder} as it is no longer open")
                 continue
-            git_parser.process_single_repo(repo_path, output_path, username)
+            user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
+            repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
+            final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
+            git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
+                                           final_output, username, min_months)
+            if args.user_email:
+                # for single user
+                git_parser.generate_pdf_report(final_output, merged_jsonl_writer)
         else:
             print(f"Skipping {folder}")
+        merged_jsonl_writer.flush()
+    merged_jsonl_writer.close()
     print(f"Processed {cnt} out of {len(sorted_folders)}")
