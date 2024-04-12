@@ -184,23 +184,17 @@ def anonymize(input_string):
         return input_string[0] + "?" * (len(input_string) - 1)
     first_char = input_string[0]
     last_char = input_string[-1]
-    num_chars_to_show = int(num_chars * max_show_percent) - 2
+    num_chars_to_show = int((num_chars - 2) * max_show_percent)
     output = first_char
     if num_chars_to_show > 0:
         for i in range(1, len(input_string) - 1):
-            if random.random() < 0.5:
+            if random.random() < 0.5 or num_chars_to_show == 0:
                 output += "?"
             else:
                 output += input_string[i]
                 num_chars_to_show -= 1
-            if random.random() < 0.1:
-                output += "?"
-            if num_chars_to_show == 0:
-                break
     output += last_char
     return output
-
-    first_char += "?"
 
 
 def sha1_hash(input_string):
