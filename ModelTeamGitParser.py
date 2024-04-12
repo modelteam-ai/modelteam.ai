@@ -12,7 +12,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam.modelteam_utils.utils import sha1_hash, anonymize
+from modelteam.modelteam_utils.crypto_utils import encrypt_compress_file
+from modelteam.modelteam_utils.utils import sha256_hash, anonymize
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -405,7 +406,7 @@ class ModelTeamGitParser:
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         if not args.keep_repo_name:
-            repo_path = sha1_hash(repo_name)
+            repo_path = sha256_hash(repo_name)
             repo_name = anonymize(repo_name)
         f.write("{")
         f.write(f"\"version\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
@@ -641,4 +642,5 @@ if __name__ == "__main__":
             print(f"Skipping {folder}")
         merged_jsonl_writer.flush()
     merged_jsonl_writer.close()
+    encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
     print(f"Processed {cnt} out of {len(sorted_folders)}")

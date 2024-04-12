@@ -197,9 +197,9 @@ def anonymize(input_string):
     return output
 
 
-def sha1_hash(input_string):
-    sha1_hash = hashlib.sha1(input_string.encode()).hexdigest()
-    return sha1_hash
+def sha256_hash(input_string):
+    sha256_hash = hashlib.sha256(input_string.encode()).hexdigest()
+    return sha256_hash
 
 
 def consistent_hash_code(input_string):
