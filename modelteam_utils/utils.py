@@ -3,6 +3,7 @@ import gzip
 import hashlib
 import os
 import pickle
+import random
 import re
 import subprocess
 from calendar import monthrange
@@ -175,21 +176,31 @@ def get_team_mates_key(u1, u2):
 
 
 def anonymize(input_string):
-    """
-    Keep first, middle and last character and replace all characters in between with ?.
-    if the string is less than 4 characters, keep only the first character and replace the rest with ?.
-    if its single change it to ?.
-    Args:
-        input_string:
-
-    Returns:
-        anonymized string
-    """
+    num_chars = len(input_string)
+    max_show_percent = 0.35
     if len(input_string) <= 1:
         return "?"
-    if len(input_string) <= 3:
+    if len(input_string) <= 4:
         return input_string[0] + "?" * (len(input_string) - 1)
-    return input_string[0] + "?" * (len(input_string) - 2) + input_string[-1]
+    first_char = input_string[0]
+    last_char = input_string[-1]
+    num_chars_to_show = int(num_chars * max_show_percent) - 2
+    output = first_char
+    if num_chars_to_show > 0:
+        for i in range(1, len(input_string) - 1):
+            if random.random() < 0.5:
+                output += "?"
+            else:
+                output += input_string[i]
+                num_chars_to_show -= 1
+            if random.random() < 0.1:
+                output += "?"
+            if num_chars_to_show == 0:
+                break
+    output += last_char
+    return output
+
+    first_char += "?"
 
 
 def sha1_hash(input_string):

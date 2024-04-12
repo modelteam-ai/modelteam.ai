@@ -31,7 +31,7 @@ ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
 # Use GMT Date yyyy-mm-dd
-profile_generation_date = datetime.datetime.utcnow().strftime("%Y_%m_%d")
+profile_generation_date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y_%m_%d")
 
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -391,7 +391,10 @@ class ModelTeamGitParser:
                                 has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
                                                                     model_data)
                 if has_new_data == 0:
-                    print(f"No users with {min_months} found for {repo_path}", flush=True)
+                    print(f"No users with {min_months} months found for {repo_path}", flush=True)
+                    return
+                if not user_profiles:
+                    print(f"No user profiles found for {repo_path}", flush=True)
                     return
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
@@ -588,15 +591,13 @@ if __name__ == "__main__":
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
-    if part is not None:
-        if part < 0 or part > max_parallelism - 1:
-            print("Invalid part")
-            exit(1)
-        print(f"Running part {part}")
-    else:
-        part = -1
-
+    part = -1
     if not username:
+        if part is not None:
+            if part < 0 or part > max_parallelism - 1:
+                print("Invalid part")
+                exit(1)
+            print(f"Running part {part}")
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
         if part == -1:
@@ -633,7 +634,7 @@ if __name__ == "__main__":
             final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                                            final_output, username, min_months)
-            if args.user_email:
+            if args.user_email and os.path.exists(final_output):
                 # for single user
                 git_parser.generate_pdf_report(final_output, merged_jsonl_writer)
         else:
