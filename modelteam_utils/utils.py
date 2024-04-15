@@ -3,6 +3,7 @@ import gzip
 import hashlib
 import os
 import pickle
+import random
 import re
 import subprocess
 from calendar import monthrange
@@ -172,6 +173,33 @@ def get_team_mates_key(u1, u2):
         return f"{u1}:{u2}"
     else:
         return f"{u2}:{u1}"
+
+
+def anonymize(input_string):
+    num_chars = len(input_string)
+    max_show_percent = 0.35
+    if len(input_string) <= 1:
+        return "?"
+    if len(input_string) <= 4:
+        return input_string[0] + "?" * (len(input_string) - 1)
+    first_char = input_string[0]
+    last_char = input_string[-1]
+    num_chars_to_show = int((num_chars - 2) * max_show_percent)
+    output = first_char
+    if num_chars_to_show > 0:
+        for i in range(1, len(input_string) - 1):
+            if random.random() < 0.5 or num_chars_to_show == 0:
+                output += "?"
+            else:
+                output += input_string[i]
+                num_chars_to_show -= 1
+    output += last_char
+    return output
+
+
+def sha256_hash(input_string):
+    sha256_hash = hashlib.sha256(input_string.encode()).hexdigest()
+    return sha256_hash
 
 
 def consistent_hash_code(input_string):
