@@ -271,11 +271,8 @@ def load_lib_config(path):
                     prev_libs[language]["next_id"] = 1
                     prev_libs[language]["libs"] = {}
                 parts = line.split("\t")
-                if len(parts) != 2:
-                    print(f"Error parsing line {line}", flush=True)
-                    exit(1)
-                id = int(parts[1])
-                prev_libs[language]["libs"][parts[0]] = id
+                id = int(parts[1].strip())
+                prev_libs[language]["libs"][parts[0].strip()] = id
                 if id >= prev_libs[language]["next_id"]:
                     prev_libs[language]["next_id"] = id + 1
     return prev_libs
