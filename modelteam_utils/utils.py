@@ -264,6 +264,8 @@ def load_lib_config(path):
             lines = f.readlines()
             language = file.split(".")[0]
             for line in lines:
+                if not line.strip():
+                    continue
                 if language not in prev_libs:
                     prev_libs[language] = {}
                     prev_libs[language]["next_id"] = 1
