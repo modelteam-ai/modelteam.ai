@@ -381,10 +381,10 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
             tmp_results = []
             tmp_scores = []
             top_n = sorted(score_map, key=score_map.get, reverse=True)[:limit]
-            # next_best_pr = next_best_prob(soft_max_map, top_n)
+            next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)
-                tmp_scores.append(soft_max_map[word])
+                tmp_scores.append(next_best_pr[word])
             skill_list.append(tmp_results)
             score_list.append(tmp_scores)
     return skill_list, score_list
