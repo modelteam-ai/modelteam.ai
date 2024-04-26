@@ -589,6 +589,7 @@ if __name__ == "__main__":
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
+    parser.add_argument('--max_parallelism', type=int, help='Max parallelism', default=1)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -600,7 +601,7 @@ if __name__ == "__main__":
     min_months = int(config['modelteam.ai']['min_months'])
     part = args.part
 
-    max_parallelism = 2
+    max_parallelism = args.max_parallelism
     allowed_users = load_repo_user_list(args.allow_list)
     if not input_path or not output_path:
         print("Invalid arguments")
