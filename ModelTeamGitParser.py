@@ -12,7 +12,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -20,10 +19,11 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SCORES, SIG_CODE_SNIPPETS,
                                        SKILLS, FILE, IMPORTS)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
-    MODEL_TYPES
+    MODEL_TYPES, I2S
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
+from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -382,6 +382,13 @@ class ModelTeamGitParser:
             if not os.path.exists(final_output):
                 if not repo_level_data[LIBS]:
                     self.load_library_data(repo_lib_output_file_name, repo_level_data)
+                for file in repo_level_data[LIBS].keys():
+                    lib_list = repo_level_data[LIBS][file]
+                    libs_in_file = ""
+                    for imp in lib_list:
+                        imp = imp.strip()
+                        libs_in_file += parser.get_import_prefix() + imp + "\n"
+                    repo_level_data[LIBS][file] = libs_in_file
                 if not user_profiles:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
@@ -394,7 +401,7 @@ class ModelTeamGitParser:
                     for model_path in models:
                         # Evaluate 1 model at a time to avoid memory issues
                         model_data = init_model(model_path, model_type, self.config, device)
-                        if model_type == C2S or model_type == LIFE_OF_PY:
+                        if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
                             for user in user_profiles:
                                 user_profile = user_profiles[user]
                                 if SKILLS not in user_profile:
@@ -462,9 +469,12 @@ class ModelTeamGitParser:
                         lines = snippet.split("\n")
                         line_count = len(lines)
                         doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                        libs_added = parser.get_library_names(include_all_libraries=False)
-                        features.append(
-                            [lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count])
+                        libs_in_file = ""
+                        if file_name in repo_level_data[LIBS]:
+                            libs_in_file = repo_level_data[LIBS][file_name]
+                        features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": snippet,
+                                         "libs": libs_in_file, "line_count": line_count,
+                                         "doc_string_line_count": doc_string_line_count})
         if features:
             self.eval_llm_model(model_data, features, user_profile)
             return len(features)
@@ -485,7 +495,10 @@ class ModelTeamGitParser:
         # TODO: Change this. Its fragile to rely on the order of the features
         print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}",
               flush=True)
-        snippets = [feature[3] for feature in features]
+        snippet_key = "snippet"
+        if model_data['model_type'] == I2S:
+            snippet_key = "libs"
+        snippets = [feature[snippet_key] for feature in features]
         if model_data['model_type'] == LIFE_OF_PY:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
@@ -493,10 +506,14 @@ class ModelTeamGitParser:
         skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
                                                             snippets, model_data['new_tokens'], limit)
         for i in range(len(features)):
-            lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count = features[i]
+            lang = features[i]["lang"]
+            yyyy_mm = features[i]["yyyy_mm"]
+            line_count = features[i]["line_count"]
+            doc_string_line_count = features[i]["doc_string_line_count"]
+            is_skill_pred = model_data['model_type'] == C2S or model_data['model_type'] == I2S
             ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
                                                 line_count, doc_string_line_count, model_data['model_tag'],
-                                                model_data['model_type'] == C2S)
+                                                is_skill_pred)
 
     def generate_pdf_report(self, profile_json, merged_jsonl_writer):
         lang_map = get_extension_to_language_map()

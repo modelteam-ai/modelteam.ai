@@ -13,7 +13,8 @@ import torch
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC
+from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC, \
+    I2S
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -489,8 +490,8 @@ def get_model_list(config, config_key):
 def init_model(model_path, model_type, config, device):
     base_llm = config["base_llm_model"]["path"]
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
-    if model_type == C2S or model_type == LIFE_OF_PY:
-        skill_list = config["c2s"]["skill_list"]
+    if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
+        skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
         if model_type == LIFE_OF_PY:
