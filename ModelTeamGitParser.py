@@ -12,8 +12,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam.modelteam_utils.crypto_utils import encrypt_compress_file
-from modelteam.modelteam_utils.utils import sha256_hash, anonymize
+from modelteam.modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -194,11 +193,23 @@ class ModelTeamGitParser:
                     file_line_stats[f"{repo_path}/{file_path}"] = [added, deleted]
         return file_line_stats
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username):
+    def is_allowed_user(self, repo_name, user):
+        global allowed_users
+        if allowed_users:
+            key = get_repo_user_key(repo_name, user)
+            return key in allowed_users
+        return False
+
+    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name):
         user_commits = self.get_commits_for_each_user(repo_path, username)
+        ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
+                if not self.is_allowed_user(repo_name, user):
+                    ignored_users += 1
+                    continue
                 self.process_user(labels, repo_path, user, user_commits, user_stats)
+            print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
             print(f"No commits found for {username}")
 
@@ -358,7 +369,7 @@ class ModelTeamGitParser:
         repo_level_data = {LIBS: {}, SKILLS: {}}
         repo_name = repo_path.split("/")[-1]
         if not os.path.exists(user_stats_output_file_name):
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username)
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
@@ -375,7 +386,8 @@ class ModelTeamGitParser:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
                             user_stats = json.loads(line)
-                            user_profiles[user_stats[USER]] = user_stats[STATS]
+                            if self.is_allowed_user(repo_name, user_stats[USER]):
+                                user_profiles[user_stats[USER]] = user_stats[STATS]
                 has_new_data = 0
                 for model_type in MODEL_TYPES:
                     models = get_model_list(self.config, model_type)
@@ -576,6 +588,7 @@ if __name__ == "__main__":
     parser.add_argument('--part', type=int, help='Part number to process', default=-1)
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
+    parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -588,7 +601,7 @@ if __name__ == "__main__":
     part = args.part
 
     max_parallelism = 2
-
+    allowed_users = load_repo_user_list(args.allow_list)
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
@@ -626,10 +639,10 @@ if __name__ == "__main__":
             print(f"Processing {folder}", flush=True)
             repo_path = f"{input_path}/{folder}"
             # check if the repo is no longer open. Ignore if it asks for password
-            result = run_commandline_command(f"git -C {repo_path} pull")
-            if not result:
-                print(f"Skipping {folder} as it is no longer open")
-                continue
+            # result = run_commandline_command(f"git -C {repo_path} pull")
+            # if not result:
+            #     print(f"Skipping {folder} as it is no longer open")
+            #     continue
             user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
             repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
             final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""

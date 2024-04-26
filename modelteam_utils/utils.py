@@ -515,3 +515,17 @@ def init_model(model_path, model_type, config, device):
         model_data["skill_names"] = skill_names
     return model_data
     pass
+
+
+def get_repo_user_key(repo, user):
+    return f"{repo}::{user}"
+
+
+def load_repo_user_list(file_name):
+    ignore_users = set()
+    if file_name:
+        with open(file_name, "r") as f:
+            for line in f:
+                repo, user, cnt = line.strip().split("\t")
+                ignore_users.add(get_repo_user_key(repo, user))
+    return ignore_users
