@@ -526,6 +526,6 @@ def load_repo_user_list(file_name):
     if file_name:
         with open(file_name, "r") as f:
             for line in f:
-                repo, user, cnt = line.strip().split("\t")
-                ignore_users.add(get_repo_user_key(repo, user))
+                parts = line.strip().split("\t")
+                ignore_users.add(get_repo_user_key(parts[0], parts[1]))
     return ignore_users
