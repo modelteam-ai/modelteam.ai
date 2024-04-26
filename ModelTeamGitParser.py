@@ -198,7 +198,8 @@ class ModelTeamGitParser:
         if allowed_users:
             key = get_repo_user_key(repo_name, user)
             return key in allowed_users
-        return False
+        # If allowed_users is empty, then all users are allowed
+        return True
 
     def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name):
         user_commits = self.get_commits_for_each_user(repo_path, username)
@@ -383,6 +384,11 @@ class ModelTeamGitParser:
                 if not repo_level_data[LIBS]:
                     self.load_library_data(repo_lib_output_file_name, repo_level_data)
                 for file in repo_level_data[LIBS].keys():
+                    file_extension = get_file_extension(file)
+                    parser = get_language_parser(file_extension, "", file, self.keep_only_public_libraries)
+                    if not parser:
+                        repo_level_data[LIBS][file] = ""
+                        continue
                     lib_list = repo_level_data[LIBS][file]
                     libs_in_file = ""
                     for imp in lib_list:
