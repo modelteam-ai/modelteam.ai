@@ -368,8 +368,8 @@ class ModelTeamGitParser:
                             final_output, username, min_months):
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
-        repo_name = repo_path.split("/")[-1]
         if not os.path.exists(user_stats_output_file_name):
+            repo_name = repo_path.split("/")[-1]
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
@@ -399,7 +399,7 @@ class ModelTeamGitParser:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
                             user_stats = json.loads(line)
-                            if self.is_allowed_user(repo_name, user_stats[USER]):
+                            if self.is_allowed_user(user_stats[REPO], user_stats[USER]):
                                 user_profiles[user_stats[USER]] = user_stats[STATS]
                 has_new_data = 0
                 for model_type in MODEL_TYPES:
@@ -427,7 +427,8 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
-                            self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
+                            self.write_user_profile_to_file(fo, user_profile[REPO], user_profile[REPO_PATH], user,
+                                                            user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         if not args.keep_repo_name:
@@ -613,6 +614,7 @@ if __name__ == "__main__":
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--max_parallelism', type=int, help='Max parallelism', default=1)
+    parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -646,7 +648,10 @@ if __name__ == "__main__":
 
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
-    sorted_folders = sorted(os.listdir(input_path))
+    if args.start_from_tmp:
+        sorted_folders = sorted(os.listdir(f"{output_path}/tmp-stats"))
+    else:
+        sorted_folders = sorted(os.listdir(input_path))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
@@ -655,22 +660,29 @@ if __name__ == "__main__":
     merged_jsonl_writer = open(merged_jsonl, "w")
     # TODO: Aggregate stats from all repos for a user
     for folder in sorted_folders:
-        if os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(f"{input_path}/{folder}/.git"):
+        if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
+                f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             cnt += 1
             if part != -1:
                 curr_part = int(folder.encode("utf-8").hex(), 16) % max_parallelism
                 if curr_part != part:
                     continue
             print(f"Processing {folder}", flush=True)
-            repo_path = f"{input_path}/{folder}"
+            if args.start_from_tmp:
+                # Repo path won't be real as it reads from tmp-stats
+                repo_path = f"{output_path}/tmp-stats/{folder}"
+                file_prefix = folder.replace(".jsonl", "")
+            else:
+                repo_path = f"{input_path}/{folder}"
+                file_prefix = f"""{repo_path.replace("/", "_")}"""
             # check if the repo is no longer open. Ignore if it asks for password
             # result = run_commandline_command(f"git -C {repo_path} pull")
             # if not result:
             #     print(f"Skipping {folder} as it is no longer open")
             #     continue
-            user_stats_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}.jsonl"""
-            repo_lib_output_file_name = f"""{output_path}/tmp-stats/{repo_path.replace("/", "_")}_libs.jsonl"""
-            final_output = f"""{output_path}/final-stats/{repo_path.replace("/", "_")}_user_profile.jsonl"""
+            user_stats_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}.jsonl"""
+            repo_lib_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}_libs.jsonl"""
+            final_output = f"""{output_path}/final-stats/{file_prefix}_user_profile.jsonl"""
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                                            final_output, username, min_months)
             if args.user_email and os.path.exists(final_output):
