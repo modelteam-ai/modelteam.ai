@@ -606,13 +606,14 @@ if __name__ == "__main__":
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
-    part = -1
     if not username:
         if part is not None:
             if part < 0 or part > max_parallelism - 1:
                 print("Invalid part")
                 exit(1)
             print(f"Running part {part}")
+        else:
+            part = -1
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
         if part == -1:
