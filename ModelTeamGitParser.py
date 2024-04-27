@@ -667,9 +667,10 @@ if __name__ == "__main__":
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             if part != -1:
-                curr_part = int(folder.encode("utf-8").hex(), 16) % max_parallelism
+                hash = int(folder.encode("utf-8").hex(), 16)
+                curr_part = hash % max_parallelism
                 if curr_part != part:
-                    print(f"Skipping {folder} {curr_part} {part}")
+                    print(f"Skipping {folder} {curr_part} {part} {hash}")
                     continue
             cnt += 1
             print(f"Processing {folder}", flush=True)
