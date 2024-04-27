@@ -666,11 +666,12 @@ if __name__ == "__main__":
     for folder in sorted_folders:
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
-            cnt += 1
             if part != -1:
                 curr_part = int(folder.encode("utf-8").hex(), 16) % max_parallelism
                 if curr_part != part:
+                    print(f"Skipping {folder} {curr_part} {part}")
                     continue
+            cnt += 1
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
                 # Repo path won't be real as it reads from tmp-stats
