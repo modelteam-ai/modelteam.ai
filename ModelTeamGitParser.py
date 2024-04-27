@@ -395,11 +395,16 @@ class ModelTeamGitParser:
                         imp = imp.strip()
                         libs_in_file += parser.get_import_prefix() + imp + "\n"
                     repo_level_data[LIBS][file] = libs_in_file
+                # when starting from tmp, we need to get repo details from the jsonl file
+                repo_name = ""
+                repo_path = ""
                 if not user_profiles:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
                             user_stats = json.loads(line)
-                            if self.is_allowed_user(user_stats[REPO], user_stats[USER]):
+                            repo_name = user_stats[REPO]
+                            repo_path = user_stats[REPO_PATH]
+                            if self.is_allowed_user(repo_name, user_stats[USER]):
                                 user_profiles[user_stats[USER]] = user_stats[STATS]
                 has_new_data = 0
                 for model_type in MODEL_TYPES:
@@ -427,8 +432,7 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
-                            self.write_user_profile_to_file(fo, user_profile[REPO], user_profile[REPO_PATH], user,
-                                                            user_profile)
+                            self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         if not args.keep_repo_name:
