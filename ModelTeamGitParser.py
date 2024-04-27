@@ -20,7 +20,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
-from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
+from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list, consistent_hash_code
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
@@ -667,7 +667,7 @@ if __name__ == "__main__":
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             if part != -1:
-                hash = int(folder.encode("utf-8").hex(), 16)
+                hash = consistent_hash_code(folder)
                 curr_part = hash % max_parallelism
                 if curr_part != part:
                     print(f"Skipping {folder} {curr_part} {part} {hash}")
