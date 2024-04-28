@@ -404,7 +404,7 @@ class ModelTeamGitParser:
                             user_stats = json.loads(line)
                             repo_name = user_stats[REPO]
                             repo_path = user_stats[REPO_PATH]
-                            if self.is_allowed_user(repo_name, user_stats[USER]):
+                            if USER in user_stats and self.is_allowed_user(repo_name, user_stats[USER]):
                                 user_profiles[user_stats[USER]] = user_stats[STATS]
                 has_new_data = 0
                 for model_type in MODEL_TYPES:
