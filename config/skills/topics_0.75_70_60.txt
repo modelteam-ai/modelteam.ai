@@ -39,7 +39,6 @@ mathematics
 cloud computing
 neural networks
 feature engineering
-programming
 ssl/tls
 redis
 database querying
@@ -67,7 +66,6 @@ code optimization
 monitoring
 graph theory
 technical documentation
-debugging troubleshooting
 web development
 version control
 aws sdk
@@ -131,7 +129,6 @@ docker
 performance optimization
 webgl
 optimization
-github
 distributed systems
 thread management
 mongodb
