@@ -427,6 +427,9 @@ class ModelTeamGitParser:
                 if not user_profiles:
                     print(f"No user profiles found for {repo_path}", flush=True)
                     return
+                if not args.keep_repo_name:
+                    repo_path = sha256_hash(repo_name)
+                    repo_name = anonymize(repo_name)
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
                         user_profile = user_profiles[user]
@@ -435,9 +438,6 @@ class ModelTeamGitParser:
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
-        if not args.keep_repo_name:
-            repo_path = sha256_hash(repo_name)
-            repo_name = anonymize(repo_name)
         f.write("{")
         f.write(f"\"version\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
         f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
@@ -521,39 +521,57 @@ class ModelTeamGitParser:
             yyyy_mm = features[i]["yyyy_mm"]
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
-            is_skill_pred = model_data['model_type'] == C2S or model_data['model_type'] == I2S
             ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
                                                 line_count, doc_string_line_count, model_data['model_tag'],
-                                                is_skill_pred)
+                                                model_data['model_type'] == C2S)
 
-    def generate_pdf_report(self, profile_json, merged_jsonl_writer):
+    def generate_pdf_report(self, output_file_list, merged_jsonl):
+        merged_jsonl_writer = open(merged_jsonl, "w")
         lang_map = get_extension_to_language_map()
-        with open(profile_json, "r") as f:
-            for line in f:
-                merged_jsonl_writer.write(line)
-                user_stats = json.loads(line)
-                user = user_stats[USER]
-                repo = user_stats[REPO]
-                user_profile = user_stats[STATS]
-                if SKILLS in user_profile:
-                    skill_list = user_profile[SKILLS]
-                    generate_tag_cloud(skill_list, f"{output_path}/{user}_wordcloud.png")
-                lang_stats = user_profile[LANGS]
-                lang_list = lang_stats.keys()
-                lang_names = [lang_map[lang] for lang in lang_list]
-                for lang in lang_list:
-                    if TIME_SERIES in lang_stats[lang]:
-                        time_series = lang_stats[lang][TIME_SERIES]
-                        ts_stats = {}
-                        for yyyy_mm in time_series:
-                            added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
-                            deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
-                            ts_stats[yyyy_mm] = [added, deleted]
-                        if ts_stats:
-                            generate_ts_plot(ts_stats, f"{output_path}/{user}_{lang}_ts.png")
-                image_files = [f"{output_path}/{user}_wordcloud.png", f"{output_path}/{user}_{lang}_ts.png"]
-                generate_pdf(output_path, user, repo, lang_names, image_files)
-        pass
+        merged_skills = {}
+        repo_list = []
+        merged_lang_stats = {}
+        wc_file = f"{output_path}/wordcloud.png"
+        image_files = [wc_file]
+        for profile_json in output_file_list:
+            with open(profile_json, "r") as f:
+                for line in f:
+                    merged_jsonl_writer.write(line)
+                    user_stats = json.loads(line)
+                    user = user_stats[USER]
+                    repo = user_stats[REPO]
+                    repo_list.append(repo)
+                    user_profile = user_stats[STATS]
+                    if SKILLS in user_profile:
+                        for s in user_profile[SKILLS]:
+                            if s not in merged_skills:
+                                merged_skills[s] = 0
+                            merged_skills[s] += user_profile[SKILLS][s]
+                    lang_stats = user_profile[LANGS]
+                    lang_list = lang_stats.keys()
+                    for lang in lang_list:
+                        if lang not in merged_lang_stats:
+                            merged_lang_stats[lang] = {}
+                        if TIME_SERIES in lang_stats[lang]:
+                            time_series = lang_stats[lang][TIME_SERIES]
+                            for yyyy_mm in time_series:
+                                if yyyy_mm not in lang_stats[lang]:
+                                    merged_lang_stats[lang][yyyy_mm] = [0, 0]
+                                added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
+                                deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
+                                merged_lang_stats[lang][yyyy_mm][0] += added
+                                merged_lang_stats[lang][yyyy_mm][1] += deleted
+        if merged_skills:
+            generate_tag_cloud(merged_skills, wc_file)
+        if merged_lang_stats:
+            for lang in merged_lang_stats:
+                ts_stats = merged_lang_stats[lang]
+                ts_file = f"{output_path}/{user}_{lang}_ts.png"
+                generate_ts_plot(ts_stats, ts_file)
+                image_files.append(ts_file)
+            lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
+        generate_pdf(output_path, user, ",".join(repo_list), lang_names, image_files)
+        merged_jsonl_writer.close()
 
     @staticmethod
     def filter_non_public_data(user_profile):
@@ -570,11 +588,11 @@ class ModelTeamGitParser:
 
     # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
-    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_skill_pred):
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
-            if is_skill_pred:
+            if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
                 user_profile[SKILLS][s] += score
@@ -661,7 +679,7 @@ if __name__ == "__main__":
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
     merged_jsonl = f"{output_path}/mt_profile_{profile_generation_date}.jsonl"
-    merged_jsonl_writer = open(merged_jsonl, "w")
+    final_outputs = []
     # TODO: Aggregate stats from all repos for a user
     for folder in sorted_folders:
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
@@ -692,11 +710,10 @@ if __name__ == "__main__":
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                                            final_output, username, min_months)
             if args.user_email and os.path.exists(final_output):
-                # for single user
-                git_parser.generate_pdf_report(final_output, merged_jsonl_writer)
+                final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-        merged_jsonl_writer.flush()
-    merged_jsonl_writer.close()
+    if final_outputs:
+        git_parser.generate_pdf_report(final_outputs, merged_jsonl)
     encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
     print(f"Processed {cnt} out of {len(sorted_folders)}")
