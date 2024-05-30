@@ -1,3 +1,5 @@
 autoload.php	1
 config.php	2
-vendor/autoload.php	3
+config/database.php	3
+session.php	4
+vendor/autoload.php	5

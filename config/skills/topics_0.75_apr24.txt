@@ -1,0 +1,138 @@
+device drivers
+azure
+routing
+microservices
+machine learning
+communication protocols
+software development lifecycle
+tensor operations
+cuda
+3d graphics
+distributed systems
+encryption
+pagination
+gpu programming
+http/2
+sql
+information retrieval
+git
+blockchain
+database querying
+schema design
+deep learning
+restful apis
+parallel programming
+html/css
+postgres
+system design
+problem solving
+google cloud
+dependency injection
+metadata
+graphql
+configuration management
+unit testing
+numpy
+data validation
+optimization
+pytorch
+plugin development
+containerization
+linear algebra
+protocol buffers
+deserialization
+batch processing
+ui design
+technical documentation
+networking
+data analysis
+dom manipulation
+design patterns
+async programming
+data processing
+automated testing
+signal processing
+mathematics
+cloud computing
+threading
+stream processing
+xml
+software design
+caching
+natural language processing
+grpc
+certificate management
+data storage
+data visualization
+data compression
+security
+cli development
+embedded systems
+iam
+indexing
+quantization
+authorization
+android
+buffer management
+reinforcement learning
+test automation
+pandas
+react
+data engineering
+data transformation
+annotations
+type safety
+aws
+query optimization
+computer vision
+promise
+software maintenance
+oauth
+callback functions
+request handling
+scripting
+shell scripting
+angular
+transaction processing
+web development
+data handling
+model deployment
+cryptography
+linux
+database management
+tensor manipulation
+node.js
+html
+json format
+parsing
+code optimization
+dependency management
+environment configuration
+spring boot
+interrupt handling
+model training
+tokenization
+object oriented programming
+data structures
+concurrent programming
+rtos
+resource management
+performance optimization
+model evaluation
+multithreading
+data loading
+regex
+data modeling
+distributed computing
+data preprocessing
+state management
+functional programming
+kubernetes
+technical writing
+redis
+frontend development
+version control
+authentication protocols
+promises
+tensorflow
+http
