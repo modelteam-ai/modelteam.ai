@@ -402,6 +402,7 @@ class ModelTeamGitParser:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
                             user_stats = json.loads(line)
+                            # Same repo for all users
                             repo_name = user_stats[REPO]
                             repo_path = user_stats[REPO_PATH]
                             if USER in user_stats and self.is_allowed_user(repo_name, user_stats[USER]):
@@ -420,7 +421,7 @@ class ModelTeamGitParser:
                                 if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
                                     continue
                                 has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
-                                                                    model_data)
+                                                                    model_data, repo_name)
                 if has_new_data == 0:
                     print(f"No users with {min_months} months found for {repo_path}", flush=True)
                     return
@@ -446,7 +447,8 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profile, repo_level_data, min_months, model_data):
+    def extract_skills(self, user_profile, repo_level_data, min_months, model_data, repo_name):
+        global label_file_list
         features = []
         if LANGS not in user_profile:
             return 0
@@ -470,6 +472,10 @@ class ModelTeamGitParser:
                 for i in range(len(monthly_snippets)):
                     snippets = monthly_snippets[i]
                     file_name = snippets[0]
+                    key = get_repo_user_key(repo_name, file_name)
+                    is_labeled_file = 0
+                    if key in label_file_list:
+                        is_labeled_file = 1
                     snippet_list = snippets[1]
                     for snippet in snippet_list:
                         file_extension = get_file_extension(file_name)
@@ -485,6 +491,7 @@ class ModelTeamGitParser:
                             libs_in_file = repo_level_data[LIBS][file_name]
                         features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": snippet,
                                          "libs": libs_in_file, "line_count": line_count,
+                                         "is_labeled_file": is_labeled_file,
                                          "doc_string_line_count": doc_string_line_count})
         if features:
             self.eval_llm_model(model_data, features, user_profile)
@@ -521,9 +528,10 @@ class ModelTeamGitParser:
             yyyy_mm = features[i]["yyyy_mm"]
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
+            is_labeled_file = features[i]["is_labeled_file"]
             ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
                                                 line_count, doc_string_line_count, model_data['model_tag'],
-                                                model_data['model_type'] == C2S)
+                                                model_data['model_type'] == C2S, is_labeled_file)
 
     def generate_pdf_report(self, output_file_list, merged_jsonl):
         merged_jsonl_writer = open(merged_jsonl, "w")
@@ -563,6 +571,7 @@ class ModelTeamGitParser:
                                 merged_lang_stats[lang][yyyy_mm][1] += deleted
         if merged_skills:
             generate_tag_cloud(merged_skills, wc_file)
+        lang_names = []
         if merged_lang_stats:
             for lang in merged_lang_stats:
                 ts_stats = merged_lang_stats[lang]
@@ -588,7 +597,8 @@ class ModelTeamGitParser:
 
     # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
-    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s):
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s,
+                         is_labeled_file):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
@@ -599,8 +609,8 @@ class ModelTeamGitParser:
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
-                # min, max, sum, count, code_line_count, doc_string_line_count
-                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0]
+                # min, max, sum, count, code_line_count, doc_string_line_count, is_labeled_file
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0, 0]
             skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s]
             skill_map[0] = max(skill_map[0], score)
             skill_map[1] = min(skill_map[1], score)
@@ -608,6 +618,7 @@ class ModelTeamGitParser:
             skill_map[3] += 1
             skill_map[4] += code_len
             skill_map[5] += doc_string_len
+            skill_map[6] = max(skill_map[6], is_labeled_file)
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
@@ -625,6 +636,21 @@ class ModelTeamGitParser:
                 skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
 
 
+def load_label_files(lf_name):
+    label_files = set()
+    if not lf_name:
+        with open(lf_name, "r") as f:
+            for line in f:
+                labels = json.loads(line)
+                if REPO not in labels or FILE not in labels:
+                    continue
+                repo = labels[REPO]
+                file = labels[FILE]
+                label_files.add(get_repo_user_key(repo, file))
+        print(f"Loaded {len(label_files)} label files", flush=True)
+    return label_files
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
@@ -637,6 +663,7 @@ if __name__ == "__main__":
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--max_parallelism', type=int, help='Max parallelism', default=1)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
+    parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -650,6 +677,7 @@ if __name__ == "__main__":
 
     max_parallelism = args.max_parallelism
     allowed_users = load_repo_user_list(args.allow_list)
+    label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
