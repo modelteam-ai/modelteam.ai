@@ -637,6 +637,7 @@ class ModelTeamGitParser:
 
 
 def load_label_files(lf_name):
+    print(f"Loading label files from {lf_name}", flush=True)
     label_files = set()
     if not lf_name:
         with open(lf_name, "r") as f:
