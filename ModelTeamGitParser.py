@@ -396,8 +396,6 @@ class ModelTeamGitParser:
                         libs_in_file += parser.get_import_prefix() + imp + "\n"
                     repo_level_data[LIBS][file] = libs_in_file
                 # when starting from tmp, we need to get repo details from the jsonl file
-                repo_name = ""
-                repo_path = ""
                 if not user_profiles:
                     with open(user_stats_output_file_name, "r") as f:
                         for line in f:
