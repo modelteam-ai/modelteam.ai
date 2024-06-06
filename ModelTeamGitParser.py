@@ -12,12 +12,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
+from modelteam.modelteam_utils.utils import break_code_snippets_to_chunks
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS)
+                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list, consistent_hash_code
@@ -481,13 +482,15 @@ class ModelTeamGitParser:
                                                      self.keep_only_public_libraries)
                         if not parser:
                             continue
-                        lines = snippet.split("\n")
-                        line_count = len(lines)
-                        doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                        libs_in_file = ""
-                        if file_name in repo_level_data[LIBS]:
-                            libs_in_file = repo_level_data[LIBS][file_name]
-                        features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": snippet,
+                        chunks = break_code_snippets_to_chunks(file_name, snippet, T5_CHUNK_CHAR_LIMIT)
+                        for chunk in chunks:
+                            lines = chunk.split("\n")
+                            line_count = len(lines)
+                            doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                            libs_in_file = ""
+                            if file_name in repo_level_data[LIBS]:
+                                libs_in_file = repo_level_data[LIBS][file_name]
+                            features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": chunk,
                                          "libs": libs_in_file, "line_count": line_count,
                                          "is_labeled_file": is_labeled_file,
                                          "doc_string_line_count": doc_string_line_count})
