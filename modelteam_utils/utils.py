@@ -441,7 +441,7 @@ def get_life_of_py_bucket(change):
         return LIFE_OF_PY_BUCKETS[0]
     if change > 100:
         return LIFE_OF_PY_BUCKETS[-1]
-    bucket = LIFE_OF_PY_BUCKETS[change // 10]
+    bucket = LIFE_OF_PY_BUCKETS[change // 20]
     return bucket
 
 
