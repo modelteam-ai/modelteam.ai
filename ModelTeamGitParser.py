@@ -21,7 +21,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
-from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list, consistent_hash_code
+from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
@@ -491,9 +491,9 @@ class ModelTeamGitParser:
                             if file_name in repo_level_data[LIBS]:
                                 libs_in_file = repo_level_data[LIBS][file_name]
                             features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": chunk,
-                                         "libs": libs_in_file, "line_count": line_count,
-                                         "is_labeled_file": is_labeled_file,
-                                         "doc_string_line_count": doc_string_line_count})
+                                             "libs": libs_in_file, "line_count": line_count,
+                                             "is_labeled_file": is_labeled_file,
+                                             "doc_string_line_count": doc_string_line_count})
         if features:
             self.eval_llm_model(model_data, features, user_profile)
             return len(features)
@@ -706,8 +706,14 @@ if __name__ == "__main__":
                 print(f"Skipping {folder} as it is already processed")
                 continue
             else:
-                with open(touch_file, "w") as f:
-                    f.write("1")
+                # There is a very tiny chance that another process might create the file
+                # Randomized file list should have taken care of this
+                try:
+                    with open(touch_file, "x") as f:
+                        f.write("1")
+                except FileExistsError:
+                    print(f"Rare Exception: Skipping {folder} as it is already processed")
+                    continue
             cnt += 1
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
