@@ -659,11 +659,9 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
-    parser.add_argument('--part', type=int, help='Part number to process', default=-1)
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
-    parser.add_argument('--max_parallelism', type=int, help='Max parallelism', default=1)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
 
@@ -675,51 +673,41 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
-    part = args.part
 
-    max_parallelism = args.max_parallelism
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
     if not username:
-        if part is not None:
-            if part < 0 or part > max_parallelism - 1:
-                print("Invalid part")
-                exit(1)
-            print(f"Running part {part}")
-        else:
-            part = -1
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
-        if part == -1:
-            print("Do you want to continue? (y/n)")
-            if input().lower() != 'y':
-                exit(0)
 
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
     if args.start_from_tmp:
-        sorted_folders = sorted(os.listdir(f"{output_path}/tmp-stats"))
+        folder_list = os.listdir(f"{output_path}/tmp-stats")
     else:
-        sorted_folders = sorted(os.listdir(input_path))
+        folder_list = os.listdir(input_path)
+    randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
+    os.makedirs(f"{output_path}/touch-files", exist_ok=True)
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
     merged_jsonl = f"{output_path}/mt_profile_{profile_generation_date}.jsonl"
     final_outputs = []
     # TODO: Aggregate stats from all repos for a user
-    for folder in sorted_folders:
+    for folder in randomized_folder_list:
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
-            if part != -1:
-                hash = consistent_hash_code(folder)
-                curr_part = hash % max_parallelism
-                if curr_part != part:
-                    print(f"Skipping {folder} {curr_part} {part} {hash}")
-                    continue
+            touch_file = f"{output_path}/touch-files/{folder}"
+            if os.path.exists(touch_file):
+                print(f"Skipping {folder} as it is already processed")
+                continue
+            else:
+                with open(touch_file, "w") as f:
+                    f.write("1")
             cnt += 1
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
@@ -737,6 +725,9 @@ if __name__ == "__main__":
             user_stats_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}.jsonl"""
             repo_lib_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}_libs.jsonl"""
             final_output = f"""{output_path}/final-stats/{file_prefix}_user_profile.jsonl"""
+            if os.path.exists(final_output):
+                print(f"Skipping {final_output} as it is already processed")
+                continue
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                                            final_output, username, min_months)
             if args.user_email and os.path.exists(final_output):
@@ -746,4 +737,4 @@ if __name__ == "__main__":
     if final_outputs:
         git_parser.generate_pdf_report(final_outputs, merged_jsonl)
     encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
-    print(f"Processed {cnt} out of {len(sorted_folders)}")
+    print(f"Processed {cnt} out of {len(folder_list)}")
