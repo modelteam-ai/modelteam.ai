@@ -699,6 +699,8 @@ if __name__ == "__main__":
     final_outputs = []
     # TODO: Aggregate stats from all repos for a user
     for folder in randomized_folder_list:
+        if folder.endswith("_libs.jsonl"):
+            continue
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             touch_file = f"{output_path}/touch-files/{folder}"
