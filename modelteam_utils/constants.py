@@ -38,7 +38,8 @@ TEAM = 'team'
 LANGUAGE = 'language'
 LABEL = 'label'
 LIFE_OF_PY = 'life_of_py'
-LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_{i}" for i in range(0, 100, 20)]
+LIFE_OF_PY_BUCKET_SIZE = 20
+LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_{i}" for i in range(0, 100, LIFE_OF_PY_BUCKET_SIZE)]
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'
