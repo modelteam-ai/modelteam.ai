@@ -18,7 +18,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT)
+                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
@@ -439,7 +439,7 @@ class ModelTeamGitParser:
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
-        f.write(f"\"version\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
+        f.write(f"\"{VERSION}\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
         f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
         f.write(f"\"{REPO}\": {json.dumps(repo_name)}, ")
         f.write(f"\"{USER}\": {json.dumps(user)}, ")
