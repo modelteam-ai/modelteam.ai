@@ -208,14 +208,14 @@ def consistent_hash_code(input_string):
     return int(sha256_hash, 16)
 
 
-def is_test(user, test_ratio=20):
+def is_test(id_str, test_ratio=20):
     """
-    Given a user, return True if the user is in the test set using consistent hashing
-    :param user:
+    Given a id, return True if the id is in the test set using consistent hashing
+    :param id_str:
     :param test_ratio:
     :return:
     """
-    return consistent_hash_code(user) % 100 < test_ratio
+    return consistent_hash_code(id_str) % 100 < test_ratio
 
 
 # TODO: Try overlapping chunks
