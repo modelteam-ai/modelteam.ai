@@ -12,7 +12,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam_utils.utils import break_code_snippets_to_chunks
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -21,6 +20,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
+from modelteam_utils.utils import break_code_snippets_to_chunks
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
@@ -528,17 +528,19 @@ class ModelTeamGitParser:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
             limit = SKILL_PREDICTION_LIMIT
-        skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
-                                                            snippets, model_data['new_tokens'], limit)
+        skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
+                                                                           model_data['model'], snippets,
+                                                                           model_data['new_tokens'], limit)
         for i in range(len(features)):
             lang = features[i]["lang"]
             yyyy_mm = features[i]["yyyy_mm"]
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
             is_labeled_file = features[i]["is_labeled_file"]
-            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
-                                                line_count, doc_string_line_count, model_data['model_tag'],
-                                                model_data['model_type'] == C2S, is_labeled_file)
+            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], sm_score_list[i],
+                                                skill_list[i], line_count, doc_string_line_count,
+                                                model_data['model_tag'], model_data['model_type'] == C2S,
+                                                is_labeled_file)
 
     def generate_pdf_report(self, output_file_list, merged_jsonl):
         merged_jsonl_writer = open(merged_jsonl, "w")
@@ -603,11 +605,12 @@ class ModelTeamGitParser:
                 del lang_stats[lang][LIBS]
 
     @staticmethod
-    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s,
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, sm_scores, skills, code_len, doc_string_len, tag, is_c2s,
                          is_labeled_file):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
+            sm_score = sm_scores[i]
             if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
@@ -616,15 +619,19 @@ class ModelTeamGitParser:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
                 # min, max, sum, count, code_line_count, doc_string_line_count, is_labeled_file
-                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0, 0]
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, sm_score, sm_score, 0, 0, 0,
+                                                                           0, 0]
             skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s]
             skill_map[0] = max(skill_map[0], score)
             skill_map[1] = min(skill_map[1], score)
             skill_map[2] += score
-            skill_map[3] += 1
-            skill_map[4] += code_len
-            skill_map[5] += doc_string_len
-            skill_map[6] = max(skill_map[6], is_labeled_file)
+            skill_map[3] += max(skill_map[3], sm_score)
+            skill_map[4] += min(skill_map[4], sm_score)
+            skill_map[5] += sm_score
+            skill_map[6] += 1
+            skill_map[7] += code_len
+            skill_map[8] += doc_string_len
+            skill_map[9] = max(skill_map[6], is_labeled_file)
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
