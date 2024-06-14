@@ -117,7 +117,7 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, username=None):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
@@ -209,8 +209,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name):
-        user_commits = self.get_commits_for_each_user(repo_path, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, username)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -373,12 +373,12 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, username, min_months):
+                            final_output, min_months, username):
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name)
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
@@ -742,7 +742,7 @@ if __name__ == "__main__":
                 print(f"Skipping {final_output} as it is already processed")
                 continue
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                           final_output, username, min_months)
+                                           final_output, min_months, username)
             if args.user_email and os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
