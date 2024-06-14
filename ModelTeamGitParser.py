@@ -731,7 +731,7 @@ if __name__ == "__main__":
                 repo_path = f"{input_path}/{folder}"
                 file_prefix = f"""{repo_path.replace("/", "_")}"""
             # check if the repo is no longer open. Ignore if it asks for password
-            # result = run_commandline_command(f"git -C {repo_path} pull")
+            # result = run_commandline_command(f"git -C {repo_path} pull --rebase")
             # if not result:
             #     print(f"Skipping {folder} as it is no longer open")
             #     continue
