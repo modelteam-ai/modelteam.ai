@@ -518,7 +518,6 @@ class ModelTeamGitParser:
         return docstring_line_count
 
     def eval_llm_model(self, model_data, features, user_profile):
-        # TODO: Change this. Its fragile to rely on the order of the features
         print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}",
               flush=True)
         snippet_key = "snippet"
@@ -603,7 +602,6 @@ class ModelTeamGitParser:
             if LIBS in lang_stats[lang]:
                 del lang_stats[lang][LIBS]
 
-    # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
     def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s,
                          is_labeled_file):
