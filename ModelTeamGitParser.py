@@ -129,6 +129,7 @@ class ModelTeamGitParser:
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
+            user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
                 # ignore if email is empty
@@ -137,7 +138,13 @@ class ModelTeamGitParser:
                 if author_email not in commits:
                     commits[author_email] = {}
                     commits[author_email][COMMITS] = []
+                if author_email not in user_months:
+                    user_months[author_email] = set()
+                user_months[author_email].add(timestamp_to_yyyy_mm(int(commit_timestamp)))
                 commits[author_email][COMMITS].append((commit_hash, int(commit_timestamp)))
+            for user in user_months:
+                if len(user_months[user]) < min_months:
+                    del commits[user]
         return commits
 
     @staticmethod
