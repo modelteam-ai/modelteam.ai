@@ -1,277 +1,352 @@
-English	1
-aasm	2
-abbrev	3
-action_controller	4
-action_mailer	5
-action_view	6
-active_admin	7
-active_job	8
-active_model	9
-active_model_serializers	10
-active_record	11
-active_storage	12
-active_support	13
-activerecord-trilogy-adapter	14
-addressable	15
-amazing_print	16
-anycable	17
-anyway_config	18
-appium_lib_core	19
-application_system_test_case	20
-arbre	21
-asciidoctor	22
-asciidoctor-pdf	23
-async	24
-aws-sdk	25
-aws-sdk-cloudwatch	26
-aws-sdk-core	27
-aws-sdk-ec2	28
-aws-sdk-s3	29
-aws-sdk-sqs	30
-babosa	31
-bar	32
-base64	33
-bcrypt	34
-benchmark	35
-benchmark_helper	36
-better_html	37
-bigdecimal	38
-builder	39
-bundler	40
-byebug	41
-capybara	42
-capybara_support	43
-cgi	44
-chef	45
-chefspec	46
-childprocess	47
-chunky_png	48
-combustion	49
-concurrent	50
-concurrent-ruby	51
-connection_pool	52
-coverage	53
-coveralls	54
-css_parser	55
-csv	56
-dalli	57
-database_cleaner	58
-date	59
-debug	60
-delegate	61
-devise	62
-did_you_mean	63
-diffy	64
-digest	65
-dotenv	66
-drb	67
-elasticsearch	68
-erb	69
-erubi	70
-etc	71
-execjs	72
-expect	73
-facter	74
-factories	75
-factory_bot	76
-factory_bot_rails	77
-faker	78
-faraday	79
-faraday_middleware	80
-fcntl	81
-ffaker	82
-ffi	83
-fiber	84
-fiddle	85
-fileutils	86
-find	87
-foo	88
-forwardable	89
-friendly_id	90
-getoptlong	91
-git	92
-globalid	93
-googleauth	94
-graphql	95
-grpc	96
-haml	97
-hatchet	98
-helper	99
-hiredis-client	100
-htmlentities	101
-http	102
-httparty	103
-httpclient	104
-i18n	105
-importmap-rails	106
-iniparse	107
-ipaddr	108
-irb	109
-java	110
-jbuilder	111
-job-iteration	112
-jruby	113
-json	114
-json-schema	115
-jwt	116
-kaminari	117
-knapsack_pro	118
-kramdown	119
-kramdown-parser-gfm	120
-liquid	121
-listen	122
-lite_spec_helper	123
-logger	124
-logging	125
-mail	126
-marcel	127
-matrix	128
-memory_profiler	129
-mercenary	130
-mini_magick	131
-mini_mime	132
-mini_racer	133
-minitest	134
-mkmf	135
-mocha	136
-mongo	137
-mongoid	138
-monitor	139
-msgpack	140
-multi_json	141
-mutex_m	142
-mysql2	143
-nokogiri	144
-objspace	145
-observer	146
-octicons	147
-octokit	148
-oj	149
-open-uri	150
-open3	151
-openai	152
-openssl	153
-optimist	154
-optparse	155
-os	156
-ostruct	157
-ougai	158
-ox	159
-pagy	160
-parallel	161
-parser	162
-pathname	163
-pg	164
-pg_query	165
-pkg-config	166
-plist	167
-pp	168
-prawn	169
-prettyprint	170
-prime	171
-prism	172
-pry	173
-pry-byebug	174
-pstore	175
-psych	176
-puma	177
-puppet	178
-puppet_pal	179
-rack	180
-rackup	181
-rails	182
-rails-controller-testing	183
-rails_helper	184
-rainbow	185
-rake	186
-rbconfig	187
-rbnacl	188
-readline	189
-redcarpet	190
-redis	191
-redis-client	192
-reline	193
-request_store	194
-resolv	195
-resque	196
-rest-client	197
-ripper	198
-rouge	199
-rr	200
-rspec	201
-rubocop	202
-ruby-debug	203
-ruby-prof	204
-ruby-progressbar	205
-ruby2_keywords	206
-ruby_installer	207
-rubygems	208
-rufus-scheduler	209
-rugged	210
-search_cop	211
-securerandom	212
-selenium-webdriver	213
-semantic_logger	214
-sentry-ruby	215
-sequel	216
-set	217
-shellwords	218
-shopify_api	219
-shoulda	220
-sidekiq	221
-simplecov	222
-simplecov-cobertura	223
-simplecov-lcov	224
-sinatra	225
-singleton	226
-slack-notifier	227
-slop	228
-snappy	229
-socket	230
-sorbet-runtime	231
-spec_helper	232
-sqlite3	233
-stackprof	234
-state_machines-activerecord	235
-statistics	236
-stringio	237
-stripe	238
-strscan	239
-syntax_tree	240
-syslog	241
-tempfile	242
-terminal-table	243
-test-unit	244
-test_helper	245
-thor	246
-thread	247
-tilt	248
-time	249
-timecop	250
-timeout	251
-timeout_interrupt	252
-tmpdir	253
-toml-rb	254
-tsort	255
-tty-screen	256
-tty-spinner	257
-uri	258
-uuidtools	259
-vcr	260
-view_component	261
-vips	262
-vite_rails	263
-warning	264
-weakref	265
-webmock	266
-webrick	267
-win32ole	268
-with_advisory_lock	269
-xcodeproj	270
-xpath	271
-yajl	272
-yaml	273
-yard	274
-zeitwerk	275
-zip	276
-zlib	277
+English	1	33
+abbrev	2	2
+abstract_command	3	2
+abstract_controller	4	3
+abstract_unit	5	2
+action_cable	6	4
+action_controller	7	12
+action_dispatch	8	3
+action_mailbox	9	2
+action_mailer	10	5
+action_view	11	12
+active_admin	12	2
+active_job	13	12
+active_model	14	11
+active_model_serializers	15	4
+active_record	16	55
+active_storage	17	3
+active_support	18	49
+activerecord-jdbc-adapter	19	3
+activerecord-jdbcsqlite3-adapter	20	2
+aggregate_root	21	2
+amazing_print	22	4
+anthropic	23	2
+anycable	24	2
+anyway_config	25	3
+appium_lib_core	26	2
+application_system_test_case	27	17
+arbre	28	2
+arrow	29	2
+asciidoctor	30	2
+asciidoctor-pdf	31	2
+ast	32	2
+async	33	4
+awesome_print	34	3
+aws-sdk-cloudwatchlogs	35	2
+aws-sdk-codebuild	36	2
+aws-sdk-core	37	4
+aws-sdk-dynamodb	38	3
+aws-sdk-ec2	39	3
+aws-sdk-lambda	40	2
+aws-sdk-s3	41	8
+aws-sdk-sns	42	2
+aws-sdk-sqs	43	3
+aws-sdk-sts	44	2
+aws-sigv4	45	2
+axlsx	46	2
+bar	47	4
+base64	48	55
+bcrypt	49	8
+benchmark	50	30
+better_html	51	2
+bigdecimal	52	27
+braintree	53	2
+builder	54	3
+bundler	55	28
+byebug	56	11
+capybara	57	7
+capybara_support	58	2
+cgi	59	39
+chartkick	60	2
+chefspec	61	2
+childprocess	62	2
+chunky_png	63	4
+cocoapods	64	4
+codecov	65	5
+colorize	66	3
+combustion	67	6
+concurrent	68	11
+concurrent-ruby	69	9
+connection_pool	70	5
+console	71	2
+coverage	72	5
+coveralls	73	6
+css_parser	74	2
+csv	75	39
+cucumber	76	2
+curb	77	2
+dalli	78	4
+database_cleaner	79	2
+date	80	62
+db	81	2
+debug	82	17
+delegate	83	26
+devise	84	4
+did_you_mean	85	2
+diffy	86	3
+digest	87	32
+dotenv	88	13
+drb	89	3
+dry-struct	90	2
+dry-types	91	2
+elasticsearch	92	4
+erb	93	56
+erubi	94	6
+etc	95	25
+excon	96	2
+expect	97	3
+factories	98	2
+factory_bot	99	6
+factory_bot_rails	100	2
+fakefs	101	2
+faker	102	4
+faraday	103	20
+faraday_middleware	104	3
+fcntl	105	4
+ffaker	106	2
+ffi	107	9
+fiber	108	9
+fiddle	109	4
+files	110	2
+fileutils	111	124
+find	112	13
+foo	113	7
+forwardable	114	59
+fugit	115	5
+getoptlong	116	6
+gi	117	2
+git	118	2
+globalid	119	4
+googleauth	120	5
+grape	121	2
+graphql	122	3
+grpc	123	6
+haml	124	7
+hanami	125	2
+hatchet	126	2
+helper	127	19
+helpers	128	2
+hiredis-client	129	2
+htmlentities	130	4
+http	131	6
+httparty	132	7
+httpclient	133	3
+i18n	134	14
+i18n-js	135	2
+image_size	136	2
+importmap-rails	137	3
+iniparse	138	2
+ipaddr	139	21
+ipaddress	140	3
+irb	141	9
+java	142	7
+jbuilder	143	3
+job-iteration	144	2
+jquery-rails	145	2
+jruby	146	4
+json	147	171
+json-schema	148	3
+jwt	149	3
+kaminari	150	2
+knapsack_pro	151	2
+kramdown	152	9
+kramdown-parser-gfm	153	3
+language_server-protocol	154	2
+launchy	155	2
+liquid	156	2
+listen	157	12
+lite_spec_helper	158	2
+log4r	159	3
+logger	160	72
+logging	161	3
+mail	162	7
+marcel	163	4
+matrix	164	5
+memory_profiler	165	5
+mini_magick	166	4
+mini_racer	167	2
+minitar	168	3
+minitest	169	13
+mkmf	170	16
+mocha	171	2
+mongo	172	4
+mongo_mapper	173	2
+mongoid	174	3
+monitor	175	14
+msgpack	176	5
+multi_json	177	4
+multi_test	178	2
+mustermann	179	2
+mutex_m	180	2
+mysql2	181	7
+nokogiri	182	35
+oauth	183	2
+objspace	184	6
+observer	185	5
+octicons	186	2
+octokit	187	5
+oj	188	11
+open-uri	189	33
+open3	190	63
+openai	191	2
+openssl	192	52
+optimist	193	3
+optionparser	194	2
+optparse	195	44
+os	196	5
+ostruct	197	46
+ougai	198	2
+ox	199	3
+pagy	200	3
+parallel	201	11
+parser	202	5
+parslet	203	2
+pathname	204	97
+pdf-reader	205	2
+perf	206	2
+pg	207	13
+pg_query	208	3
+pkg-config	209	2
+plist	210	3
+polyphony	211	2
+pp	212	29
+prawn	213	2
+prettyprint	214	4
+prime	215	2
+prism	216	8
+pry	217	28
+pry-byebug	218	5
+pry-nav	219	2
+psych	220	5
+pty	221	4
+puma	222	2
+puppet	223	3
+puppet_pal	224	2
+rack	225	28
+rackup	226	5
+rails	227	50
+rails-dom-testing	228	2
+rails_event_store	229	2
+rails_helper	230	34
+rainbow	231	8
+rake	232	32
+rbconfig	233	33
+rbnacl	234	4
+rbs	235	2
+rdoc	236	2
+readline	237	7
+redcarpet	238	4
+redis	239	14
+redis-client	240	4
+regexp_parser	241	2
+reline	242	3
+repo_context	243	2
+request_store	244	2
+resolv	245	19
+resque	246	2
+rest-client	247	4
+rexml	248	2
+rghost	249	2
+ripper	250	9
+rmagick	251	2
+roda	252	4
+rouge	253	5
+rr	254	2
+rspec	255	16
+rubocop	256	9
+ruby-prof	257	9
+ruby-progressbar	258	3
+ruby2_keywords	259	2
+ruby_event_store	260	2
+ruby_installer	261	2
+rubygems	262	47
+rufus-scheduler	263	3
+rugged	264	2
+sample	265	2
+sass-rails	266	2
+securerandom	267	76
+selenium-webdriver	268	6
+semantic_logger	269	3
+sentry-ruby	270	3
+sequel	271	13
+set	272	80
+shellwords	273	39
+shoulda	274	3
+sidekiq	275	10
+sidekiq-unique-jobs	276	2
+simplecov	277	67
+simplecov-cobertura	278	4
+simplecov-console	279	4
+simplecov-lcov	280	13
+simpleidn	281	2
+sinatra	282	16
+singleton	283	33
+slim	284	2
+slop	285	3
+socket	286	48
+sorbet-runtime	287	9
+spec_helper	288	154
+spec_helper_acceptance	289	3
+spi	290	2
+sprockets	291	2
+sprockets-helpers	292	2
+sqlite3	293	12
+stackprof	294	8
+state_machines-activerecord	295	2
+statistics	296	2
+stringio	297	71
+stripe	298	3
+strscan	299	17
+supply	300	2
+swagger_helper	301	2
+syntax_tree	302	5
+system_helper	303	2
+tempfile	304	83
+terminal-table	305	7
+test	306	2
+test-prof	307	2
+test-unit	308	4
+test_helper	309	112
+thor	310	18
+thread	311	19
+tilt	312	5
+time	313	52
+timecop	314	13
+timeout	315	36
+timeout_interrupt	316	2
+tmpdir	317	60
+toml-rb	318	4
+toxiproxy	319	2
+trilogy	320	2
+tsort	321	3
+tty-markdown	322	2
+tty-screen	323	2
+tty-spinner	324	3
+turbo-rails	325	2
+typhoeus	326	3
+unicode_plot	327	2
+uri	328	97
+user	329	2
+uuidtools	330	2
+vagrant	331	3
+vcr	332	6
+vega	333	2
+vernier	334	2
+version	335	2
+view_component	336	4
+vips	337	3
+vite_rails	338	2
+warning	339	4
+weakref	340	3
+webrick	341	13
+will_paginate	342	2
+with_advisory_lock	343	2
+xcodeproj	344	3
+xmlsimple	345	2
+xpath	346	2
+yajl	347	5
+yaml	348	92
+yard	349	12
+zeitwerk	350	24
+zip	351	12
+zlib	352	39

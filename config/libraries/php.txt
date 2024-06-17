@@ -1,5 +1,7 @@
-autoload.php	1
-config.php	2
-config/database.php	3
-session.php	4
-vendor/autoload.php	5
+$PHPUNIT_DIR/$PHPUNIT_VERSION_DIR/phpunit	1	2
+%path%foo.php	2	2
+PEAR.php	3	2
+autoload.php	4	3
+common.php	5	3
+config.php	6	5
+vendor/autoload.php	7	24

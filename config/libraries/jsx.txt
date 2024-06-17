@@ -1,32 +1,47 @@
-ajv	1
-axios	2
-classnames	3
-clsx	4
-copy-to-clipboard	5
-dayjs	6
-debounce	7
-fetch-mock	8
-highcharts-react-official	9
-i18next	10
-lodash	11
-markdown-to-jsx	12
-mockdate	13
-moment	14
-path	15
-prop-types	16
-query-string	17
-react	18
-react-countup	19
-react-dom	20
-react-draggable	21
-react-easy-crop	22
-react-helmet	23
-react-markdown	24
-react-native-video	25
-react-select	26
-react-slider	27
-react-tooltip	28
-redux-mock-store	29
-redux-thunk	30
-sinon	31
-styled-components	32
+ajv	1	2
+axios	2	5
+classnames	3	22
+clsx	4	12
+copy-to-clipboard	5	2
+create-react-class	6	2
+dayjs	7	6
+debounce	8	2
+debug	9	3
+fs	10	2
+i18next	11	3
+js-cookie	12	3
+js-yaml	13	2
+json5	14	2
+lodash	15	7
+markdown-to-jsx	16	2
+memoize-one	17	2
+mockdate	18	3
+moment	19	16
+path	20	4
+prismjs	21	2
+prop-types	22	37
+query-string	23	4
+rc-time-picker	24	2
+react	25	119
+react-countup	26	2
+react-datepicker	27	2
+react-dom	28	23
+react-draggable	29	2
+react-dropzone	30	4
+react-easy-crop	31	2
+react-helmet	32	2
+react-json-view	33	2
+react-markdown	34	4
+react-modal	35	2
+react-native-video	36	2
+react-paginate	37	2
+react-select	38	5
+react-simple-code-editor	39	2
+react-slider	40	2
+react-tooltip	41	2
+redux-mock-store	42	3
+redux-thunk	43	4
+sinon	44	4
+styled-components	45	5
+url-parse	46	2
+vue	47	2
