@@ -9,7 +9,6 @@ request handling
 security
 sql
 gpu programming
-software architecture
 encryption
 multithreading
 protobuf
@@ -18,7 +17,6 @@ client server communication
 schema design
 cuda
 data extraction
-html/css
 asynchronous programming
 ui design
 deep learning
@@ -31,7 +29,6 @@ cluster management
 monitoring
 sorting algorithm
 jax
-optimization
 azure sdk
 mocking
 routing
@@ -39,42 +36,34 @@ package management
 model deployment
 file system operations
 code optimization
-timeout handling
 query optimization
 postgresql
 aws sdk
 version control
 performance tuning
 cross platform development
-data formatting
-code refactoring
 distributed systems
 access control
 statistical analysis
 memory management
-type annotations
 storage management
 tensorflow
 automated testing
 feature engineering
 time series analysis
 authentication
-data filtering
 xml
 model training
 context management
 data transformation
 machine learning
 angular
-reflection
 apache kafka
 database querying
 ssl/tls
 text processing
 github
 data retrieval
-problem solving
-deprecation handling
 filtering
 stream processing
 blockchain development
@@ -93,27 +82,18 @@ graphql
 cloud storage
 data structure
 quantum computing
-documenting code
-version control systems
 reinforcement learning
 amazon s3
-iterators
-source code management
 redis
 session management
-html
 process management
 fault tolerance
 android development
 grpc
-api usage
-inheritance
-troubleshooting
 neural networks
 static analysis
 permission management
 backend development
-pattern matching
 spring framework
 integration testing
 database management
@@ -133,7 +113,6 @@ apache beam
 signal processing
 computer graphics
 web development
-data synchronization
 load balancing
 rtos
 shell scripting
@@ -147,9 +126,7 @@ webgl
 performance optimization
 openapi specification
 elasticsearch
-base64 encoding
 bigquery
-data normalization
 natural language processing
 linear algebra
 design patterns
@@ -163,35 +140,24 @@ resource management
 infrastructure as code
 payment processing
 cloud computing
-technical writing
 jdbc
-connection management
 mongodb
 queue management
-type hinting
 code analysis
 benchmarking
-bit manipulation
 sdk development
-error handling
 iam
 server side development
-software development best practices
 hashing
-technical documentation
-file handling
-parallel processing
 localization
 numpy
 functional programming
-path manipulation
 apache camel
 rpc
 pointer manipulation
 frontend development
 orm
 http/2
-debugging and troubleshooting
 unit testing
 accessibility
 webassembly
@@ -204,7 +170,6 @@ django
 containerization
 graph theory
 event driven programming
-decorator pattern
 software design patterns
 key management
 computer vision
@@ -212,4 +177,3 @@ reactive programming
 dependency injection
 asyncio
 test driven development
-apis
