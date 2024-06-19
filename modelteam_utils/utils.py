@@ -208,14 +208,14 @@ def consistent_hash_code(input_string):
     return int(sha256_hash, 16)
 
 
-def is_test(user, test_ratio=20):
+def is_test(id_str, test_ratio=20):
     """
-    Given a user, return True if the user is in the test set using consistent hashing
-    :param user:
+    Given a id, return True if the id is in the test set using consistent hashing
+    :param id_str:
     :param test_ratio:
     :return:
     """
-    return consistent_hash_code(user) % 100 < test_ratio
+    return consistent_hash_code(id_str) % 100 < test_ratio
 
 
 # TODO: Try overlapping chunks
@@ -360,13 +360,14 @@ def softmax(x):
 
 def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
     skill_list = []
-    score_list = []
+    next_best_prob_list = []
+    soft_max_list = []
     for code in codes:
         with torch.no_grad():
             input_tokens = tokenizer(code, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
                 device)
             output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
-                                    no_repeat_ngram_size=3, do_sample=False)
+                                    no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
             score_map = {}
             soft_max_map = {}
             new_token_scores = []
@@ -381,14 +382,17 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
                 soft_max_map[w] = s
             tmp_results = []
             tmp_scores = []
+            tmp_orig_scores = []
             top_n = sorted(score_map, key=score_map.get, reverse=True)[:limit]
             next_best_pr = next_best_prob(soft_max_map, top_n)
             for word in top_n:
                 tmp_results.append(word)
                 tmp_scores.append(next_best_pr[word])
+                tmp_orig_scores.append(soft_max_map[word])
             skill_list.append(tmp_results)
-            score_list.append(tmp_scores)
-    return skill_list, score_list
+            next_best_prob_list.append(tmp_scores)
+            soft_max_list.append(tmp_orig_scores)
+    return skill_list, next_best_prob_list, soft_max_list
 
 
 def next_best_prob(word_probabilities, top_words):

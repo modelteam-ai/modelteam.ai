@@ -12,7 +12,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from modelteam_utils.utils import break_code_snippets_to_chunks
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -21,6 +20,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
+from modelteam_utils.utils import break_code_snippets_to_chunks
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
@@ -117,7 +117,7 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, username=None):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
@@ -129,6 +129,7 @@ class ModelTeamGitParser:
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
+            user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
                 # ignore if email is empty
@@ -137,7 +138,13 @@ class ModelTeamGitParser:
                 if author_email not in commits:
                     commits[author_email] = {}
                     commits[author_email][COMMITS] = []
+                if author_email not in user_months:
+                    user_months[author_email] = set()
+                user_months[author_email].add(timestamp_to_yyyy_mm(int(commit_timestamp)))
                 commits[author_email][COMMITS].append((commit_hash, int(commit_timestamp)))
+            for user in user_months:
+                if len(user_months[user]) < min_months:
+                    del commits[user]
         return commits
 
     @staticmethod
@@ -202,8 +209,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name):
-        user_commits = self.get_commits_for_each_user(repo_path, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, username)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -366,12 +373,12 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, username, min_months):
+                            final_output, min_months, username):
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name)
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
@@ -511,7 +518,6 @@ class ModelTeamGitParser:
         return docstring_line_count
 
     def eval_llm_model(self, model_data, features, user_profile):
-        # TODO: Change this. Its fragile to rely on the order of the features
         print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}",
               flush=True)
         snippet_key = "snippet"
@@ -522,17 +528,19 @@ class ModelTeamGitParser:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
             limit = SKILL_PREDICTION_LIMIT
-        skill_list, score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device, model_data['model'],
-                                                            snippets, model_data['new_tokens'], limit)
+        skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
+                                                                           model_data['model'], snippets,
+                                                                           model_data['new_tokens'], limit)
         for i in range(len(features)):
             lang = features[i]["lang"]
             yyyy_mm = features[i]["yyyy_mm"]
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
             is_labeled_file = features[i]["is_labeled_file"]
-            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], skill_list[i],
-                                                line_count, doc_string_line_count, model_data['model_tag'],
-                                                model_data['model_type'] == C2S, is_labeled_file)
+            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], sm_score_list[i],
+                                                skill_list[i], line_count, doc_string_line_count,
+                                                model_data['model_tag'], model_data['model_type'] == C2S,
+                                                is_labeled_file)
 
     def generate_pdf_report(self, output_file_list, merged_jsonl):
         merged_jsonl_writer = open(merged_jsonl, "w")
@@ -596,13 +604,13 @@ class ModelTeamGitParser:
             if LIBS in lang_stats[lang]:
                 del lang_stats[lang][LIBS]
 
-    # TODO: 1. Extract Comments, 2. Change to I2S model, 3. Life of Py Model 4. Store quantity and quality @ skill level
     @staticmethod
-    def accumulate_score(user_profile, lang, yyyy_mm, scores, skills, code_len, doc_string_len, tag, is_c2s,
+    def accumulate_score(user_profile, lang, yyyy_mm, scores, sm_scores, skills, code_len, doc_string_len, tag, is_c2s,
                          is_labeled_file):
         for i in range(len(skills)):
             s = skills[i]
             score = scores[i]
+            sm_score = sm_scores[i]
             if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
@@ -611,15 +619,19 @@ class ModelTeamGitParser:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
                 # min, max, sum, count, code_line_count, doc_string_line_count, is_labeled_file
-                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, 0, 0, 0, 0]
+                user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s] = [score, score, 0, sm_score, sm_score, 0, 0, 0,
+                                                                           0, 0]
             skill_map = user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag][s]
             skill_map[0] = max(skill_map[0], score)
             skill_map[1] = min(skill_map[1], score)
             skill_map[2] += score
-            skill_map[3] += 1
-            skill_map[4] += code_len
-            skill_map[5] += doc_string_len
-            skill_map[6] = max(skill_map[6], is_labeled_file)
+            skill_map[3] = max(skill_map[3], sm_score)
+            skill_map[4] = min(skill_map[4], sm_score)
+            skill_map[5] += sm_score
+            skill_map[6] += 1
+            skill_map[7] += code_len
+            skill_map[8] += doc_string_len
+            skill_map[9] = max(skill_map[6], is_labeled_file)
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
@@ -726,7 +738,7 @@ if __name__ == "__main__":
                 repo_path = f"{input_path}/{folder}"
                 file_prefix = f"""{repo_path.replace("/", "_")}"""
             # check if the repo is no longer open. Ignore if it asks for password
-            # result = run_commandline_command(f"git -C {repo_path} pull")
+            # result = run_commandline_command(f"git -C {repo_path} pull --rebase")
             # if not result:
             #     print(f"Skipping {folder} as it is no longer open")
             #     continue
@@ -737,7 +749,7 @@ if __name__ == "__main__":
                 print(f"Skipping {final_output} as it is already processed")
                 continue
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                           final_output, username, min_months)
+                                           final_output, min_months, username)
             if args.user_email and os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
