@@ -625,8 +625,8 @@ class ModelTeamGitParser:
             skill_map[0] = max(skill_map[0], score)
             skill_map[1] = min(skill_map[1], score)
             skill_map[2] += score
-            skill_map[3] += max(skill_map[3], sm_score)
-            skill_map[4] += min(skill_map[4], sm_score)
+            skill_map[3] = max(skill_map[3], sm_score)
+            skill_map[4] = min(skill_map[4], sm_score)
             skill_map[5] += sm_score
             skill_map[6] += 1
             skill_map[7] += code_len
