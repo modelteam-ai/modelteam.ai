@@ -218,7 +218,8 @@ class ModelTeamGitParser:
                     ignored_users += 1
                     continue
                 self.process_user(labels, repo_path, user, user_commits, user_stats)
-            print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
+            if ignored_users:
+                print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
             print(f"No commits found for {username}")
 
