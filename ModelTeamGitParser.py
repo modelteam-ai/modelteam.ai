@@ -632,7 +632,7 @@ class ModelTeamGitParser:
             skill_map[6] += 1
             skill_map[7] += code_len
             skill_map[8] += doc_string_len
-            skill_map[9] = max(skill_map[6], is_labeled_file)
+            skill_map[9] = max(skill_map[9], is_labeled_file)
 
     @staticmethod
     def add_to_skills(skill_stats, monthly_skills_and_scores, model_path, score_type):
