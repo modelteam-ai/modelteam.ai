@@ -10,6 +10,7 @@ from calendar import monthrange
 
 import numpy as np
 import torch
+from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
@@ -491,18 +492,32 @@ def get_model_list(config, config_key):
     return model_list
 
 
-def init_model(model_path, model_type, config, device, use_local_file=False):
-    base_llm = config["base_llm_model"]["path"]
+def get_hf_cache_path_if_present(model_name):
+    if os.path.isdir(model_name):
+        return model_name
+    file_list = ['config.json', 'adapter_config.json', 'adapter_model.safetensors', 'pytorch_model.bin',
+                 'model.safetensors']
+    for file in file_list:
+        filepath = try_to_load_from_cache(model_name, file)
+        if isinstance(filepath, str):
+            return filepath.replace(file, '')
+    return model_name
+
+
+def init_model(model_path, model_type, config, device):
+    base_llm = get_hf_cache_path_if_present(config["base_llm_model"]["path"])
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
+        model_path = get_hf_cache_path_if_present(model_path)
         skill_list = config["modelteam.ai"]["skill_list"]
-        peft_config = PeftConfig.from_pretrained(model_path, local_files_only=use_local_file)
-        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path, local_files_only=use_local_file).to(device)
+        peft_config = PeftConfig.from_pretrained(model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            get_hf_cache_path_if_present(peft_config.base_model_name_or_path)).to(device)
         if model_type == LIFE_OF_PY:
             tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
         else:
             tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
-        model = PeftModel.from_pretrained(model, model_path, local_files_only=use_local_file).to(device)
+        model = PeftModel.from_pretrained(model, model_path).to(device)
         model.eval()
         model_data["model"] = model
         model_data["tokenizer"] = tokenizer
