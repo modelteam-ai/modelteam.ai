@@ -497,12 +497,12 @@ def init_model(model_path, model_type, config, device, use_local_file=False):
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path, local_files_only=use_local_file)
-        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path).to(device)
+        model = AutoModelForSeq2SeqLM.from_pretrained(peft_config.base_model_name_or_path, local_files_only=use_local_file).to(device)
         if model_type == LIFE_OF_PY:
             tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
         else:
             tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
-        model = PeftModel.from_pretrained(model, model_path).to(device)
+        model = PeftModel.from_pretrained(model, model_path, local_files_only=use_local_file).to(device)
         model.eval()
         model_data["model"] = model
         model_data["tokenizer"] = tokenizer
