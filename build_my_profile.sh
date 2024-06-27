@@ -8,7 +8,7 @@ fi
 input_path=$1
 email_id=$2
 
-python3 -m ModelTeamGitParser --input_path $input_path --output_path model_team_profile --config config.ini --user_email $email_id &
+HF_HUB_OFFLINE=1 python3 -m ModelTeamGitParser --input_path $input_path --output_path model_team_profile --config config.ini --user_email $email_id &
 pid=$!
 # prevent sleeping in mac
 caffeinate -w $pid
