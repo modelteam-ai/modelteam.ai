@@ -1,8 +1,7 @@
 import argparse
 from configparser import ConfigParser
 
-from modelteam.modelteam_utils.constants import I2S
-from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY
+from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY, I2S
 from modelteam_utils.utils import get_model_list, eval_llm_batch_with_scores, init_model
 
 arg_parser = argparse.ArgumentParser(description="Download models")

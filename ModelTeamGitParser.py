@@ -419,7 +419,7 @@ class ModelTeamGitParser:
                     models = get_model_list(self.config, model_type)
                     for model_path in models:
                         # Evaluate 1 model at a time to avoid memory issues
-                        model_data = init_model(model_path, model_type, self.config, device)
+                        model_data = init_model(model_path, model_type, self.config, device, True)
                         if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
                             for user in user_profiles:
                                 user_profile = user_profiles[user]
