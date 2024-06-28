@@ -42,8 +42,9 @@ cd modelteam.ai
 
 # Step 2
 # Beyond this step, internet access is not required
-# Generates your profile
-./build_my_profile.sh modelteam/repos <email>
+# Generates your profile. Takes email used in git commits and optionally number of years to consider
+# Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
+./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
 # Verify the generated profile and remove any unwanted/confidential information
 ./edit_and_sign.sh modelteam/model_team_profile/<email>.json
 

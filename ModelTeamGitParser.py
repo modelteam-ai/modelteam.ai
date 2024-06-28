@@ -8,7 +8,6 @@ import re
 
 import torch
 
-from modelteam_utils.viz_utils import generate_tag_cloud, generate_ts_plot, generate_pdf
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -22,6 +21,7 @@ from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_mo
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
+from modelteam_utils.viz_utils import generate_tag_cloud, generate_ts_plot, generate_pdf
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -55,7 +55,7 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, min_months, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, num_months, username=None):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
@@ -63,7 +63,7 @@ class ModelTeamGitParser:
         :return:
         """
         commits = {}
-        command = self.get_commit_log_command(repo_path, username)
+        command = self.get_commit_log_command(repo_path, username, num_months)
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
@@ -86,11 +86,11 @@ class ModelTeamGitParser:
         return commits
 
     @staticmethod
-    def get_commit_log_command(repo_path, username):
+    def get_commit_log_command(repo_path, username, num_months):
         if username:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}"'
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}" --since="{num_months} months ago"'
         else:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="36 months ago"'
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
     def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm):
         # Get the line stats for each file in the given commit
@@ -147,8 +147,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months):
-        user_commits = self.get_commits_for_each_user(repo_path, min_months, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months, num_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, username)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -312,12 +312,13 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, min_months, username):
+                            final_output, min_months, username, num_months):
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months)
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months,
+                                        num_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
@@ -467,6 +468,7 @@ class ModelTeamGitParser:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
             limit = SKILL_PREDICTION_LIMIT
+        # TODO: Add support for batch processing
         skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
                                                                            model_data['model'], snippets,
                                                                            model_data['new_tokens'], limit)
@@ -616,6 +618,7 @@ if __name__ == "__main__":
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=10)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -625,6 +628,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
+    num_months = args.num_years * 12
 
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
@@ -689,7 +693,7 @@ if __name__ == "__main__":
                 print(f"Skipping {final_output} as it is already processed")
                 continue
             git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                           final_output, min_months, username)
+                                           final_output, min_months, username, num_months)
             if args.user_email and os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
