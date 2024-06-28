@@ -26,7 +26,7 @@ ensuring your organization has the best talent in the right roles.
 
 ![Getting Started](images/getting_started.png)
 
-- Create a folder `modelteam` and navigate to it. (Th)
+- Create a folder `modelteam` and navigate to it.
 - Create `modelteam/repos` folder
 - Clone all the repositories you want to include in your profile to `modelteam/repos`
 - Run the following command to generate your profile
@@ -35,13 +35,18 @@ ensuring your organization has the best talent in the right roles.
 ```bash
 # Step 1
 mkdir modelteam;cd modelteam
+# Clone all the repositories you want to include in your profile
+mkdir repos
+cd repos && git clone <repo1> && git clone <repo2> && cd ..
+# Get the modelteam.ai code
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
-# Generates venv and installs dependencies. Downloads all the AI models
+# Generates venv and installs dependencies. It will download all the AI models
 ./setup.sh
 
+
 # Step 2
-# Beyond this step, internet access is not required
+# For this step, internet access is not required
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
 ./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
