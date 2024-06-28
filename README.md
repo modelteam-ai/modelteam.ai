@@ -1,6 +1,5 @@
-<div style="background-color: gray; padding: 10px; display: inline-block;">
-  <img src="images/modelteam_logo.png" alt="modelteam.ai">
-</div>
+![modelteam.ai](images/modelteam_logo.jpg)
+
 **ModelTeam** is a cutting-edge AI-powered platform revolutionizing how organizations hire and manage their engineering
 talent. By precisely matching talents with responsibilities based on skill sets, ModelTeam optimizes the fit and
 efficiency of engineering teams.
