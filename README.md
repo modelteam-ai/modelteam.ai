@@ -13,7 +13,7 @@ Generate your modelteam profile with AI verified skills.
 - ~15GB free disk space
 
 ## Getting Started
-
+![Getting Started](images/getting_started.png)
 - Create a folder `modelteam` and navigate to it. (Th)
 - Create `modelteam/repos` folder
 - Clone all the repositories you want to include in your profile to `modelteam/repos`
