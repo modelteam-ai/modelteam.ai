@@ -33,15 +33,20 @@ ensuring your organization has the best talent in the right roles.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
 ```bash
+# Step 1
 mkdir modelteam;cd modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 # Generates venv and installs dependencies. Downloads all the AI models
 ./setup.sh
+
+# Step 2
 # Beyond this step, internet access is not required
 # Generates your profile
 ./build_my_profile.sh modelteam/repos <email>
 # Verify the generated profile and remove any unwanted/confidential information
 ./edit_and_sign.sh modelteam/model_team_profile/<email>.json
+
+# Step 3
 # Upload the signed profile to modelteam.ai
 ```
