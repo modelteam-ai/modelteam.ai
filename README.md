@@ -35,16 +35,18 @@ ensuring your organization has the best talent in the right roles.
 ```bash
 # Step 1
 mkdir modelteam;cd modelteam
-# Clone all the repositories you want to include in your profile
-mkdir repos
-cd repos && git clone <repo1> && git clone <repo2> && cd ..
 # Get the modelteam.ai code
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 # Generates venv and installs dependencies. It will download all the AI models
 ./setup.sh
-
-
+# Clone / Copy all the repositories you want to include in your profile
+mkdir repos;cd repos
+git clone <repo1>
+git clone <repo2>
+...
+...
+cd ..
 # Step 2
 # For this step, internet access is not required
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
