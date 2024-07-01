@@ -313,6 +313,9 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, username, num_months):
+        skill_min_score = self.config['modelteam.ai']['skill_min_score']
+        lop_min_score = self.config['modelteam.ai']['lop_min_score']
+        min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
@@ -382,6 +385,7 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
+                            self.filter_low_score_skills(user_profile, min_scores)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
@@ -590,11 +594,38 @@ class ModelTeamGitParser:
                 skill_stats[model_name][skill][TIME_SERIES].append(month)
                 skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
 
+    @staticmethod
+    def filter_low_score_skills(user_profile, min_scores):
+        lang_stats = user_profile[STATS][LANGS]
+        all_skills = set()
+        all_good_skills = set()
+        for lang in lang_stats.keys():
+            monthly_stats = lang_stats[lang][TIME_SERIES]
+            for month in monthly_stats.keys():
+                for model in monthly_stats[month].keys():
+                    if model not in min_scores:
+                        continue
+                    min_score_to_filter = min_scores[model]
+                    model_stats = monthly_stats[month][model]
+                    skills = [model_stats.keys()]
+                    for skill in skills:
+                        all_skills.add(skill)
+                        max_monthly_score = model_stats[skill][0]
+                        if max_monthly_score <= min_score_to_filter:
+                            del model_stats[skill]
+                        else:
+                            all_good_skills.add(skill)
+        # Remove skills that are not present in any month
+        for skill in all_skills:
+            if skill not in all_good_skills:
+                if skill in user_profile[STATS][SKILLS]:
+                    del user_profile[STATS][SKILLS][skill]
+
 
 def load_label_files(lf_name):
-    print(f"Loading label files from {lf_name}", flush=True)
     label_files = set()
     if lf_name:
+        print(f"Loading label files from {lf_name}", flush=True)
         with open(lf_name, "r") as f:
             for line in f:
                 labels = json.loads(line)
@@ -615,6 +646,8 @@ if __name__ == "__main__":
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
+    parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
+                        action='store_true')
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
@@ -659,19 +692,20 @@ if __name__ == "__main__":
             continue
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
-            touch_file = f"{output_path}/touch-files/{folder}"
-            if os.path.exists(touch_file):
-                print(f"Skipping {folder} as it is already processed")
-                continue
-            else:
-                # There is a very tiny chance that another process might create the file
-                # Randomized file list should have taken care of this
-                try:
-                    with open(touch_file, "x") as f:
-                        f.write("1")
-                except FileExistsError:
-                    print(f"Rare Exception: Skipping {folder} as it is already processed")
+            if args.parallel_mode:
+                touch_file = f"{output_path}/touch-files/{folder}"
+                if os.path.exists(touch_file):
+                    print(f"Skipping {folder} as it is already processed")
                     continue
+                else:
+                    # There is a very tiny chance that another process might create the file
+                    # Randomized file list should have taken care of this
+                    try:
+                        with open(touch_file, "x") as f:
+                            f.write("1")
+                    except FileExistsError:
+                        print(f"Rare Exception: Skipping {folder} as it is already processed")
+                        continue
             cnt += 1
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:

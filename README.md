@@ -19,6 +19,7 @@ ensuring your organization has the best talent in the right roles.
 - Python-venv (if not included in Python installation)
 - Git (command line)
 - MacOS or Linux
+- caffeine (for linux). caffeinate (for MacOS, built-in)
 - Minimum 8GB RAM
 - ~15GB free disk space
 
