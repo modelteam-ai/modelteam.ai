@@ -12,3 +12,4 @@ wordcloud==1.9.3
 reportlab==4.1.0
 cryptography==42.0.5
 pillow==10.2.0
+huggingface-hub==0.23.4
