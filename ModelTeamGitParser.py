@@ -313,8 +313,8 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, username, num_months):
-        skill_min_score = self.config['modelteam.ai']['skill_min_score']
-        lop_min_score = self.config['modelteam.ai']['lop_min_score']
+        skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
+        lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
         min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
@@ -596,18 +596,21 @@ class ModelTeamGitParser:
 
     @staticmethod
     def filter_low_score_skills(user_profile, min_scores):
-        lang_stats = user_profile[STATS][LANGS]
+        if not user_profile:
+            return
+        lang_stats = user_profile[LANGS]
         all_skills = set()
         all_good_skills = set()
         for lang in lang_stats.keys():
             monthly_stats = lang_stats[lang][TIME_SERIES]
             for month in monthly_stats.keys():
                 for model in monthly_stats[month].keys():
-                    if model not in min_scores:
+                    model_type = model.split("::")[0]
+                    if model_type not in min_scores:
                         continue
-                    min_score_to_filter = min_scores[model]
+                    min_score_to_filter = min_scores[model_type]
                     model_stats = monthly_stats[month][model]
-                    skills = [model_stats.keys()]
+                    skills = list(model_stats.keys())
                     for skill in skills:
                         all_skills.add(skill)
                         max_monthly_score = model_stats[skill][0]
@@ -618,8 +621,8 @@ class ModelTeamGitParser:
         # Remove skills that are not present in any month
         for skill in all_skills:
             if skill not in all_good_skills:
-                if skill in user_profile[STATS][SKILLS]:
-                    del user_profile[STATS][SKILLS][skill]
+                if skill in user_profile[SKILLS]:
+                    del user_profile[SKILLS][skill]
 
 
 def load_label_files(lf_name):
@@ -725,14 +728,14 @@ if __name__ == "__main__":
             final_output = f"""{output_path}/final-stats/{file_prefix}_user_profile.jsonl"""
             if os.path.exists(final_output):
                 print(f"Skipping {final_output} as it is already processed")
-                continue
-            git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                           final_output, min_months, username, num_months)
-            if args.user_email and os.path.exists(final_output):
+            else:
+                git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
+                                               final_output, min_months, username, num_months)
+            if os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-    if final_outputs:
+    if args.user_email and final_outputs:
         git_parser.generate_pdf_report(final_outputs, merged_jsonl)
     encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
     print(f"Processed {cnt} out of {len(folder_list)}")

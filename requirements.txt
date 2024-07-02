@@ -11,3 +11,4 @@ xgboost==2.0.3
 wordcloud==1.9.3
 reportlab==4.1.0
 cryptography==42.0.5
+pillow==10.2.0
