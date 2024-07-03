@@ -616,7 +616,8 @@ class ModelTeamGitParser:
                         max_monthly_score = model_stats[skill][0]
                         if max_monthly_score <= min_score_to_filter:
                             del model_stats[skill]
-                        else:
+                        elif model_type == C2S:
+                            # Ignore skills that are not present in C2S model results
                             all_good_skills.add(skill)
         # Remove skills that are not present in any month
         for skill in all_skills:
