@@ -1,12 +1,12 @@
 import argparse
 import json
-import tkinter as tk
-from tkinter import ttk, messagebox
+import sys
 
-from PIL import Image, ImageTk
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
+                             QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication)
 
 from modelteam.modelteam_utils.constants import USER, REPO, STATS, SKILLS
-from modelteam.modelteam_utils.crypto_utils import encrypt_compress_file
 
 RELEVANT = "Relevant"
 NOT_RELEVANT = "Not Relevant"
@@ -20,110 +20,106 @@ explanation = ("\nThese are the skills that our models predicted after analyzing
                "\n3. Top Secret: Dont send this to the server.")
 
 
-class App:
-    def __init__(self, root, email, repocsv, skill_list, choices_file):
-        self.root = root
-        self.root.title("Edit Profile")
+class App(QWidget):
+    def __init__(self, email, repocsv, explanation, items, choice_file):
+        super().__init__()
 
-        # Configure dark theme colors
-        self.root.configure(background='#333333')
-        self.style = ttk.Style()
-        self.style.theme_use('clam')  # Use a style that supports customization (e.g., 'clam', 'alt', 'default')
-
-        # Define custom colors
-        dark_bg = '#333333'
-        light_fg = 'white'
-
-        self.style.configure('.', background=dark_bg, foreground=light_fg)
-        self.style.map('.', background=[('selected', '#444444')])
-
-        # Top frame for logo and display fields
-        top_frame = ttk.Frame(root, style='TFrame', padding=(10, 10, 10, 0))
-        top_frame.pack(fill='x')
-
-        # Add logo image (JPEG)
-        image = Image.open("images/modelteam_logo.png")
-        self.logo = ImageTk.PhotoImage(image)
-        logo_label = ttk.Label(top_frame, image=self.logo)
-        logo_label.pack(side='left', padx=10)
-
-        # Header frame for email and RepoCSV
-        header_frame = ttk.Frame(root, style='TFrame', padding=(10, 10, 10, 0))
-        header_frame.pack(fill='x')
-
-        email_label = ttk.Label(header_frame, text=f"Email: {email}", style='TLabel')
-        email_label.pack(side='top', anchor='w')
-
-        repo_csv_label = ttk.Label(header_frame, text=f"RepoCSV: {repocsv}", style='TLabel')
-        repo_csv_label.pack(side='top', anchor='w')
-
-        repo_csv_label = ttk.Label(header_frame, text=explanation, style='TLabel', wraplength=600)
-        repo_csv_label.pack(side='top', anchor='w')
-        # Main frame for items and choices
-        main_frame = ttk.Frame(root, style='TFrame')
-        main_frame.pack(padx=10, pady=10, expand=True, fill='both')
-
-        self.canvas = tk.Canvas(main_frame, background=dark_bg)
-        self.scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = ttk.Frame(self.canvas, style='TFrame')
-
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        self.choices = {}
-
-        for item in skill_list:
-            self.add_choice_widget(self.scrollable_frame, item)
-
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
-
-        self.save_button = ttk.Button(root, text="Save Choices", command=self.save_choices)
-        self.save_button.pack(pady=10)
-
-        # Save email and RepoCSV for later use
         self.email = email
         self.repocsv = repocsv
+        self.items = items
+        self.choice_file = choice_file
+        self.explanation = explanation
+        self.init_ui()
 
-    def add_choice_widget(self, frame, item):
-        item_frame = ttk.Frame(frame, style='TFrame')
-        item_frame.pack(fill='x', pady=5)
+    def init_ui(self):
+        self.setWindowTitle("Data Selector")
+        self.setStyleSheet("background-color: #333333; color: white;")
+        layout = QVBoxLayout()
 
-        label = ttk.Label(item_frame, text=item)
-        label.pack(side='left', padx=5)
+        # Top frame for logo and display fields
+        top_frame = QHBoxLayout()
+        layout.addLayout(top_frame)
 
-        var = tk.StringVar(value="Relevant")
-        self.choices[item] = var
+        # Add logo image (PNG)
+        pixmap = QPixmap("images/modelteam_logo.png")
+        logo_label = QLabel()
+        logo_label.setPixmap(pixmap)
+        top_frame.addWidget(logo_label)
 
-        keep_radio = ttk.Radiobutton(item_frame, text="Relevant", variable=var, value="Relevant",
-                                     command=self.check_filled)
-        not_relevant_radio = ttk.Radiobutton(item_frame, text="Not Relevant", variable=var, value="Not Relevant",
-                                             command=self.check_filled)
-        remove_conf_radio = ttk.Radiobutton(item_frame, text="Top Secret", variable=var,
-                                            value="Top Secret", command=self.check_filled)
+        header_frame = QVBoxLayout()
+        layout.addLayout(header_frame)
 
-        keep_radio.pack(side='left', padx=5)
-        not_relevant_radio.pack(side='left', padx=5)
-        remove_conf_radio.pack(side='left', padx=5)
+        email_label = QLabel(f"Email: {self.email}")
+        email_label.setStyleSheet("color: white;")
+        header_frame.addWidget(email_label)
+
+        repo_csv_label = QLabel(self.explanation)
+        repo_csv_label.setWordWrap(True)
+        repo_csv_label.setStyleSheet("color: white;")
+        header_frame.addWidget(repo_csv_label)
+
+        # Scroll area for items
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("background-color: #333333;")
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_area.setWidget(scroll_content)
+        self.choices = {}
+        for item in self.items:
+            self.add_choice_widget(scroll_layout, item)
+
+        layout.addWidget(scroll_area)
+        self.save_button = QPushButton("Save Choices")
+        self.save_button.clicked.connect(self.save_choices)
+        self.save_button.setEnabled(False)
+        layout.addWidget(self.save_button)
+
+        self.setLayout(layout)
+        self.show()
+
+    def add_choice_widget(self, layout, item):
+        frame = QFrame()
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame_layout = QHBoxLayout(frame)
+
+        label = QLabel(item)
+        frame_layout.addWidget(label)
+
+        button_group = QButtonGroup()
+
+        keep_radio = QRadioButton(RELEVANT)
+        keep_radio.setChecked(True)
+        keep_radio.toggled.connect(self.check_filled)
+        button_group.addButton(keep_radio)
+        frame_layout.addWidget(keep_radio)
+
+        not_relevant_radio = QRadioButton(NOT_RELEVANT)
+        not_relevant_radio.toggled.connect(self.check_filled)
+        button_group.addButton(not_relevant_radio)
+        frame_layout.addWidget(not_relevant_radio)
+
+        remove_conf_radio = QRadioButton(TOP_SECRET)
+        remove_conf_radio.toggled.connect(self.check_filled)
+        button_group.addButton(remove_conf_radio)
+        frame_layout.addWidget(remove_conf_radio)
+
+        self.choices[item] = button_group
+
+        layout.addWidget(frame)
 
     def check_filled(self):
-        if all(var.get() != "" for var in self.choices.values()):
-            self.save_button.config(state='normal')
+        if all(group.checkedButton() for group in self.choices.values()):
+            self.save_button.setEnabled(True)
         else:
-            self.save_button.config(state='disabled')
+            self.save_button.setEnabled(False)
 
     def save_choices(self):
-        choices_dict = {item: var.get() for item, var in self.choices.items()}
-        with open(choices_file, 'w') as f:
+        choices_dict = {item: group.checkedButton().text() for item, group in self.choices.items()}
+        with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
-        messagebox.showinfo("Save Choices", "Choices saved successfully!")
+        QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
 
 
 def edit_profile(profile_jsonl, choices_file):
@@ -135,9 +131,9 @@ def edit_profile(profile_jsonl, choices_file):
             email = json_line[USER]
             repos.append(json_line[REPO])
             skills.extend(json_line[STATS][SKILLS].keys())
-        root = tk.Tk()
-        app = App(root, email, ",".join(repos), skills, choices_file)
-        root.mainloop()
+        app = QApplication(sys.argv)
+        ex = App(email, ",".join(repos), explanation, sorted(skills), choices_file)
+        return app.exec_()
 
 
 def apply_choices(profile_jsonl, choices_file, edited_file):
@@ -154,6 +150,10 @@ if __name__ == "__main__":
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.jsonl"
     encrypted_file = f"{file_name_without_extension}.enc.gz"
-    edit_profile(args.profile_jsonl, choices_file)
-    apply_choices(args.profile_jsonl, choices_file, edited_file)
-    encrypt_compress_file(args.profile_jsonl, encrypted_file, args.user_key)
+    result = edit_profile(args.profile_jsonl, choices_file)
+    if result == 0:
+        apply_choices(args.profile_jsonl, choices_file, edited_file)
+        # encrypt_compress_file(args.profile_jsonl, encrypted_file, args.user_key)
+    else:
+        print("Changes were not saved. Exiting... Please run the script again.")
+        sys.exit(1)
