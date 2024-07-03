@@ -65,6 +65,7 @@ class App(QWidget):
 
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(5)
         scroll_area.setWidget(scroll_content)
         self.choices = {}
         for item in self.items:
@@ -83,8 +84,11 @@ class App(QWidget):
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QHBoxLayout(frame)
+        frame_layout.setContentsMargins(10, 0, 10, 0)
 
         label = QLabel(item)
+        label.setFixedWidth(200)
+        label.setWordWrap(True)
         frame_layout.addWidget(label)
 
         button_group = QButtonGroup()
