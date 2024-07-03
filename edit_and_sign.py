@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication)
@@ -32,7 +33,7 @@ class App(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("Data Selector")
+        self.setWindowTitle("Edit Profile")
         self.setStyleSheet("background-color: #333333; color: white;")
         layout = QVBoxLayout()
 
@@ -68,6 +69,7 @@ class App(QWidget):
         scroll_layout.setSpacing(5)
         scroll_area.setWidget(scroll_content)
         self.choices = {}
+        self.add_choice_header(scroll_layout)
         for item in self.items:
             self.add_choice_widget(scroll_layout, item)
 
@@ -79,6 +81,24 @@ class App(QWidget):
 
         self.setLayout(layout)
         self.show()
+
+    def add_choice_header(self, layout):
+        frame = QFrame()
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame_layout = QHBoxLayout(frame)
+        frame_layout.setContentsMargins(10, 0, 10, 0)
+        label = QLabel("Skill")
+        label.setFixedWidth(200)
+        label.setAlignment(Qt.AlignCenter)
+        frame_layout.addWidget(label)
+        names = [RELEVANT, NOT_RELEVANT, TOP_SECRET]
+        for name in names:
+            radio_layout = QHBoxLayout()
+            radio_layout.setAlignment(Qt.AlignCenter)
+            label = QLabel(name)
+            radio_layout.addWidget(label)
+            frame_layout.addLayout(radio_layout)
+        layout.addWidget(frame)
 
     def add_choice_widget(self, layout, item):
         frame = QFrame()
@@ -92,25 +112,19 @@ class App(QWidget):
         frame_layout.addWidget(label)
 
         button_group = QButtonGroup()
-
-        keep_radio = QRadioButton(RELEVANT)
-        keep_radio.setChecked(True)
-        keep_radio.toggled.connect(self.check_filled)
-        button_group.addButton(keep_radio)
-        frame_layout.addWidget(keep_radio)
-
-        not_relevant_radio = QRadioButton(NOT_RELEVANT)
-        not_relevant_radio.toggled.connect(self.check_filled)
-        button_group.addButton(not_relevant_radio)
-        frame_layout.addWidget(not_relevant_radio)
-
-        remove_conf_radio = QRadioButton(TOP_SECRET)
-        remove_conf_radio.toggled.connect(self.check_filled)
-        button_group.addButton(remove_conf_radio)
-        frame_layout.addWidget(remove_conf_radio)
-
+        names = [RELEVANT, NOT_RELEVANT, TOP_SECRET]
+        for name in names:
+            radio_layout = QHBoxLayout()
+            radio_layout.setAlignment(Qt.AlignCenter)
+            radio = QRadioButton()
+            radio.setAccessibleName(name)
+            if name == RELEVANT:
+                radio.setChecked(True)
+            radio.toggled.connect(self.check_filled)
+            button_group.addButton(radio)
+            radio_layout.addWidget(radio)
+            frame_layout.addLayout(radio_layout)
         self.choices[item] = button_group
-
         layout.addWidget(frame)
 
     def check_filled(self):
@@ -120,7 +134,7 @@ class App(QWidget):
             self.save_button.setEnabled(False)
 
     def save_choices(self):
-        choices_dict = {item: group.checkedButton().text() for item, group in self.choices.items()}
+        choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
         with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
         QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
@@ -156,6 +170,7 @@ if __name__ == "__main__":
     encrypted_file = f"{file_name_without_extension}.enc.gz"
     result = edit_profile(args.profile_jsonl, choices_file)
     if result == 0:
+        print("Changes were saved. Applying changes...")
         apply_choices(args.profile_jsonl, choices_file, edited_file)
         # encrypt_compress_file(args.profile_jsonl, encrypted_file, args.user_key)
     else:
