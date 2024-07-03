@@ -15,14 +15,23 @@ TOP_SECRET = "Top Secret"
 
 
 class App(QWidget):
-    def __init__(self, email, repocsv, items, choice_file):
+    def __init__(self, email, repocsv, skills, choice_file):
         super().__init__()
 
         self.email = email
         self.repocsv = repocsv
-        self.items = items
+        self.skills = skills
         self.choice_file = choice_file
+        self.choices = {}
         self.init_ui()
+
+    def load_choices(self):
+        try:
+            with open(self.choice_file, 'r') as f:
+                choices_dict = json.load(f)
+                return choices_dict
+        except FileNotFoundError:
+            return {}
 
     def init_ui(self):
         self.setWindowTitle("Edit Profile")
@@ -44,7 +53,7 @@ class App(QWidget):
             f"""<html>
 <h4><b>Email:</b> {self.email}<br>      
 <b>RepoCSV:</b> {self.repocsv}<br>
-<b>Total Skills:</b> {len(self.items)}</h4>
+<b>Total Skills:</b> {len(self.skills)}</h4>
 <p style="font-size:12px; ">These are the skills that our models predicted after analyzing your code contributions.
 These skills will further be scored by another model on the server side.
 <br>Please select the appropriate choice for each skill to help us improve our model.</p>
@@ -61,7 +70,7 @@ These skills will further be scored by another model on the server side.
         repo_csv_label.setStyleSheet("color: white;")
         layout.addWidget(repo_csv_label)
 
-        # Scroll area for items
+        # Scroll area for skills
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("background-color: #333333;")
@@ -71,11 +80,11 @@ These skills will further be scored by another model on the server side.
         scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_layout.setSpacing(1)
         scroll_area.setWidget(scroll_content)
-        self.choices = {}
         self.add_choice_header(layout)
         layout.setSpacing(1)
-        for item in self.items:
-            self.add_choice_widget(scroll_layout, item)
+        prev_choices = self.load_choices()
+        for skill in self.skills:
+            self.add_choice_widget(scroll_layout, skill, prev_choices.get(skill, RELEVANT))
 
         layout.addWidget(scroll_area)
         button_layout = QHBoxLayout()
@@ -115,13 +124,13 @@ These skills will further be scored by another model on the server side.
             frame_layout.addLayout(header_layout)
         layout.addWidget(frame)
 
-    def add_choice_widget(self, layout, item):
+    def add_choice_widget(self, layout, skill, def_enabled):
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
-        label = QLabel(item)
+        label = QLabel(skill)
         label.setFixedWidth(150)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
@@ -133,13 +142,13 @@ These skills will further be scored by another model on the server side.
             radio_layout.setAlignment(Qt.AlignCenter)
             radio = QRadioButton()
             radio.setAccessibleName(name)
-            if name == RELEVANT:
+            if name == def_enabled:
                 radio.setChecked(True)
             radio.toggled.connect(self.check_filled)
             button_group.addButton(radio)
             radio_layout.addWidget(radio)
             frame_layout.addLayout(radio_layout)
-        self.choices[item] = button_group
+        self.choices[skill] = button_group
         layout.addWidget(frame)
 
     def check_filled(self):
