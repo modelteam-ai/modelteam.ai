@@ -3,9 +3,9 @@ import json
 import sys
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
-                             QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication)
+                             QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
 from modelteam.modelteam_utils.constants import USER, REPO, STATS, SKILLS
 
@@ -13,23 +13,15 @@ RELEVANT = "Relevant"
 NOT_RELEVANT = "Not Relevant"
 TOP_SECRET = "Top Secret"
 
-explanation = ("\nThese are the skills that our models predicted after analyzing your code contributions. "
-               "These skills will further be scored by another model on the server side."
-               "Please select the appropriate choice for each skill to help us improve our model.\n"
-               "\n1. Relevant: Keep the skill in your profile."
-               "\n2. Not Relevant: Will be removed at the server side."
-               "\n3. Top Secret: Dont send this to the server.")
-
 
 class App(QWidget):
-    def __init__(self, email, repocsv, explanation, items, choice_file):
+    def __init__(self, email, repocsv, items, choice_file):
         super().__init__()
 
         self.email = email
         self.repocsv = repocsv
         self.items = items
         self.choice_file = choice_file
-        self.explanation = explanation
         self.init_ui()
 
     def init_ui(self):
@@ -47,17 +39,27 @@ class App(QWidget):
         logo_label.setPixmap(pixmap)
         top_frame.addWidget(logo_label)
 
-        header_frame = QVBoxLayout()
-        layout.addLayout(header_frame)
-
-        email_label = QLabel(f"Email: {self.email}")
-        email_label.setStyleSheet("color: white;")
-        header_frame.addWidget(email_label)
-
-        repo_csv_label = QLabel(self.explanation)
-        repo_csv_label.setWordWrap(True)
+        repo_csv_label = QTextBrowser()
+        explanation = (
+            f"""<html>
+<h4><b>Email:</b> {self.email}<br>      
+<b>RepoCSV:</b> {self.repocsv}<br>
+<b>Total Skills:</b> {len(self.items)}</h4>
+<p style="font-size:12px; ">These are the skills that our models predicted after analyzing your code contributions.
+These skills will further be scored by another model on the server side.
+<br>Please select the appropriate choice for each skill to help us improve our model.</p>
+<p style="font-size:14px; ">
+1. <b>Relevant</b>: Keep in profile.
+<br>2. <b>Not Relevant</b>: Mark as not relevant and Remove from profile in the server.
+<br>3. <b>Top Secret</b>: Remove from profile and DON'T even send it to the server.
+</p>
+</html>
+""")
+        repo_csv_label.setMaximumHeight(200)
+        repo_csv_label.setHtml(explanation)
+        repo_csv_label.setWordWrapMode(QTextOption.WordWrap)
         repo_csv_label.setStyleSheet("color: white;")
-        header_frame.addWidget(repo_csv_label)
+        layout.addWidget(repo_csv_label)
 
         # Scroll area for items
         scroll_area = QScrollArea()
@@ -66,18 +68,25 @@ class App(QWidget):
 
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
-        scroll_layout.setSpacing(5)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(1)
         scroll_area.setWidget(scroll_content)
         self.choices = {}
-        self.add_choice_header(scroll_layout)
+        self.add_choice_header(layout)
+        layout.setSpacing(1)
         for item in self.items:
             self.add_choice_widget(scroll_layout, item)
 
         layout.addWidget(scroll_area)
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(10)
+        button_layout.setContentsMargins(20, 20, 20, 20)
         self.save_button = QPushButton("Save Choices")
+        self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
         self.save_button.clicked.connect(self.save_choices)
         self.save_button.setEnabled(False)
-        layout.addWidget(self.save_button)
+        button_layout.addWidget(self.save_button)
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
         self.show()
@@ -86,18 +95,24 @@ class App(QWidget):
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QHBoxLayout(frame)
-        frame_layout.setContentsMargins(10, 0, 10, 0)
+        frame_layout.setContentsMargins(2, 2, 2, 2)
         label = QLabel("Skill")
-        label.setFixedWidth(200)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        label.setFixedWidth(150)
         label.setAlignment(Qt.AlignCenter)
         frame_layout.addWidget(label)
         names = [RELEVANT, NOT_RELEVANT, TOP_SECRET]
         for name in names:
-            radio_layout = QHBoxLayout()
-            radio_layout.setAlignment(Qt.AlignCenter)
+            header_layout = QHBoxLayout()
+            header_layout.setAlignment(Qt.AlignCenter)
             label = QLabel(name)
-            radio_layout.addWidget(label)
-            frame_layout.addLayout(radio_layout)
+            font = label.font()
+            font.setBold(True)
+            label.setFont(font)
+            header_layout.addWidget(label)
+            frame_layout.addLayout(header_layout)
         layout.addWidget(frame)
 
     def add_choice_widget(self, layout, item):
@@ -107,7 +122,7 @@ class App(QWidget):
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
         label = QLabel(item)
-        label.setFixedWidth(200)
+        label.setFixedWidth(150)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
 
@@ -140,6 +155,11 @@ class App(QWidget):
         QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
 
 
+def to_title_case(skills):
+    return sorted([skill.title() for skill in skills])
+    pass
+
+
 def edit_profile(profile_jsonl, choices_file):
     with open(profile_jsonl, "r") as f:
         repos = []
@@ -149,8 +169,9 @@ def edit_profile(profile_jsonl, choices_file):
             email = json_line[USER]
             repos.append(json_line[REPO])
             skills.extend(json_line[STATS][SKILLS].keys())
+        skills = to_title_case(skills)
         app = QApplication(sys.argv)
-        ex = App(email, ",".join(repos), explanation, sorted(skills), choices_file)
+        ex = App(email, ",".join(repos), skills, choices_file)
         return app.exec_()
 
 
