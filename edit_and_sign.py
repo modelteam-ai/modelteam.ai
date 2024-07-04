@@ -36,6 +36,7 @@ class App(QWidget):
     def init_ui(self):
         self.setWindowTitle("Edit Profile")
         self.setStyleSheet("background-color: #333333; color: white;")
+        self.setGeometry(100, 100, 800, 800)
         layout = QVBoxLayout()
 
         # Top frame for logo and display fields
@@ -52,11 +53,10 @@ class App(QWidget):
         explanation = (
             f"""<html>
 <h4><b>Email:</b> {self.email}<br>      
-<b>RepoCSV:</b> {self.repocsv}<br>
+<b>Repos:</b> {self.repocsv}<br>
 <b>Total Skills:</b> {len(self.skills)}</h4>
 <p style="font-size:12px; ">These are the skills that our models predicted after analyzing your code contributions.
-These skills will further be scored by another model on the server side.
-<br>Please select the appropriate choice for each skill to help us improve our model.</p>
+These skills will further be scored by another model on the server side. Please select the appropriate choice for each skill to help us improve our model.</p>
 <p style="font-size:14px; ">
 1. <b>Relevant</b>: Keep in profile.
 <br>2. <b>Not Relevant</b>: Mark as not relevant and Remove from profile in the server.
@@ -90,8 +90,22 @@ These skills will further be scored by another model on the server side.
         button_layout = QHBoxLayout()
         button_layout.setSpacing(10)
         button_layout.setContentsMargins(20, 20, 20, 20)
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setFixedWidth(150)
+        self.cancel_button.setFixedHeight(30)
+        font = self.cancel_button.font()
+        font.setBold(True)
+        self.cancel_button.setFont(font)
+        self.cancel_button.setStyleSheet("background-color: #ff6600; color: white;")
+        self.cancel_button.clicked.connect(self.close)
+        button_layout.addWidget(self.cancel_button)
         self.save_button = QPushButton("Save Choices")
-        self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
+        font = self.save_button.font()
+        font.setBold(True)
+        self.save_button.setFont(font)
+        self.save_button.setFixedWidth(150)
+        self.save_button.setFixedHeight(30)
+        self.save_button.setStyleSheet("background-color: #808080; color: white;")
         self.save_button.clicked.connect(self.save_choices)
         self.save_button.setEnabled(False)
         button_layout.addWidget(self.save_button)
@@ -154,8 +168,10 @@ These skills will further be scored by another model on the server side.
     def check_filled(self):
         if all(group.checkedButton() for group in self.choices.values()):
             self.save_button.setEnabled(True)
+            self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
         else:
             self.save_button.setEnabled(False)
+            self.save_button.setStyleSheet("background-color: #808080; color: white;")
 
     def save_choices(self):
         choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
