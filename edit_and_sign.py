@@ -175,6 +175,7 @@ These skills will further be scored by another model on the server side. Please 
         with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
         QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
+        self.close()
 
 
 def edit_profile(profile_jsonl, choices_file):
