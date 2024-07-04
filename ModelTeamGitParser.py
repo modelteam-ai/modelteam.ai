@@ -560,7 +560,7 @@ class ModelTeamGitParser:
             if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
-                user_profile[SKILLS][s] += score
+                user_profile[SKILLS][s] += sm_score * code_len
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
@@ -706,6 +706,6 @@ if __name__ == "__main__":
         else:
             print(f"Skipping {folder}")
     if args.user_email and final_outputs:
+        # TODO: Move this to edit_and_sign.py
         git_parser.generate_pdf_report(final_outputs, merged_jsonl)
-    encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
     print(f"Processed {cnt} out of {len(folder_list)}")

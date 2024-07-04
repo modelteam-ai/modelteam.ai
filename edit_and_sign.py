@@ -141,7 +141,7 @@ These skills will further be scored by another model on the server side. Please 
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
-        label = QLabel(skill)
+        label = QLabel(skill.title())
         label.setFixedWidth(150)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
@@ -177,21 +177,17 @@ These skills will further be scored by another model on the server side. Please 
         QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
 
 
-def to_title_case(skills):
-    return sorted([skill.title() for skill in skills])
-    pass
-
-
 def edit_profile(profile_jsonl, choices_file):
     with open(profile_jsonl, "r") as f:
         repos = []
-        skills = []
+        skills = {}
         for line in f:
             json_line = json.loads(line)
             email = json_line[USER]
             repos.append(json_line[REPO])
-            skills.extend(json_line[STATS][SKILLS].keys())
-        skills = to_title_case(skills)
+            for skill in json_line[STATS][SKILLS].keys():
+                skills[skill] = max(skills.get(skill, 0), json_line[STATS][SKILLS][skill])
+        skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
         app = QApplication(sys.argv)
         ex = App(email, ",".join(repos), skills, choices_file)
         return app.exec_()

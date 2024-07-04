@@ -551,7 +551,7 @@ def load_repo_user_list(file_name):
     return ignore_users
 
 
-def filter_low_score_skills(user_profile, min_scores, changes={}):
+def filter_low_score_skills(user_profile, min_scores, changes=None):
     if not user_profile:
         return
     lang_stats = user_profile[LANGS]
@@ -562,17 +562,23 @@ def filter_low_score_skills(user_profile, min_scores, changes={}):
         for month in monthly_stats.keys():
             for model in monthly_stats[month].keys():
                 model_type = model.split("::")[0]
-                if model_type not in [C2S, LIFE_OF_PY, I2S]:
+                if model_type not in [C2S, I2S, LIFE_OF_PY]:
                     continue
                 min_score_to_filter = min_scores.get(model_type, 0)
                 model_stats = monthly_stats[month][model]
                 skills = list(model_stats.keys())
                 for skill in skills:
                     all_skills.add(skill)
-                    # All skills should be in changes, so setting default to TOP_SECRET so it will be removed
-                    change = changes.get(skill, TOP_SECRET)
+                    # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
+                    if not changes:
+                        change = ""
+                    else:
+                        change = changes.get(skill, TOP_SECRET)
                     max_monthly_score = model_stats[skill][0]
-                    if change == TOP_SECRET or max_monthly_score <= min_score_to_filter:
+                    if max_monthly_score <= min_score_to_filter:
+                        del model_stats[skill]
+                    elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS] or change == TOP_SECRET):
+                        # Ignore skills that are not present in user profile (No C2S) or top secret skills
                         del model_stats[skill]
                     elif model_type == C2S:
                         # Ignore skills that are not present in C2S model results
@@ -580,7 +586,10 @@ def filter_low_score_skills(user_profile, min_scores, changes={}):
     # Remove skills that are not present in any month
     for skill in all_skills:
         if skill in user_profile[SKILLS]:
-            change = changes.get(skill, TOP_SECRET)
+            if not changes:
+                change = ""
+            else:
+                change = changes.get(skill, TOP_SECRET)
             if change == TOP_SECRET or skill not in all_good_skills:
                 del user_profile[SKILLS][skill]
             if change == NOT_RELEVANT:
