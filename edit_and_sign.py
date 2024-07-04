@@ -7,11 +7,8 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam.modelteam_utils.constants import USER, REPO, STATS, SKILLS
-
-RELEVANT = "Relevant"
-NOT_RELEVANT = "Not Relevant"
-TOP_SECRET = "Top Secret"
+from modelteam.modelteam_utils.utils import filter_low_score_skills
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
 
 
 class App(QWidget):
@@ -201,7 +198,16 @@ def edit_profile(profile_jsonl, choices_file):
 
 
 def apply_choices(profile_jsonl, choices_file, edited_file):
-    pass
+    with open(profile_jsonl, "r") as f:
+        with open(edited_file, "w") as f2:
+            with open(choices_file, 'r') as f3:
+                choices_dict = json.load(f3)
+            for line in f:
+                json_line = json.loads(line)
+                stats = json_line[STATS]
+                filter_low_score_skills(stats, {}, choices_dict)
+                f2.write(json.dumps(json_line) + "\n")
+    print(f"Edited file saved as {edited_file}")
 
 
 if __name__ == "__main__":

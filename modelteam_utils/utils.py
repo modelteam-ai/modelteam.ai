@@ -15,7 +15,7 @@ from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC, \
-    I2S
+    I2S, LANGS, TIME_SERIES, SKILLS, TOP_SECRET, NOT_RELEVANT
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -549,3 +549,40 @@ def load_repo_user_list(file_name):
                 parts = line.strip().split("\t")
                 ignore_users.add(get_repo_user_key(parts[0], parts[1]))
     return ignore_users
+
+
+def filter_low_score_skills(user_profile, min_scores, changes={}):
+    if not user_profile:
+        return
+    lang_stats = user_profile[LANGS]
+    all_skills = set()
+    all_good_skills = set()
+    for lang in lang_stats.keys():
+        monthly_stats = lang_stats[lang][TIME_SERIES]
+        for month in monthly_stats.keys():
+            for model in monthly_stats[month].keys():
+                model_type = model.split("::")[0]
+                if model_type not in [C2S, LIFE_OF_PY, I2S]:
+                    continue
+                min_score_to_filter = min_scores.get(model_type, 0)
+                model_stats = monthly_stats[month][model]
+                skills = list(model_stats.keys())
+                for skill in skills:
+                    all_skills.add(skill)
+                    # All skills should be in changes, so setting default to TOP_SECRET so it will be removed
+                    change = changes.get(skill, TOP_SECRET)
+                    max_monthly_score = model_stats[skill][0]
+                    if change == TOP_SECRET or max_monthly_score <= min_score_to_filter:
+                        del model_stats[skill]
+                    elif model_type == C2S:
+                        # Ignore skills that are not present in C2S model results
+                        all_good_skills.add(skill)
+    # Remove skills that are not present in any month
+    for skill in all_skills:
+        if skill in user_profile[SKILLS]:
+            change = changes.get(skill, TOP_SECRET)
+            if change == TOP_SECRET or skill not in all_good_skills:
+                del user_profile[SKILLS][skill]
+            if change == NOT_RELEVANT:
+                # Mark the skill as not relevant
+                user_profile[SKILLS][skill] = -1 * user_profile[SKILLS][skill]

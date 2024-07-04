@@ -16,7 +16,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
-from modelteam_utils.utils import break_code_snippets_to_chunks
+from modelteam_utils.utils import break_code_snippets_to_chunks, filter_low_score_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
@@ -385,7 +385,7 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
-                            self.filter_low_score_skills(user_profile, min_scores)
+                            filter_low_score_skills(user_profile, min_scores)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
@@ -593,37 +593,6 @@ class ModelTeamGitParser:
                     skill_stats[model_name][skill][SCORES] = []
                 skill_stats[model_name][skill][TIME_SERIES].append(month)
                 skill_stats[model_name][skill][SCORES].append(monthly_skills_and_scores[month][skill])
-
-    @staticmethod
-    def filter_low_score_skills(user_profile, min_scores):
-        if not user_profile:
-            return
-        lang_stats = user_profile[LANGS]
-        all_skills = set()
-        all_good_skills = set()
-        for lang in lang_stats.keys():
-            monthly_stats = lang_stats[lang][TIME_SERIES]
-            for month in monthly_stats.keys():
-                for model in monthly_stats[month].keys():
-                    model_type = model.split("::")[0]
-                    if model_type not in min_scores:
-                        continue
-                    min_score_to_filter = min_scores[model_type]
-                    model_stats = monthly_stats[month][model]
-                    skills = list(model_stats.keys())
-                    for skill in skills:
-                        all_skills.add(skill)
-                        max_monthly_score = model_stats[skill][0]
-                        if max_monthly_score <= min_score_to_filter:
-                            del model_stats[skill]
-                        elif model_type == C2S:
-                            # Ignore skills that are not present in C2S model results
-                            all_good_skills.add(skill)
-        # Remove skills that are not present in any month
-        for skill in all_skills:
-            if skill not in all_good_skills:
-                if skill in user_profile[SKILLS]:
-                    del user_profile[SKILLS][skill]
 
 
 def load_label_files(lf_name):

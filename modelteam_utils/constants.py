@@ -68,3 +68,6 @@ I2S = 'i2s'
 C2S = 'c2s'
 MLC = 'mlc'
 MODEL_TYPES = [I2S, C2S, MLC, LIFE_OF_PY]
+RELEVANT = "Relevant"
+NOT_RELEVANT = "Not Relevant"
+TOP_SECRET = "Top Secret"
