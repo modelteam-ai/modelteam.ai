@@ -12,6 +12,18 @@ projects, spanning 50 thousand skills and 9 programming languages. Leveraging th
 evaluates engineers' expertise across various skill domains, assesses coding quality, and ranks them among their peers,
 ensuring your organization has the best talent in the right roles.
 
+## Supported Languages
+
+- Python
+- Javascript
+- Java
+- Go
+- C
+- C++
+- PHP
+- Ruby
+- C#
+
 ## Prerequisites
 
 - Python 3.7 or higher
@@ -55,7 +67,8 @@ cd ..
 # Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
 ./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
 # Verify the generated profile and remove any unwanted/confidential information
-./edit_and_sign.sh modelteam/model_team_profile/<email>.json
+# Key will be emailed to you. JSON file will be encrypted using this key.
+./edit_and_sign.sh modelteam/model_team_profile/<email>.json <key>
 
 # Step 3
 # Upload the signed profile to modelteam.ai
