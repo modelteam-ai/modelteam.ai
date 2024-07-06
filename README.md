@@ -42,9 +42,11 @@ ensuring your organization has the best talent in the right roles.
 - Create a folder `modelteam` and navigate to it.
 - Create `modelteam/repos` folder
 - Clone all the repositories you want to include in your profile to `modelteam/repos`
+    - **IMPORTANT**: You should have made contributions for a minimum period of 6 months.
 - Run the following command to generate your profile
-  - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume a lot of resources**
-  - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
+    - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
+      a lot of resources**
+    - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
 ```bash
 # Step 1

@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 
 from PyQt5.QtCore import Qt
@@ -7,7 +8,10 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam.modelteam_utils.utils import filter_low_score_skills
+from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
+from modelteam_utils.constants import PROFILES
+from modelteam_utils.utils import filter_low_score_skills
+from modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
 
 
@@ -182,46 +186,52 @@ def edit_profile(profile_jsonl, choices_file):
     with open(profile_jsonl, "r") as f:
         repos = []
         skills = {}
-        for line in f:
-            json_line = json.loads(line)
-            email = json_line[USER]
-            repos.append(json_line[REPO])
-            for skill in json_line[STATS][SKILLS].keys():
-                skills[skill] = max(skills.get(skill, 0), json_line[STATS][SKILLS][skill])
+        merged_profile = json.load(f)
+        email = merged_profile[USER]
+        for profile in merged_profile[PROFILES]:
+            repos.append(profile[REPO])
+            for skill in profile[STATS][SKILLS].keys():
+                skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
         skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
         app = QApplication(sys.argv)
         ex = App(email, ",".join(repos), skills, choices_file)
         return app.exec_()
 
 
-def apply_choices(profile_jsonl, choices_file, edited_file):
-    with open(profile_jsonl, "r") as f:
+def apply_choices(profile_json, choices_file, edited_file, output_path):
+    with open(profile_json, "r") as f:
         with open(edited_file, "w") as f2:
             with open(choices_file, 'r') as f3:
                 choices_dict = json.load(f3)
-            for line in f:
-                json_line = json.loads(line)
-                stats = json_line[STATS]
+            merged_profile = json.load(f)
+            for profile in merged_profile[PROFILES]:
+                stats = profile[STATS]
                 filter_low_score_skills(stats, {}, choices_dict)
-                f2.write(json.dumps(json_line) + "\n")
+            f2.write(json.dumps(merged_profile))
+    generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--profile_jsonl", type=str, required=True)
+    arg_parser.add_argument("--profile_json", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
+    arg_parser.add_argument("--output_path", type=str, required=True)
 
     args = arg_parser.parse_args()
-    file_name_without_extension = args.profile_jsonl.replace(".jsonl", "")
+    if not os.path.exists(args.output_path):
+        os.makedirs(args.output_path)
+    file_name_without_extension = args.profile_json.replace(".jsonl", "")
     choices_file = f"{file_name_without_extension}_choices.json"
-    edited_file = f"{file_name_without_extension}.edited.jsonl"
-    encrypted_file = f"{file_name_without_extension}.enc.gz"
-    result = edit_profile(args.profile_jsonl, choices_file)
+    edited_file = f"{file_name_without_extension}.edited.json"
+    hc = generate_hc(edited_file)
+    encrypted_file = f"{args.output_path}/mt_profile_{hc}.enc.gz"
+    result = edit_profile(args.profile_json, choices_file)
     if result == 0:
         print("Changes were saved. Applying changes...")
-        apply_choices(args.profile_jsonl, choices_file, edited_file)
-        # encrypt_compress_file(args.profile_jsonl, encrypted_file, args.user_key)
+        apply_choices(args.profile_json, choices_file, edited_file, args.output_path)
+        encrypt_compress_file(args.profile_json, encrypted_file, args.user_key)
+        print(f"Encrypted and compressed file saved as {encrypted_file}")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
         sys.exit(1)

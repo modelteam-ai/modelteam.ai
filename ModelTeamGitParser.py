@@ -5,23 +5,24 @@ import json
 import os
 import random
 import re
+import sys
 
 import torch
 
+from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
+                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_low_score_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
-    get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
+    get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
-from modelteam_utils.viz_utils import generate_tag_cloud, generate_ts_plot, generate_pdf
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -488,56 +489,6 @@ class ModelTeamGitParser:
                                                 is_labeled_file)
 
     @staticmethod
-    def generate_pdf_report(output_file_list, merged_jsonl):
-        merged_jsonl_writer = open(merged_jsonl, "w")
-        lang_map = get_extension_to_language_map()
-        merged_skills = {}
-        repo_list = []
-        merged_lang_stats = {}
-        wc_file = f"{output_path}/wordcloud.png"
-        image_files = [wc_file]
-        for profile_json in output_file_list:
-            with open(profile_json, "r") as f:
-                for line in f:
-                    merged_jsonl_writer.write(line)
-                    user_stats = json.loads(line)
-                    user = user_stats[USER]
-                    repo = user_stats[REPO]
-                    repo_list.append(repo)
-                    user_profile = user_stats[STATS]
-                    if SKILLS in user_profile:
-                        for s in user_profile[SKILLS]:
-                            if s not in merged_skills:
-                                merged_skills[s] = 0
-                            merged_skills[s] += user_profile[SKILLS][s]
-                    lang_stats = user_profile[LANGS]
-                    lang_list = lang_stats.keys()
-                    for lang in lang_list:
-                        if lang not in merged_lang_stats:
-                            merged_lang_stats[lang] = {}
-                        if TIME_SERIES in lang_stats[lang]:
-                            time_series = lang_stats[lang][TIME_SERIES]
-                            for yyyy_mm in time_series:
-                                if yyyy_mm not in lang_stats[lang]:
-                                    merged_lang_stats[lang][yyyy_mm] = [0, 0]
-                                added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
-                                deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
-                                merged_lang_stats[lang][yyyy_mm][0] += added
-                                merged_lang_stats[lang][yyyy_mm][1] += deleted
-        if merged_skills:
-            generate_tag_cloud(merged_skills, wc_file)
-        lang_names = []
-        if merged_lang_stats:
-            for lang in merged_lang_stats:
-                ts_stats = merged_lang_stats[lang]
-                ts_file = f"{output_path}/{user}_{lang}_ts.png"
-                generate_ts_plot(ts_stats, ts_file)
-                image_files.append(ts_file)
-            lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
-        generate_pdf(output_path, user, ",".join(repo_list), lang_names, image_files)
-        merged_jsonl_writer.close()
-
-    @staticmethod
     def filter_non_public_data(user_profile):
         if TMP_MAX_YYYY_MM in user_profile:
             del user_profile[TMP_MAX_YYYY_MM]
@@ -611,6 +562,18 @@ def load_label_files(lf_name):
     return label_files
 
 
+def merge_json(user, output_file_list, merged_json):
+    phc = generate_hc(os.path.abspath(sys.argv[0]))
+    merged_profile = {USER: user, PROFILES: [], PHC: phc}
+    with open(merged_json, "w") as merged_json_writer:
+        for profile_json in output_file_list:
+            with open(profile_json, "r") as f:
+                for line in f:
+                    profile = json.loads(line)
+                    merged_profile[PROFILES].append(profile)
+        json.dump(merged_profile, merged_json_writer)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
@@ -657,7 +620,7 @@ if __name__ == "__main__":
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
     os.makedirs(f"{output_path}/touch-files", exist_ok=True)
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
-    merged_jsonl = f"{output_path}/mt_profile_{profile_generation_date}.jsonl"
+    merged_json = f"{output_path}/mt_profile_{profile_generation_date}.json"
     final_outputs = []
     # TODO: Aggregate stats from all repos for a user
     for folder in randomized_folder_list:
@@ -705,7 +668,6 @@ if __name__ == "__main__":
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-    if args.user_email and final_outputs:
-        # TODO: Move this to edit_and_sign.py
-        git_parser.generate_pdf_report(final_outputs, merged_jsonl)
+        if final_outputs and args.user_email:
+            merge_json(args.user_email, final_outputs, merged_json)
     print(f"Processed {cnt} out of {len(folder_list)}")

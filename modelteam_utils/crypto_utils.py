@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -54,3 +55,11 @@ def compress_data(data):
 def decompress_data(data):
     decompressed_data = gzip.decompress(data)
     return decompressed_data
+
+
+def generate_hc(file_path, hash_algorithm='sha256'):
+    hash_func = hashlib.new(hash_algorithm)
+    with open(file_path, 'rb') as file:
+        while chunk := file.read(8192):
+            hash_func.update(chunk)
+    return hash_func.hexdigest()
