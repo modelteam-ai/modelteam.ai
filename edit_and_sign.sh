@@ -7,5 +7,5 @@ if [ "$#" -ne 1 ]; then
 fi
 input_path=$(cat model_team_profile_path.txt)
 output_path="$input_path-signed"
-python3 -m edit_and_sign.py --profile_json "$input_path/mt_profile.json" --user_key "$1" --output_path "$output_path"
+python3 -m edit_and_sign --profile_json "$input_path/mt_profile.json" --user_key "$1" --output_path "$output_path"
 echo "ModelTeam profile Saved in $output_path directory"
