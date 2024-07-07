@@ -49,9 +49,8 @@ ensuring your organization has the best talent in the right roles.
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
-
+### Step 1
 ```bash
-# Step 1
 mkdir modelteam;cd modelteam
 # Get the modelteam.ai code
 git clone https://github.com/modelteam-ai/modelteam.ai.git
@@ -62,10 +61,13 @@ cd modelteam.ai
 mkdir repos;cd repos
 git clone <repo1>
 git clone <repo2>
+cp -r <repo3> .
 ...
 ...
 cd ..
-# Step 2
+```
+### Step 2
+```bash
 # For this step, internet access is not required
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
@@ -74,7 +76,7 @@ cd ..
 # Key will be emailed to you. JSON file will be encrypted using this key.
 # If you are using linux server without GUI, use --cli_mode
 ./edit_and_sign.sh <key> [--cli_mode]
-
-# Step 3
-# Upload the encrypted json profile to modelteam.ai
 ```
+
+### Step 3
+  - Upload the encrypted json profile to modelteam.ai
