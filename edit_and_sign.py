@@ -224,10 +224,10 @@ if __name__ == "__main__":
     file_name_without_extension = args.profile_json.replace(".jsonl", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
-    hc = generate_hc(edited_file)
-    encrypted_file = f"{args.output_path}/mt_profile_{hc}.enc.gz"
     result = edit_profile(args.profile_json, choices_file)
     if result == 0:
+        hc = generate_hc(edited_file)
+        encrypted_file = f"{args.output_path}/mt_profile_{hc}.enc.gz"
         print("Changes were saved. Applying changes...")
         apply_choices(args.profile_json, choices_file, edited_file, args.output_path)
         encrypt_compress_file(args.profile_json, encrypted_file, args.user_key)
