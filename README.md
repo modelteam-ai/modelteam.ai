@@ -72,8 +72,9 @@ cd ..
 ./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
 # Verify the generated profile and remove any unwanted/confidential information
 # Key will be emailed to you. JSON file will be encrypted using this key.
-./edit_and_sign.sh <key>
+# If you are using linux server without GUI, use --cli_mode
+./edit_and_sign.sh <key> [--cli_mode]
 
 # Step 3
-# Upload the signed profile to modelteam.ai
+# Upload the encrypted json profile to modelteam.ai
 ```
