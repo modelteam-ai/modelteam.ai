@@ -186,24 +186,22 @@ These skills will further be scored by another model on the server side. Please 
         self.close()
 
 
-def edit_profile(profile_jsonl, choices_file, cli_mode):
-    with open(profile_jsonl, "r") as f:
-        repos = []
-        skills = {}
-        merged_profile = json.load(f)
-        email = merged_profile[USER]
-        for profile in merged_profile[PROFILES]:
-            repos.append(profile[REPO])
-            for skill in profile[STATS][SKILLS].keys():
-                skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
-        skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
-        if cli_mode:
-            cli_choices(choices_file, email, repos, skills)
-            return 0
-        else:
-            app = QApplication(sys.argv)
-            ex = App(email, ",".join(repos), skills, choices_file)
-            return app.exec_()
+def edit_profile(merged_profile, choices_file, cli_mode):
+    repos = []
+    skills = {}
+    email = merged_profile[USER]
+    for profile in merged_profile[PROFILES]:
+        repos.append(profile[REPO])
+        for skill in profile[STATS][SKILLS].keys():
+            skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
+    skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
+    if cli_mode:
+        cli_choices(choices_file, email, repos, skills)
+        return 0
+    else:
+        app = QApplication(sys.argv)
+        ex = App(email, ",".join(repos), skills, choices_file)
+        return app.exec_()
 
 
 def cli_choices(choices_file, email, repos, skills):
@@ -219,7 +217,7 @@ def cli_choices(choices_file, email, repos, skills):
     choices_dict = {}
     for skill in skills:
         while True:
-            choice = input(f"Skill: {skill}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
+            choice = input(f"Skill: {skill.title}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
             if not choice:
                 choice = "1"
             if choice in ["1", "2", "3"]:
@@ -231,18 +229,25 @@ def cli_choices(choices_file, email, repos, skills):
         json.dump(choices_dict, f)
 
 
-def apply_choices(profile_json, choices_file, edited_file, output_path):
-    with open(profile_json, "r") as f:
-        with open(edited_file, "w") as f2:
-            with open(choices_file, 'r') as f3:
-                choices_dict = json.load(f3)
-            merged_profile = json.load(f)
-            for profile in merged_profile[PROFILES]:
-                stats = profile[STATS]
-                filter_low_score_skills(stats, {}, choices_dict)
-            f2.write(json.dumps(merged_profile))
+def apply_choices(merged_profile, choices_file, edited_file, output_path):
+    with open(edited_file, "w") as f2:
+        with open(choices_file, 'r') as f3:
+            choices_dict = json.load(f3)
+        for profile in merged_profile[PROFILES]:
+            stats = profile[STATS]
+            filter_low_score_skills(stats, {}, choices_dict)
+        f2.write(json.dumps(merged_profile))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
+
+
+def display_t_and_c(email_id):
+    t_and_c = ["I certify that,",
+               f"1. I am the owner of the email address {email_id} associated with this profile",
+               "2. I own the code contributions associated with this email address",
+               "3. I will remove any confidential skills from the profile before submitting"]
+    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: ")
+    return res.lower()
 
 
 if __name__ == "__main__":
@@ -255,13 +260,18 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    file_name_without_extension = args.profile_json.replace(".jsonl", "")
+    file_name_without_extension = args.profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
-    result = edit_profile(args.profile_json, choices_file, args.cli_mode)
+    with open(args.profile_json, "r") as f:
+        merged_profile = json.load(f)
+    if display_t_and_c(merged_profile[USER]) != "i agree":
+        print("Please accept the terms and conditions to proceed.")
+        sys.exit(1)
+    result = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0:
         print("Changes were saved. Applying changes...")
-        apply_choices(args.profile_json, choices_file, edited_file, args.output_path)
+        apply_choices(merged_profile, choices_file, edited_file, args.output_path)
         hc = generate_hc(edited_file)
         encrypted_file = f"{args.output_path}/mt_profile_{hc}.enc.gz"
         encrypt_compress_file(args.profile_json, encrypted_file, args.user_key)
