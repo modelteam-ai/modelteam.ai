@@ -8,11 +8,11 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.constants import PROFILES
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
+from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_low_score_skills
 from modelteam_utils.viz_utils import generate_pdf_report
-from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
 
 
 class App(QWidget):
@@ -84,8 +84,10 @@ These skills will further be scored by another model on the server side. Please 
         self.add_choice_header(layout)
         layout.setSpacing(1)
         prev_choices = self.load_choices()
+        toggle = False
         for skill in self.skills:
-            self.add_choice_widget(scroll_layout, skill, prev_choices.get(skill, RELEVANT))
+            self.add_choice_widget(scroll_layout, skill, prev_choices.get(skill, RELEVANT), toggle)
+            toggle = not toggle
 
         layout.addWidget(scroll_area)
         button_layout = QHBoxLayout()
@@ -124,7 +126,7 @@ These skills will further be scored by another model on the server side. Please 
         font = label.font()
         font.setBold(True)
         label.setFont(font)
-        label.setFixedWidth(150)
+        label.setFixedWidth(200)
         label.setAlignment(Qt.AlignCenter)
         frame_layout.addWidget(label)
         names = [RELEVANT, NOT_RELEVANT, TOP_SECRET]
@@ -139,14 +141,16 @@ These skills will further be scored by another model on the server side. Please 
             frame_layout.addLayout(header_layout)
         layout.addWidget(frame)
 
-    def add_choice_widget(self, layout, skill, def_enabled):
+    def add_choice_widget(self, layout, skill, def_enabled, toggle_bg_color):
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
+        if toggle_bg_color:
+            frame.setStyleSheet("background-color: #444444;")
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
         label = QLabel(skill.title())
-        label.setFixedWidth(150)
+        label.setFixedWidth(200)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
 
@@ -182,7 +186,7 @@ These skills will further be scored by another model on the server side. Please 
         self.close()
 
 
-def edit_profile(profile_jsonl, choices_file):
+def edit_profile(profile_jsonl, choices_file, cli_mode):
     with open(profile_jsonl, "r") as f:
         repos = []
         skills = {}
@@ -193,9 +197,36 @@ def edit_profile(profile_jsonl, choices_file):
             for skill in profile[STATS][SKILLS].keys():
                 skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
         skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
-        app = QApplication(sys.argv)
-        ex = App(email, ",".join(repos), skills, choices_file)
-        return app.exec_()
+        if cli_mode:
+            cli_choices(choices_file, email, repos, skills)
+            return 0
+        else:
+            app = QApplication(sys.argv)
+            ex = App(email, ",".join(repos), skills, choices_file)
+            return app.exec_()
+
+
+def cli_choices(choices_file, email, repos, skills):
+    print(f"Email: {email}")
+    print(f"Repos: {','.join(repos)}")
+    print(f"Total Skills: {len(skills)}")
+    print("These are the skills that our models predicted after analyzing your code contributions.")
+    print("These skills will further be scored by another model on the server side.")
+    print("Please select the appropriate choice for each skill to help us improve our model.")
+    print("1. Relevant: Keep in profile.")
+    print("2. Not Relevant: Mark as not relevant and Remove from profile in the server.")
+    print("3. Top Secret: Remove from profile and DON'T even send it to the server.")
+    choices_dict = {}
+    for skill in skills:
+        while True:
+            choice = input(f"Skill: {skill}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice: ")
+            if choice in ["1", "2", "3"]:
+                choices_dict[skill] = [RELEVANT, NOT_RELEVANT, TOP_SECRET][int(choice) - 1]
+                break
+            else:
+                print("Invalid choice. Please enter 1, 2 or 3.")
+    with open(choices_file, 'w') as f:
+        json.dump(choices_dict, f)
 
 
 def apply_choices(profile_json, choices_file, edited_file, output_path):
@@ -217,6 +248,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--profile_json", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
     arg_parser.add_argument("--output_path", type=str, required=True)
+    arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
     if not os.path.exists(args.output_path):
@@ -224,7 +256,7 @@ if __name__ == "__main__":
     file_name_without_extension = args.profile_json.replace(".jsonl", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
-    result = edit_profile(args.profile_json, choices_file)
+    result = edit_profile(args.profile_json, choices_file, args.cli_mode)
     if result == 0:
         print("Changes were saved. Applying changes...")
         apply_choices(args.profile_json, choices_file, edited_file, args.output_path)
