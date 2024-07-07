@@ -29,9 +29,6 @@ ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
-# Use GMT Date yyyy-mm-dd
-profile_generation_date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y_%m_%d")
-
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -71,6 +68,9 @@ class ModelTeamGitParser:
             user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
+                if username and author_email != username:
+                    print(f"ERROR: EmailID mismatch. Given email {username} but found {author_email}")
+                    continue
                 # ignore if email is empty
                 if not author_email:
                     continue
@@ -620,7 +620,7 @@ if __name__ == "__main__":
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
     os.makedirs(f"{output_path}/touch-files", exist_ok=True)
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
-    merged_json = f"{output_path}/mt_profile_{profile_generation_date}.json"
+    merged_json = f"{output_path}/mt_profile.json"
     final_outputs = []
     # TODO: Aggregate stats from all repos for a user
     for folder in randomized_folder_list:

@@ -12,11 +12,13 @@ email_id=$2
 if [ "$#" -eq 3 ]; then
   num_years=$3
 fi
-
-HF_HUB_OFFLINE=1 python3 -m ModelTeamGitParser --input_path $input_path --output_path model_team_profile --config config.ini --user_email $email_id --num_years $num_years &
+curr_dir=$(pwd)
+curr_date=$(date)
+output_path="$curr_dir/model_team_profile/$curr_date"
+HF_HUB_OFFLINE=1 python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_email $email_id --num_years $num_years &
 pid=$!
 # prevent sleeping in mac
 caffeinate -w $pid
 wait $pid
-curr_dir=$(pwd)
-echo "ModelTeam profile created in $curr_dir/model_team_profile directory"
+echo "$output_path" > model_team_profile_path.txt
+echo "ModelTeam profile created in $output_path directory"

@@ -34,6 +34,9 @@ ensuring your organization has the best talent in the right roles.
 - caffeine (for linux). caffeinate (for MacOS, built-in)
 - Minimum 8GB RAM
 - ~15GB free disk space
+- You should have made contributions for a minimum period of 6 months.
+- Your email address should match the email address used in your git commits
+  - We are working on supporting noreply email addresses
 
 ## Getting Started
 
@@ -42,7 +45,6 @@ ensuring your organization has the best talent in the right roles.
 - Create a folder `modelteam` and navigate to it.
 - Create `modelteam/repos` folder
 - Clone all the repositories you want to include in your profile to `modelteam/repos`
-    - **IMPORTANT**: You should have made contributions for a minimum period of 6 months.
 - Run the following command to generate your profile
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**
@@ -70,7 +72,7 @@ cd ..
 ./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
 # Verify the generated profile and remove any unwanted/confidential information
 # Key will be emailed to you. JSON file will be encrypted using this key.
-./edit_and_sign.sh modelteam/model_team_profile/<email>.json <key>
+./edit_and_sign.sh <key>
 
 # Step 3
 # Upload the signed profile to modelteam.ai
