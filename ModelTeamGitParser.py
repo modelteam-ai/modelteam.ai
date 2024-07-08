@@ -1,29 +1,26 @@
 import argparse
 import configparser
-import datetime
 import json
 import os
 import random
 import re
+import sys
 
-import matplotlib.pyplot as plt
 import torch
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from wordcloud import WordCloud
 
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION)
+                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
-from modelteam_utils.utils import break_code_snippets_to_chunks
+from modelteam_utils.crypto_utils import generate_hc
+from modelteam_utils.utils import break_code_snippets_to_chunks, filter_low_score_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
-    get_num_chars_changed, get_language_parser, get_extension_to_language_map, normalize_docstring
+    get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
 
 TRAIN_FLAG = False
@@ -31,73 +28,11 @@ ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
-# Use GMT Date yyyy-mm-dd
-profile_generation_date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y_%m_%d")
-
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
-
-
-def generate_tag_cloud(skill_map, file_name):
-    if len(skill_map) > 20:
-        skill_map = dict(sorted(skill_map.items(), key=lambda item: item[1], reverse=True)[:20])
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(skill_map)
-    # Display the generated word cloud
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.title("Top Skills", fontsize=24)
-    plt.savefig(file_name)
-
-
-def to_short_date(yyyymm):
-    mon_str = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    month = int(yyyymm[4:6])
-    return f"{mon_str[month - 1]}\n{yyyymm[:4]}"
-
-
-def generate_ts_plot(ts_stats, file_name):
-    years_months = sorted(ts_stats.keys())
-    readable_dates = []
-    for yyyymm in years_months:
-        readable_dates.append(to_short_date(yyyymm))
-
-    # Extract added and deleted values
-    added = [ts_stats[key][0] for key in years_months]
-    deleted = [ts_stats[key][1] for key in years_months]
-
-    # Plotting
-    plt.figure(figsize=(10, 5))
-    plt.plot(readable_dates, added, label='Lines Added')
-    plt.plot(readable_dates, deleted, label='Lines Deleted')
-
-    plt.xlabel('Time', fontsize=15)
-    plt.ylabel('Count', fontsize=15)
-    plt.title('Code Contribution Over Time', fontsize=24)
-    plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.legend(fontsize=15)
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(file_name)
-
-
-def generate_pdf(output_path, user, repo, languages, image_files):
-    pdf_file = f"{output_path}/{user}.pdf"
-    c = canvas.Canvas(pdf_file, pagesize=letter)
-    c.setFont("Helvetica", 24)
-    c.drawString(50, 700, "ModelTeam.AI")
-    c.setFont("Helvetica", 12)
-    c.drawString(50, 650, f"User: {user}")
-    c.drawString(50, 630, f"Repo: {repo}")
-    c.drawString(50, 610, f"Languages: {','.join(languages)}")
-    top = 400
-    for image_file in image_files:
-        c.drawImage(image_file, 50, top, width=500, height=200)
-        top -= 250
-    c.save()
 
 
 class ModelTeamGitParser:
@@ -117,7 +52,7 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, min_months, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, num_months, username=None):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
@@ -125,13 +60,16 @@ class ModelTeamGitParser:
         :return:
         """
         commits = {}
-        command = self.get_commit_log_command(repo_path, username)
+        command = self.get_commit_log_command(repo_path, username, num_months)
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
             user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
+                if username and author_email != username:
+                    print(f"ERROR: EmailID mismatch. Given email {username} but found {author_email}")
+                    continue
                 # ignore if email is empty
                 if not author_email:
                     continue
@@ -148,11 +86,11 @@ class ModelTeamGitParser:
         return commits
 
     @staticmethod
-    def get_commit_log_command(repo_path, username):
+    def get_commit_log_command(repo_path, username, num_months):
         if username:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}"'
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}" --since="{num_months} months ago"'
         else:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="36 months ago"'
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
     def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm):
         # Get the line stats for each file in the given commit
@@ -209,8 +147,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months):
-        user_commits = self.get_commits_for_each_user(repo_path, min_months, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months, num_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, username)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -374,12 +312,16 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, min_months, username):
+                            final_output, min_months, username, num_months):
+        skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
+        lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
+        min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months)
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months,
+                                        num_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
@@ -443,6 +385,7 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
+                            filter_low_score_skills(user_profile, min_scores)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
@@ -529,6 +472,7 @@ class ModelTeamGitParser:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
             limit = SKILL_PREDICTION_LIMIT
+        # TODO: Add support for batch processing
         skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
                                                                            model_data['model'], snippets,
                                                                            model_data['new_tokens'], limit)
@@ -542,55 +486,6 @@ class ModelTeamGitParser:
                                                 skill_list[i], line_count, doc_string_line_count,
                                                 model_data['model_tag'], model_data['model_type'] == C2S,
                                                 is_labeled_file)
-
-    def generate_pdf_report(self, output_file_list, merged_jsonl):
-        merged_jsonl_writer = open(merged_jsonl, "w")
-        lang_map = get_extension_to_language_map()
-        merged_skills = {}
-        repo_list = []
-        merged_lang_stats = {}
-        wc_file = f"{output_path}/wordcloud.png"
-        image_files = [wc_file]
-        for profile_json in output_file_list:
-            with open(profile_json, "r") as f:
-                for line in f:
-                    merged_jsonl_writer.write(line)
-                    user_stats = json.loads(line)
-                    user = user_stats[USER]
-                    repo = user_stats[REPO]
-                    repo_list.append(repo)
-                    user_profile = user_stats[STATS]
-                    if SKILLS in user_profile:
-                        for s in user_profile[SKILLS]:
-                            if s not in merged_skills:
-                                merged_skills[s] = 0
-                            merged_skills[s] += user_profile[SKILLS][s]
-                    lang_stats = user_profile[LANGS]
-                    lang_list = lang_stats.keys()
-                    for lang in lang_list:
-                        if lang not in merged_lang_stats:
-                            merged_lang_stats[lang] = {}
-                        if TIME_SERIES in lang_stats[lang]:
-                            time_series = lang_stats[lang][TIME_SERIES]
-                            for yyyy_mm in time_series:
-                                if yyyy_mm not in lang_stats[lang]:
-                                    merged_lang_stats[lang][yyyy_mm] = [0, 0]
-                                added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
-                                deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
-                                merged_lang_stats[lang][yyyy_mm][0] += added
-                                merged_lang_stats[lang][yyyy_mm][1] += deleted
-        if merged_skills:
-            generate_tag_cloud(merged_skills, wc_file)
-        lang_names = []
-        if merged_lang_stats:
-            for lang in merged_lang_stats:
-                ts_stats = merged_lang_stats[lang]
-                ts_file = f"{output_path}/{user}_{lang}_ts.png"
-                generate_ts_plot(ts_stats, ts_file)
-                image_files.append(ts_file)
-            lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
-        generate_pdf(output_path, user, ",".join(repo_list), lang_names, image_files)
-        merged_jsonl_writer.close()
 
     @staticmethod
     def filter_non_public_data(user_profile):
@@ -615,7 +510,7 @@ class ModelTeamGitParser:
             if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
-                user_profile[SKILLS][s] += score
+                user_profile[SKILLS][s] += sm_score * code_len
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
@@ -651,9 +546,9 @@ class ModelTeamGitParser:
 
 
 def load_label_files(lf_name):
-    print(f"Loading label files from {lf_name}", flush=True)
     label_files = set()
     if lf_name:
+        print(f"Loading label files from {lf_name}", flush=True)
         with open(lf_name, "r") as f:
             for line in f:
                 labels = json.loads(line)
@@ -666,6 +561,18 @@ def load_label_files(lf_name):
     return label_files
 
 
+def merge_json(user, output_file_list, merged_json):
+    phc = generate_hc(os.path.abspath(sys.argv[0]))
+    merged_profile = {USER: user, PROFILES: [], PHC: phc}
+    with open(merged_json, "w") as merged_json_writer:
+        for profile_json in output_file_list:
+            with open(profile_json, "r") as f:
+                for line in f:
+                    profile = json.loads(line)
+                    merged_profile[PROFILES].append(profile)
+        json.dump(merged_profile, merged_json_writer)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
@@ -674,9 +581,12 @@ if __name__ == "__main__":
     parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
+    parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
+                        action='store_true')
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -686,6 +596,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
+    num_months = args.num_years * 12
 
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
@@ -708,7 +619,7 @@ if __name__ == "__main__":
     os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
     os.makedirs(f"{output_path}/touch-files", exist_ok=True)
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
-    merged_jsonl = f"{output_path}/mt_profile_{profile_generation_date}.jsonl"
+    merged_json = f"{output_path}/mt_profile.json"
     final_outputs = []
     # TODO: Aggregate stats from all repos for a user
     for folder in randomized_folder_list:
@@ -716,19 +627,20 @@ if __name__ == "__main__":
             continue
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
-            touch_file = f"{output_path}/touch-files/{folder}"
-            if os.path.exists(touch_file):
-                print(f"Skipping {folder} as it is already processed")
-                continue
-            else:
-                # There is a very tiny chance that another process might create the file
-                # Randomized file list should have taken care of this
-                try:
-                    with open(touch_file, "x") as f:
-                        f.write("1")
-                except FileExistsError:
-                    print(f"Rare Exception: Skipping {folder} as it is already processed")
+            if args.parallel_mode:
+                touch_file = f"{output_path}/touch-files/{folder}"
+                if os.path.exists(touch_file):
+                    print(f"Skipping {folder} as it is already processed")
                     continue
+                else:
+                    # There is a very tiny chance that another process might create the file
+                    # Randomized file list should have taken care of this
+                    try:
+                        with open(touch_file, "x") as f:
+                            f.write("1")
+                    except FileExistsError:
+                        print(f"Rare Exception: Skipping {folder} as it is already processed")
+                        continue
             cnt += 1
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
@@ -748,14 +660,13 @@ if __name__ == "__main__":
             final_output = f"""{output_path}/final-stats/{file_prefix}_user_profile.jsonl"""
             if os.path.exists(final_output):
                 print(f"Skipping {final_output} as it is already processed")
-                continue
-            git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                           final_output, min_months, username)
-            if args.user_email and os.path.exists(final_output):
+            else:
+                git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
+                                               final_output, min_months, username, num_months)
+            if os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-    if final_outputs:
-        git_parser.generate_pdf_report(final_outputs, merged_jsonl)
-    encrypted_jsonl = f"{output_path}/mt_profile_{profile_generation_date}_encrypted.jsonl.gz"
+        if final_outputs and args.user_email:
+            merge_json(args.user_email, final_outputs, merged_json)
     print(f"Processed {cnt} out of {len(folder_list)}")
