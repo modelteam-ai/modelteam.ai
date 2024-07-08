@@ -52,12 +52,8 @@ ensuring your organization has the best talent in the right roles.
 ### Step 1
 ```bash
 mkdir modelteam;cd modelteam
-# Get the modelteam.ai code
-git clone https://github.com/modelteam-ai/modelteam.ai.git
-cd modelteam.ai
-# Generates venv and installs dependencies. It will download all the AI models
-./setup.sh
 # Clone / Copy all the repositories you want to include in your profile
+# This can be any path, as long as they all are in a single folder
 mkdir repos;cd repos
 git clone <repo1>
 git clone <repo2>
@@ -65,17 +61,25 @@ cp -r <repo3> .
 ...
 ...
 cd ..
+# Get the modelteam.ai code
+git clone https://github.com/modelteam-ai/modelteam.ai.git
+cd modelteam.ai
+# Generates venv and installs dependencies. It will download all the AI models
+./setup.sh
 ```
 ### Step 2
 ```bash
 # For this step, internet access is not required
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
-./build_my_profile.sh modelteam/repos <email> [<number_of_years>]
+./build_my_profile.sh <repos_path> <email> [<number_of_years>]
+# e.g. ./build_my_profile.sh ../repos "obulikrishnaraj@gmail.com"
 # Verify the generated profile and remove any unwanted/confidential information
 # Key will be emailed to you. JSON file will be encrypted using this key.
 # If you are using linux server without GUI, use --cli_mode
 ./edit_and_sign.sh <key> [--cli_mode]
+# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c --cli_mode
+# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS
 ```
 
 ### Step 3
