@@ -1,6 +1,5 @@
 import argparse
 import configparser
-import datetime
 import json
 import os
 import random
@@ -9,7 +8,6 @@ import sys
 
 import torch
 
-from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -18,6 +16,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
+from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_low_score_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
@@ -587,7 +586,7 @@ if __name__ == "__main__":
     parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
-    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=10)
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
 
     args = parser.parse_args()
     input_path = args.input_path
