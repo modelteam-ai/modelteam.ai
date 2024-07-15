@@ -159,7 +159,7 @@ class ModelTeamGitParser:
             if ignored_users:
                 print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
-            print(f"No commits found for {username}")
+            print(f"Not enough contribution for {username} in {repo_name} ({min_months} months)", flush=True)
 
     def process_user(self, labels, repo_path, user, user_commits, user_stats):
         commits = user_commits[user]
@@ -211,7 +211,6 @@ class ModelTeamGitParser:
     def break_diff_and_process_each_file(self, commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
                                          labels, yyyy_mm, curr_user, src_prefix, dest_prefix):
         file_diffs = re.split(fr'diff --git {src_prefix}/', git_diff)
-        print(f"Processing {len(file_diffs)} files", flush=True)
 
         for file_diff in file_diffs[1:]:  # ignore the first element
             file_lines = file_diff.split('\n')
@@ -272,7 +271,6 @@ class ModelTeamGitParser:
             file = file.replace(repo_path + "/", "")
             file_list += f'"{file}" '
         command = f'git -C {repo_path} show --src-prefix={src_prefix}/ --dst-prefix={dest_prefix}/ {commit_hash} -- {file_list}'
-        print(f"Running command {command}", flush=True)
         git_diff = run_commandline_command(command)
         if git_diff:
             self.break_diff_and_process_each_file(commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
@@ -367,7 +365,6 @@ class ModelTeamGitParser:
                         model_data = init_model(model_path, model_type, self.config, device)
                         if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
                             for user in user_profiles:
-                                print("Processing", user, flush=True)
                                 user_profile = user_profiles[user]
                                 if SKILLS not in user_profile:
                                     user_profile[SKILLS] = {}
@@ -376,7 +373,7 @@ class ModelTeamGitParser:
                                 has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
                                                                     model_data, repo_name)
                 if has_new_data == 0:
-                    print(f"No users with {min_months} months found for {repo_path}", flush=True)
+                    print(f"No users with extracted skills found for {repo_path}", flush=True)
                     return
                 if not user_profiles:
                     print(f"No user profiles found for {repo_path}", flush=True)
@@ -402,7 +399,6 @@ class ModelTeamGitParser:
         f.write("}\n")
 
     def extract_skills(self, user_profile, repo_level_data, min_months, model_data, repo_name):
-        print("Extracting skills", flush=True)
         global label_file_list
         features = []
         if LANGS not in user_profile:
