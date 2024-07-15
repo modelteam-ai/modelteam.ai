@@ -211,6 +211,7 @@ class ModelTeamGitParser:
     def break_diff_and_process_each_file(self, commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
                                          labels, yyyy_mm, curr_user, src_prefix, dest_prefix):
         file_diffs = re.split(fr'diff --git {src_prefix}/', git_diff)
+        print(f"Processing {len(file_diffs)} files", flush=True)
 
         for file_diff in file_diffs[1:]:  # ignore the first element
             file_lines = file_diff.split('\n')
@@ -263,7 +264,6 @@ class ModelTeamGitParser:
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
-        print(f"Deep analysis of commit {commit_hash}", flush=True)
         src_prefix = random.randint(0, 1000)
         dest_prefix = random.randint(0, 1000)
         # Analyze the actual code changes in the given commit
