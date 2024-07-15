@@ -170,7 +170,6 @@ class ModelTeamGitParser:
         # iterate through each commit from oldest to newest
         sorted_commits = sorted(commits[COMMITS], key=lambda x: x[1])
         for commit in sorted_commits:
-            print(f"Processing commit {commit[0]} for {user}", flush=True)
             self.process_commit(commit, user_commit_stats, labels, repo_path, user)
 
     @staticmethod
@@ -264,6 +263,7 @@ class ModelTeamGitParser:
 
     def deep_analysis_of_a_commit(self, repo_path, commit_hash, file_line_stats, user_commit_stats, labels, yyyy_mm,
                                   curr_user):
+        print(f"Deep analysis of commit {commit_hash}", flush=True)
         src_prefix = random.randint(0, 1000)
         dest_prefix = random.randint(0, 1000)
         # Analyze the actual code changes in the given commit
