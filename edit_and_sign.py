@@ -242,10 +242,10 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
 
 
 def display_t_and_c(email_id):
-    t_and_c = ["I certify that,",
-               f"1. I am the owner of the email address {email_id} associated with this profile",
-               "2. I own the code contributions associated with this email address",
-               "3. I will remove any confidential skills from the profile before submitting"]
+    t_and_c = ["\nI certify that,",
+               f"\t1. I am the owner of the email address {email_id} associated with this profile",
+               "\t2. I own the code contributions associated with this email address",
+               "\t3. I will remove any confidential skills from the profile before submitting"]
     res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: ")
     return res.lower()
 
