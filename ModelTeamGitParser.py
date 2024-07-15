@@ -271,6 +271,7 @@ class ModelTeamGitParser:
         for file in file_line_stats.keys():
             file_list += f'"{file}" '
         command = f'git -C {repo_path} show --src-prefix={src_prefix}/ --dst-prefix={dest_prefix}/ {commit_hash} -- {file_list}'
+        print(f"Running command {command}", flush=True)
         git_diff = run_commandline_command(command)
         if git_diff:
             self.break_diff_and_process_each_file(commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
