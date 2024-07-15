@@ -269,6 +269,7 @@ class ModelTeamGitParser:
         # Analyze the actual code changes in the given commit
         file_list = ""
         for file in file_line_stats.keys():
+            file = file.replace(repo_path + "/", "")
             file_list += f'"{file}" '
         command = f'git -C {repo_path} show --src-prefix={src_prefix}/ --dst-prefix={dest_prefix}/ {commit_hash} -- {file_list}'
         print(f"Running command {command}", flush=True)
