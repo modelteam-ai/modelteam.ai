@@ -364,6 +364,7 @@ class ModelTeamGitParser:
                         model_data = init_model(model_path, model_type, self.config, device)
                         if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
                             for user in user_profiles:
+                                print("Processing", user, flush=True)
                                 user_profile = user_profiles[user]
                                 if SKILLS not in user_profile:
                                     user_profile[SKILLS] = {}
@@ -398,6 +399,7 @@ class ModelTeamGitParser:
         f.write("}\n")
 
     def extract_skills(self, user_profile, repo_level_data, min_months, model_data, repo_name):
+        print("Extracting skills", flush=True)
         global label_file_list
         features = []
         if LANGS not in user_profile:
