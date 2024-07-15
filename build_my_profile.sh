@@ -15,10 +15,6 @@ curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
 output_path="$curr_dir/model_team_profile/$curr_date"
 echo "Creating ModelTeam profile in $output_path directory"
-HF_HUB_OFFLINE=1 python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_email $email_id --num_years $num_years &
-pid=$!
-# prevent sleeping in mac
-caffeinate -w $pid
-wait $pid
+HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_email $email_id --num_years $num_years
 echo "$output_path" > model_team_profile_path.txt
 echo "ModelTeam profile created in $output_path directory"

@@ -159,7 +159,7 @@ class ModelTeamGitParser:
             if ignored_users:
                 print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
-            print(f"No commits found for {username}")
+            print(f"Not enough contribution for {username} in {repo_name} ({min_months} months)", flush=True)
 
     def process_user(self, labels, repo_path, user, user_commits, user_stats):
         commits = user_commits[user]
@@ -268,6 +268,7 @@ class ModelTeamGitParser:
         # Analyze the actual code changes in the given commit
         file_list = ""
         for file in file_line_stats.keys():
+            file = file.replace(repo_path + "/", "")
             file_list += f'"{file}" '
         command = f'git -C {repo_path} show --src-prefix={src_prefix}/ --dst-prefix={dest_prefix}/ {commit_hash} -- {file_list}'
         git_diff = run_commandline_command(command)
@@ -372,7 +373,7 @@ class ModelTeamGitParser:
                                 has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
                                                                     model_data, repo_name)
                 if has_new_data == 0:
-                    print(f"No users with {min_months} months found for {repo_path}", flush=True)
+                    print(f"No users with extracted skills found for {repo_path}", flush=True)
                     return
                 if not user_profiles:
                     print(f"No user profiles found for {repo_path}", flush=True)
