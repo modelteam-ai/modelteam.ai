@@ -74,7 +74,7 @@ def generate_pdf_report(merged_json, output_path):
     repo_list = []
     merged_lang_stats = {}
     wc_file = f"{output_path}/wordcloud.png"
-    image_files = [wc_file]
+    image_files = []
     with open(merged_json, "r") as f:
         merged_profile = json.load(f)
         for user_stats in merged_profile[PROFILES]:
@@ -103,6 +103,7 @@ def generate_pdf_report(merged_json, output_path):
                         merged_lang_stats[lang][yyyy_mm][1] += deleted
     if merged_skills:
         generate_tag_cloud(merged_skills, wc_file)
+        image_files.append(wc_file)
     lang_names = []
     if merged_lang_stats:
         for lang in merged_lang_stats:
