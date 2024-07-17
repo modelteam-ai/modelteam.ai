@@ -217,7 +217,7 @@ def cli_choices(choices_file, email, repos, skills):
     choices_dict = {}
     for skill in skills:
         while True:
-            choice = input(f"Skill: {skill.title}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
+            choice = input(f"Skill: {skill.title()}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
             if not choice:
                 choice = "1"
             if choice in ["1", "2", "3"]:
