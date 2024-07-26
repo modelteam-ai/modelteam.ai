@@ -415,8 +415,6 @@ class ModelTeamGitParser:
                 user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], num_months)
             if TIME_SERIES not in lang_stats[lang] or num_months < min_months:
                 continue
-            if SKILLS not in lang_stats[lang]:
-                lang_stats[lang][SKILLS] = {}
             sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
             for yyyy_mm in sig_code_snippets.keys():
                 monthly_snippets = sig_code_snippets[yyyy_mm]
