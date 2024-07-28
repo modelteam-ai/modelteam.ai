@@ -233,11 +233,12 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
+        non_relevant_skills = [skill for skill in choices_dict if choices_dict[skill] == NOT_RELEVANT]
+        top_secret_set = {skill for skill in choices_dict if choices_dict[skill] == TOP_SECRET}
         for profile in merged_profile[PROFILES]:
             stats = profile[STATS]
-            filter_skills(stats, {}, choices_dict)
-        non_relevant_skills = [skill for skill in choices_dict if choices_dict[skill] == NOT_RELEVANT]
-        merged_profile[NR_SKILLS] = non_relevant_skills
+            filter_skills(stats, {}, top_secret_set)
+            profile[NR_SKILLS] = non_relevant_skills
         f2.write(json.dumps(merged_profile))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
