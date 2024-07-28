@@ -276,7 +276,7 @@ if __name__ == "__main__":
         hc = generate_hc(edited_file)
         today = datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
-        encrypt_compress_file(args.profile_json, encrypted_file, args.user_key)
+        encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         print(f"Encrypted and compressed file saved as {encrypted_file}")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")

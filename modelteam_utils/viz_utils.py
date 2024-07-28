@@ -1,4 +1,5 @@
 import json
+import os
 
 from matplotlib import pyplot as plt
 from reportlab.lib.pagesizes import letter
@@ -112,4 +113,33 @@ def generate_pdf_report(merged_json, output_path):
             generate_ts_plot(ts_stats, ts_file)
             image_files.append(ts_file)
         lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
-    generate_pdf(output_path, user, ",".join(repo_list), lang_names, image_files)
+    generate_multi_page_pdf(output_path, user, image_files)
+
+
+def generate_multi_page_pdf(output_path, user, image_files):
+    pdf_file = f"{output_path}/{user}.pdf"
+    c = canvas.Canvas(pdf_file, pagesize=letter)
+    c.setFont("Helvetica", 18)
+    page_height = letter[1]
+    top = page_height - 50
+    top = pdf_header(c, top, user)
+    image_height = 200
+    image_margin = 25
+    for image_file in image_files:
+        if os.path.exists(image_file):
+            if top < image_height + image_margin:
+                c.showPage()
+                c.setFont("Helvetica", 18)
+                pdf_header(c, top, user)
+                top = page_height - 50
+            top -= (image_height + image_margin)
+            c.drawImage(image_file, 50, top, width=500, height=image_height)
+    c.save()
+
+
+def pdf_header(c, top, user):
+    c.drawString(50, top, "modelteam.ai")
+    c.setFont("Helvetica-Bold", 16)
+    top -= 50
+    c.drawString(50, top, f"Summary for {user}")
+    return top
