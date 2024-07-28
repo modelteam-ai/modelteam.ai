@@ -42,6 +42,7 @@ TEAM = 'team'
 LANGUAGE = 'language'
 LABEL = 'label'
 LIFE_OF_PY = 'life_of_py'
+NR_SKILLS = 'nr_skills'
 LIFE_OF_PY_BUCKET_SIZE = 20
 LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_{i}" for i in range(0, 100, LIFE_OF_PY_BUCKET_SIZE)]
 

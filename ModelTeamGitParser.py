@@ -18,7 +18,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
 from modelteam_utils.crypto_utils import generate_hc
-from modelteam_utils.utils import break_code_snippets_to_chunks, filter_low_score_skills
+from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, normalize_docstring
@@ -387,7 +387,7 @@ class ModelTeamGitParser:
                         user_profile = user_profiles[user]
                         if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] >= min_months:
                             self.filter_non_public_data(user_profile)
-                            filter_low_score_skills(user_profile, min_scores)
+                            filter_skills(user_profile, min_scores)
                             self.write_user_profile_to_file(fo, repo_name, repo_path, user, user_profile)
 
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):

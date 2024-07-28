@@ -551,7 +551,7 @@ def load_repo_user_list(file_name):
     return ignore_users
 
 
-def filter_low_score_skills(user_profile, min_scores, changes=None):
+def filter_skills(user_profile, min_scores, manual_edits=None):
     if not user_profile:
         return
     lang_stats = user_profile[LANGS]
@@ -570,10 +570,10 @@ def filter_low_score_skills(user_profile, min_scores, changes=None):
                 for skill in skills:
                     all_skills.add(skill)
                     # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
-                    if not changes:
+                    if not manual_edits:
                         change = ""
                     else:
-                        change = changes.get(skill, TOP_SECRET)
+                        change = manual_edits.get(skill, TOP_SECRET)
                     max_monthly_score = model_stats[skill][0]
                     if max_monthly_score <= min_score_to_filter:
                         del model_stats[skill]
@@ -586,12 +586,9 @@ def filter_low_score_skills(user_profile, min_scores, changes=None):
     # Remove skills that are not present in any month
     for skill in all_skills:
         if skill in user_profile[SKILLS]:
-            if not changes:
+            if not manual_edits:
                 change = ""
             else:
-                change = changes.get(skill, TOP_SECRET)
+                change = manual_edits.get(skill, TOP_SECRET)
             if change == TOP_SECRET or skill not in all_good_skills:
                 del user_profile[SKILLS][skill]
-            if change == NOT_RELEVANT:
-                # Mark the skill as not relevant
-                user_profile[SKILLS][skill] = -1 * user_profile[SKILLS][skill]

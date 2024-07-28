@@ -9,10 +9,9 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.constants import PROFILES
-from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, NR_SKILLS
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
-from modelteam_utils.utils import filter_low_score_skills
+from modelteam_utils.utils import filter_skills
 from modelteam_utils.viz_utils import generate_pdf_report
 
 
@@ -236,7 +235,9 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
             choices_dict = json.load(f3)
         for profile in merged_profile[PROFILES]:
             stats = profile[STATS]
-            filter_low_score_skills(stats, {}, choices_dict)
+            filter_skills(stats, {}, choices_dict)
+        non_relevant_skills = [skill for skill in choices_dict if choices_dict[skill] == NOT_RELEVANT]
+        merged_profile[NR_SKILLS] = non_relevant_skills
         f2.write(json.dumps(merged_profile))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
