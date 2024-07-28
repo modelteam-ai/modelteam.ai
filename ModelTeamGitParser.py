@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import datetime
 import json
 import os
 import random
@@ -13,7 +14,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC)
+                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC, TIMESTAMP)
 from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
     MODEL_TYPES, I2S
 from modelteam_utils.crypto_utils import generate_hc
@@ -392,6 +393,7 @@ class ModelTeamGitParser:
     def write_user_profile_to_file(self, f, repo_name, repo_path, user, user_profile):
         f.write("{")
         f.write(f"\"{VERSION}\": {json.dumps(self.config['modelteam.ai']['version'])}, ")
+        f.write(f"\"{TIMESTAMP}\": {utc_now}, ")
         f.write(f"\"{REPO_PATH}\": {json.dumps(repo_path)}, ")
         f.write(f"\"{REPO}\": {json.dumps(repo_name)}, ")
         f.write(f"\"{USER}\": {json.dumps(user)}, ")
@@ -415,8 +417,6 @@ class ModelTeamGitParser:
                 user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], num_months)
             if TIME_SERIES not in lang_stats[lang] or num_months < min_months:
                 continue
-            if SKILLS not in lang_stats[lang]:
-                lang_stats[lang][SKILLS] = {}
             sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
             for yyyy_mm in sig_code_snippets.keys():
                 monthly_snippets = sig_code_snippets[yyyy_mm]
@@ -564,7 +564,7 @@ def load_label_files(lf_name):
 
 def merge_json(user, output_file_list, merged_json):
     phc = generate_hc(os.path.abspath(sys.argv[0]))
-    merged_profile = {USER: user, PROFILES: [], PHC: phc}
+    merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
     with open(merged_json, "w") as merged_json_writer:
         for profile_json in output_file_list:
             with open(profile_json, "r") as f:
@@ -598,7 +598,7 @@ if __name__ == "__main__":
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
     num_months = args.num_years * 12
-
+    utc_now = int(datetime.datetime.utcnow().timestamp())
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
