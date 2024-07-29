@@ -9,6 +9,7 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
+from modelteam.modelteam_utils.constants import TIMESTAMP
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, NR_SKILLS
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
@@ -230,6 +231,7 @@ def cli_choices(choices_file, email, repos, skills):
 
 
 def apply_choices(merged_profile, choices_file, edited_file, output_path):
+    utc_now = int(datetime.utcnow().timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
@@ -239,6 +241,8 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
             stats = profile[STATS]
             filter_skills(stats, {}, top_secret_set)
             profile[NR_SKILLS] = non_relevant_skills
+            profile[TIMESTAMP] = utc_now
+        merged_profile[TIMESTAMP] = utc_now
         f2.write(json.dumps(merged_profile))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
