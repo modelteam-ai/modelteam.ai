@@ -9,10 +9,10 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.constants import PROFILES
-from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET
+from modelteam.modelteam_utils.constants import TIMESTAMP
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, NR_SKILLS
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
-from modelteam_utils.utils import filter_low_score_skills
+from modelteam_utils.utils import filter_skills
 from modelteam_utils.viz_utils import generate_pdf_report
 
 
@@ -231,12 +231,18 @@ def cli_choices(choices_file, email, repos, skills):
 
 
 def apply_choices(merged_profile, choices_file, edited_file, output_path):
+    utc_now = int(datetime.utcnow().timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
+        non_relevant_skills = [skill for skill in choices_dict if choices_dict[skill] == NOT_RELEVANT]
+        top_secret_set = {skill for skill in choices_dict if choices_dict[skill] == TOP_SECRET}
         for profile in merged_profile[PROFILES]:
             stats = profile[STATS]
-            filter_low_score_skills(stats, {}, choices_dict)
+            filter_skills(stats, {}, top_secret_set)
+            profile[NR_SKILLS] = non_relevant_skills
+            profile[TIMESTAMP] = utc_now
+        merged_profile[TIMESTAMP] = utc_now
         f2.write(json.dumps(merged_profile))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
@@ -276,7 +282,7 @@ if __name__ == "__main__":
         hc = generate_hc(edited_file)
         today = datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
-        encrypt_compress_file(args.profile_json, encrypted_file, args.user_key)
+        encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         print(f"Encrypted and compressed file saved as {encrypted_file}")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")

@@ -551,7 +551,7 @@ def load_repo_user_list(file_name):
     return ignore_users
 
 
-def filter_low_score_skills(user_profile, min_scores, changes=None):
+def filter_skills(user_profile, min_scores, manual_edits=set()):
     if not user_profile:
         return
     lang_stats = user_profile[LANGS]
@@ -570,14 +570,10 @@ def filter_low_score_skills(user_profile, min_scores, changes=None):
                 for skill in skills:
                     all_skills.add(skill)
                     # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
-                    if not changes:
-                        change = ""
-                    else:
-                        change = changes.get(skill, TOP_SECRET)
                     max_monthly_score = model_stats[skill][0]
                     if max_monthly_score <= min_score_to_filter:
                         del model_stats[skill]
-                    elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS] or change == TOP_SECRET):
+                    elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS] or skill in manual_edits):
                         # Ignore skills that are not present in user profile (No C2S) or top secret skills
                         del model_stats[skill]
                     elif model_type == C2S:
@@ -586,12 +582,5 @@ def filter_low_score_skills(user_profile, min_scores, changes=None):
     # Remove skills that are not present in any month
     for skill in all_skills:
         if skill in user_profile[SKILLS]:
-            if not changes:
-                change = ""
-            else:
-                change = changes.get(skill, TOP_SECRET)
-            if change == TOP_SECRET or skill not in all_good_skills:
+            if skill in manual_edits or skill not in all_good_skills:
                 del user_profile[SKILLS][skill]
-            if change == NOT_RELEVANT:
-                # Mark the skill as not relevant
-                user_profile[SKILLS][skill] = -1 * user_profile[SKILLS][skill]
