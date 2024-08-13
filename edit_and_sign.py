@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+import datetime
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QTextOption
@@ -281,7 +281,7 @@ if __name__ == "__main__":
         print("Changes were saved. Applying changes...")
         apply_choices(merged_profile, choices_file, edited_file, args.output_path)
         hc = generate_hc(edited_file)
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         print(f"Encrypted and compressed file saved as {encrypted_file}")
