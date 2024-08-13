@@ -2,15 +2,15 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+import datetime
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam.modelteam_utils.constants import TIMESTAMP
-from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, NR_SKILLS
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
+    NR_SKILLS, TIMESTAMP
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
 from modelteam_utils.viz_utils import generate_pdf_report
@@ -231,7 +231,7 @@ def cli_choices(choices_file, email, repos, skills):
 
 
 def apply_choices(merged_profile, choices_file, edited_file, output_path):
-    utc_now = int(datetime.utcnow().timestamp())
+    utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
@@ -243,7 +243,7 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
             profile[NR_SKILLS] = non_relevant_skills
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
-        f2.write(json.dumps(merged_profile))
+        f2.write(json.dumps(merged_profile, indent=4))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
 
@@ -265,6 +265,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
+    print("Loading...")
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
     file_name_without_extension = args.profile_json.replace(".json", "")
@@ -280,7 +281,7 @@ if __name__ == "__main__":
         print("Changes were saved. Applying changes...")
         apply_choices(merged_profile, choices_file, edited_file, args.output_path)
         hc = generate_hc(edited_file)
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         print(f"Encrypted and compressed file saved as {encrypted_file}")

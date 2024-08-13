@@ -565,12 +565,39 @@ def load_label_files(lf_name):
 def merge_json(user, output_file_list, merged_json):
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
+    lines_added = 0
+    months = set()
+    languages = set()
+    skills = set()
+
     with open(merged_json, "w") as merged_json_writer:
         for profile_json in output_file_list:
             with open(profile_json, "r") as f:
                 for line in f:
                     profile = json.loads(line)
+                    if LANGS in profile[STATS]:
+                        for lang in profile[STATS][LANGS]:
+                            if TIME_SERIES in profile[STATS][LANGS][lang]:
+                                for month in profile[STATS][LANGS][lang][TIME_SERIES]:
+                                    if month not in months:
+                                        months.add(month)
+                                    if lang not in languages:
+                                        languages.add(lang)
+                                    lines_added += profile[STATS][LANGS][lang][TIME_SERIES][month][ADDED]
+                    if SKILLS in profile[STATS]:
+                        for skill in profile[STATS][SKILLS]:
+                            if skill not in skills:
+                                skills.add(skill)
                     merged_profile[PROFILES].append(profile)
+        print("Stats for", user)
+        print("Number of repositories analyzed:", len(output_file_list))
+        print("Number of months analyzed:", len(months))
+        print("Kinds of file analyzed:", ", ".join(languages))
+        print("Number of lines analyzed:", lines_added)
+        print("Number of skills extracted:", len(skills))
+        end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        time_taken_in_minutes = round((end_ts - utc_now) / 60)
+        print("Time taken: ", time_taken_in_minutes, "minutes")
         json.dump(merged_profile, merged_json_writer)
 
 
@@ -598,7 +625,7 @@ if __name__ == "__main__":
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
     num_months = args.num_years * 12
-    utc_now = int(datetime.datetime.utcnow().timestamp())
+    utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
