@@ -9,8 +9,8 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam.modelteam_utils.constants import TIMESTAMP
-from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, NR_SKILLS
+from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
+    NR_SKILLS, TIMESTAMP
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
 from modelteam_utils.viz_utils import generate_pdf_report
