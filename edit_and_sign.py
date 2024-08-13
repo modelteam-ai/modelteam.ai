@@ -231,7 +231,7 @@ def cli_choices(choices_file, email, repos, skills):
 
 
 def apply_choices(merged_profile, choices_file, edited_file, output_path):
-    utc_now = int(datetime.utcnow().timestamp())
+    utc_now = int(datetime.datetime.now(datetime.UTC).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
@@ -243,7 +243,7 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
             profile[NR_SKILLS] = non_relevant_skills
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
-        f2.write(json.dumps(merged_profile))
+        f2.write(json.dumps(merged_profile, indent=4))
     generate_pdf_report(edited_file, output_path)
     print(f"Edited file saved as {edited_file}")
 
@@ -265,6 +265,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
+    print("Loading...")
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
     file_name_without_extension = args.profile_json.replace(".json", "")
