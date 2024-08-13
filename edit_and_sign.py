@@ -231,7 +231,7 @@ def cli_choices(choices_file, email, repos, skills):
 
 
 def apply_choices(merged_profile, choices_file, edited_file, output_path):
-    utc_now = int(datetime.datetime.now(datetime.UTC).timestamp())
+    utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)

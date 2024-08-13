@@ -598,7 +598,7 @@ if __name__ == "__main__":
     config.read(config_file)
     min_months = int(config['modelteam.ai']['min_months'])
     num_months = args.num_years * 12
-    utc_now = int(datetime.datetime.now(datetime.UTC).timestamp())
+    utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     allowed_users = load_repo_user_list(args.allow_list)
     label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
