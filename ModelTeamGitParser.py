@@ -590,12 +590,13 @@ def merge_json(user, output_file_list, merged_json):
                                 skills.add(skill)
                     merged_profile[PROFILES].append(profile)
         print("Stats for", user)
+        print("Number of repositories analyzed:", len(output_file_list))
         print("Number of months analyzed:", len(months))
         print("Kinds of file analyzed:", ", ".join(languages))
         print("Number of lines analyzed:", lines_added)
         print("Number of skills extracted:", len(skills))
         end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        time_taken_in_minutes = (end_ts - utc_now) / 60
+        time_taken_in_minutes = round((end_ts - utc_now) / 60)
         print("Time taken: ", time_taken_in_minutes, "minutes")
         json.dump(merged_profile, merged_json_writer)
 
