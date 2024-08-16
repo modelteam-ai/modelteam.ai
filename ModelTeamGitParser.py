@@ -564,7 +564,26 @@ def load_label_files(lf_name):
     return label_files
 
 
-def merge_json(user, output_file_list, merged_json):
+def gen_user_name(users, max_len=255):
+    if len(users) == 1:
+        return users[0]
+    domain_users = {}
+    for user in users:
+        domain = user.split("@")[1]
+        if domain not in domain_users:
+            domain_users[domain] = []
+        domain_users[domain].append(user)
+    user = ""
+    for domain in domain_users:
+        users += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
+    user = user[:-1]
+    if len(user) > max_len:
+        user = user[:max_len-3] + "..."
+    return user
+
+
+def merge_json(users, output_file_list, merged_json):
+    user = gen_user_name(users)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
     lines_added = 0
@@ -701,6 +720,6 @@ if __name__ == "__main__":
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-        if final_outputs and args.user_email:
-            merge_json(args.user_email, final_outputs, merged_json)
+        if final_outputs and args.user_emails:
+            merge_json(args.user_emails, final_outputs, merged_json)
     print(f"Processed {cnt} out of {len(folder_list)}")
