@@ -72,7 +72,8 @@ cd modelteam.ai
 # For this step, internet access is not required
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 10 years. It's recommended to change it to your years of experience
-./build_my_profile.sh <repos_path> <email> [<number_of_years>]
+# csv_of_emails is used to build a team profile. (e.g. "email1,email2,email3")
+./build_my_profile.sh <repos_path> <email|csv_of_emails> [<number_of_years>]
 # e.g. ./build_my_profile.sh ../repos "obulikrishnaraj@gmail.com"
 # Verify the generated profile and remove any unwanted/confidential information
 # Key will be emailed to you. JSON file will be encrypted using this key.

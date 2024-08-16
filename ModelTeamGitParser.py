@@ -53,23 +53,24 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, min_months, num_months, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, num_months, usernames=set()):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
-        :param username:
+        :param usernames:
         :return:
         """
         commits = {}
-        command = self.get_commit_log_command(repo_path, username, num_months)
+        command = self.get_commit_log_command(repo_path, usernames, num_months)
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
             user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
-                if username and author_email != username:
-                    print(f"ERROR: EmailID mismatch. Given email {username} but found {author_email}")
+                # TODO: Check if this is needed
+                if usernames and author_email not in usernames:
+                    print(f"ERROR: EmailID mismatch. Given email {usernames} but found {author_email}")
                     continue
                 # ignore if email is empty
                 if not author_email:
@@ -87,9 +88,10 @@ class ModelTeamGitParser:
         return commits
 
     @staticmethod
-    def get_commit_log_command(repo_path, username, num_months):
-        if username:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}" --since="{num_months} months ago"'
+    def get_commit_log_command(repo_path, usernames, num_months):
+        if usernames:
+            usernames_pattern = f'"({"|".join(usernames)})"'
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author={usernames_pattern} --since="{num_months} months ago"'
         else:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
@@ -148,8 +150,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months, num_months):
-        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, usernames, repo_name, min_months, num_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, usernames)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -160,7 +162,7 @@ class ModelTeamGitParser:
             if ignored_users:
                 print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
-            print(f"Not enough contribution for {username} in {repo_name} ({min_months} months)", flush=True)
+            print(f"Not enough contribution for {usernames} in {repo_name} ({min_months} months)", flush=True)
 
     def process_user(self, labels, repo_path, user, user_commits, user_stats):
         commits = user_commits[user]
@@ -314,7 +316,7 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, min_months, username, num_months):
+                            final_output, min_months, usernames, num_months):
         skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
         lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
         min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
@@ -322,7 +324,7 @@ class ModelTeamGitParser:
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months,
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
                                         num_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
@@ -606,12 +608,14 @@ if __name__ == "__main__":
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
-    parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
+    parser.add_argument('--user_emails', type=str,
+                        help='User emails as CSV, if present will generate stats only for that user')
+    # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
                         action='store_true')
-    parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
+    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
     parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
@@ -619,7 +623,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_path = args.input_path
     output_path = args.output_path
-    username = args.user_email
+    usernames = args.user_emails
     config_file = args.config
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -631,10 +635,12 @@ if __name__ == "__main__":
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
-    if not username:
+    if not usernames:
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
-
+    else:
+        # split, trim and convert to set
+        usernames = set([x.strip() for x in usernames.split(",")])
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
     if args.start_from_tmp:
@@ -690,7 +696,7 @@ if __name__ == "__main__":
                 print(f"Skipping {final_output} as it is already processed")
             else:
                 git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                               final_output, min_months, username, num_months)
+                                               final_output, min_months, usernames, num_months)
             if os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
