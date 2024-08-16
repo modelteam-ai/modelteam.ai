@@ -90,8 +90,8 @@ class ModelTeamGitParser:
     @staticmethod
     def get_commit_log_command(repo_path, usernames, num_months):
         if usernames:
-            usernames_pattern = f'"({"|".join(usernames)})"'
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author={usernames_pattern} --since="{num_months} months ago"'
+            usernames_pattern = " ".join([f"--author={user}" for user in usernames])
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  {usernames_pattern} --since="{num_months} months ago"'
         else:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
