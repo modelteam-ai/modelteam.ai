@@ -576,7 +576,7 @@ def gen_user_name(users, max_len=255):
         domain_users[domain].append(user)
     user = ""
     for domain in sorted(domain_users.keys()):
-        users += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
+        user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
     user = user[:-1]
     print(f"Generated user name: {user}")
     if len(user) > max_len:
