@@ -634,7 +634,9 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_emails', type=str,
-                        help='User emails as CSV, if present will generate stats only for that user')
+                        help='User emails as CSV, if present will generate stats only for those users                                                                     ')
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
+
     # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
@@ -643,7 +645,6 @@ if __name__ == "__main__":
     parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
-    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -666,6 +667,10 @@ if __name__ == "__main__":
     else:
         # split, trim and convert to set
         usernames = set([x.strip() for x in usernames.split(",")])
+        if len(usernames) > 5:
+            print("Error: Too many users. Please provide no more than 5 users", flush=True)
+            exit(1)
+
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
     if args.start_from_tmp:
