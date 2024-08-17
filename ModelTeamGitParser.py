@@ -8,6 +8,8 @@ import re
 import sys
 
 import torch
+from tabulate import tabulate
+
 
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
@@ -565,7 +567,6 @@ def load_label_files(lf_name):
 
 
 def gen_user_name(users, max_len=255):
-    print(f"Generating user name for {users}")
     if len(users) == 1:
         return users[0]
     domain_users = {}
@@ -576,12 +577,14 @@ def gen_user_name(users, max_len=255):
         domain_users[domain].append(user)
     user = ""
     for domain in sorted(domain_users.keys()):
-        user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
+        users = domain_users[domain]
+        if len(users) == 1:
+            user += users[0] + "@"
+        else:
+            user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
     user = user[:-1]
-    print(f"Generated user name: {user}")
     if len(user) > max_len:
         user = user[:max_len-3] + "..."
-        print(f"Trimmed user name to {user}")
     return user
 
 
@@ -614,14 +617,18 @@ def merge_json(users, output_file_list, merged_json):
                                 skills.add(skill)
                     merged_profile[PROFILES].append(profile)
         print("Stats for", user)
-        print("Number of repositories analyzed:", len(output_file_list))
-        print("Number of months analyzed:", len(months))
-        print("Kinds of file analyzed:", ", ".join(languages))
-        print("Number of lines analyzed:", lines_added)
-        print("Number of skills extracted:", len(skills))
+        data = []
+        data.append(["Number of repositories analyzed", len(output_file_list)])
+        data.append(["Number of months analyzed", len(months)])
+        data.append(["Kinds of files analyzed", ", ".join(languages)])
+        data.append(["Number of lines analyzed:", lines_added])
+        data.append(["Number of skills extracted:", len(skills)])
         end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         time_taken_in_minutes = round((end_ts - utc_now) / 60)
-        print("Time taken: ", time_taken_in_minutes, "minutes")
+        data.append(["Time taken: ", f"{time_taken_in_minutes} minutes"])
+        print(tabulate(data, tablefmt="grid"), flush=True)
+        print("------------------------------------", flush=True)
+        print(tabulate(data, headers=["Metric", "Value"], tablefmt="pretty"))
         json.dump(merged_profile, merged_json_writer)
 
 
@@ -723,6 +730,6 @@ if __name__ == "__main__":
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-        if final_outputs and args.user_emails:
-            merge_json(usernames, final_outputs, merged_json)
+    if final_outputs and args.user_emails:
+        merge_json(usernames, final_outputs, merged_json)
     print(f"Processed {cnt} out of {len(folder_list)}")
