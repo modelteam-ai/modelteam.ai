@@ -10,7 +10,6 @@ import sys
 import torch
 from tabulate import tabulate
 
-
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
                                        END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -584,11 +583,11 @@ def gen_user_name(users, max_len=255):
             user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
     user = user[:-1]
     if len(user) > max_len:
-        user = user[:max_len-3] + "..."
+        user = user[:max_len - 3] + "..."
     return user
 
 
-def merge_json(users, output_file_list, merged_json):
+def merge_json(users, output_file_list, merged_json_file_name):
     user = gen_user_name(users)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
@@ -597,7 +596,7 @@ def merge_json(users, output_file_list, merged_json):
     languages = set()
     skills = set()
 
-    with open(merged_json, "w") as merged_json_writer:
+    with open(merged_json_file_name, "w") as merged_json_writer:
         for profile_json in output_file_list:
             with open(profile_json, "r") as f:
                 for line in f:
@@ -617,18 +616,15 @@ def merge_json(users, output_file_list, merged_json):
                                 skills.add(skill)
                     merged_profile[PROFILES].append(profile)
         print("Stats for", user)
-        data = []
-        data.append(["Number of repositories analyzed", len(output_file_list)])
-        data.append(["Number of months analyzed", len(months)])
-        data.append(["Kinds of files analyzed", ", ".join(languages)])
-        data.append(["Number of lines analyzed:", lines_added])
-        data.append(["Number of skills extracted:", len(skills)])
         end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         time_taken_in_minutes = round((end_ts - utc_now) / 60)
-        data.append(["Time taken: ", f"{time_taken_in_minutes} minutes"])
-        print(tabulate(data, tablefmt="grid"), flush=True)
-        print("------------------------------------", flush=True)
-        print(tabulate(data, headers=["Metric", "Value"], tablefmt="pretty"))
+        data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
+                ["Number of repositories analyzed", len(output_file_list)],
+                ["Number of months analyzed", len(months)],
+                ["Number of lines analyzed", lines_added],
+                ["Number of skills extracted", len(skills)]]
+        print(tabulate(data, headers=["Metric", "Value"], tablefmt="psql", showindex=False, colalign=("left", "right")))
+        print(f"Final Output: {merged_json_file_name}")
         json.dump(merged_profile, merged_json_writer)
 
 
