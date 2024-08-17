@@ -1,8 +1,8 @@
 import argparse
+import datetime
 import json
 import os
 import sys
-import datetime
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QTextOption
@@ -13,7 +13,6 @@ from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_R
     NR_SKILLS, TIMESTAMP
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
-from modelteam_utils.viz_utils import generate_pdf_report
 
 
 class App(QWidget):
@@ -230,7 +229,7 @@ def cli_choices(choices_file, email, repos, skills):
         json.dump(choices_dict, f)
 
 
-def apply_choices(merged_profile, choices_file, edited_file, output_path):
+def apply_choices(merged_profile, choices_file, edited_file, formatted_file, output_path):
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
@@ -243,9 +242,10 @@ def apply_choices(merged_profile, choices_file, edited_file, output_path):
             profile[NR_SKILLS] = non_relevant_skills
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
-        f2.write(json.dumps(merged_profile, indent=4))
-    generate_pdf_report(edited_file, output_path)
-    print(f"Edited file saved as {edited_file}")
+        f2.write(json.dumps(merged_profile))
+    with open(formatted_file, "w") as f:
+        f.write(json.dumps(merged_profile, indent=4))
+    print(f"Edited file saved as {edited_file}\nFormatted file (easier to read) saved as {formatted_file}")
 
 
 def display_t_and_c(email_id):
@@ -271,6 +271,7 @@ if __name__ == "__main__":
     file_name_without_extension = args.profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
+    formatted_file = f"{file_name_without_extension}.edited.formatted.json"
     with open(args.profile_json, "r") as f:
         merged_profile = json.load(f)
     if display_t_and_c(merged_profile[USER]) != "i agree":
@@ -279,7 +280,7 @@ if __name__ == "__main__":
     result = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0:
         print("Changes were saved. Applying changes...")
-        apply_choices(merged_profile, choices_file, edited_file, args.output_path)
+        apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"

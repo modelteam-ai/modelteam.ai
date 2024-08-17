@@ -10,14 +10,13 @@ import sys
 import torch
 from tabulate import tabulate
 
-from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
-                                       END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
+from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
+                                       MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
-                                       SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC, TIMESTAMP)
-from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
-    MODEL_TYPES, I2S
+                                       SCORES, SIG_CODE_SNIPPETS, SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION,
+                                       PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
+                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
@@ -565,7 +564,9 @@ def load_label_files(lf_name):
     return label_files
 
 
-def gen_user_name(users, max_len=255):
+def gen_user_name(users, team_name, max_len=255, ):
+    if not users:
+        return team_name
     if len(users) == 1:
         return users[0]
     domain_users = {}
@@ -587,10 +588,12 @@ def gen_user_name(users, max_len=255):
     return user
 
 
-def merge_json(users, output_file_list, merged_json_file_name):
-    user = gen_user_name(users)
+def merge_json(users, output_file_list, merged_json_file_name, team_name):
+    user = gen_user_name(users, team_name)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
+    if team_name:
+        merged_profile[TEAM] = team_name
     lines_added = 0
     months = set()
     languages = set()
@@ -634,7 +637,9 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_emails', type=str,
-                        help='User emails as CSV, if present will generate stats only for those users                                                                     ')
+                        help='User emails as CSV, if present will generate stats only for those users')
+    # Used only for giving a team name when using multiple emails or for generating profiles for all users
+    parser.add_argument('--team_name', type=str, help='Team Name', default=None)
     parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
 
     # These are advanced options that's usually used for internal use
@@ -731,6 +736,6 @@ if __name__ == "__main__":
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-    if final_outputs and args.user_emails:
-        merge_json(usernames, final_outputs, merged_json)
+    if final_outputs and (args.user_emails or args.team_name):
+        merge_json(usernames, final_outputs, merged_json, args.team_name)
     print(f"Processed {cnt} out of {len(folder_list)}")
