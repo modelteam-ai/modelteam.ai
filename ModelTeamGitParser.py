@@ -565,6 +565,7 @@ def load_label_files(lf_name):
 
 
 def gen_user_name(users, max_len=255):
+    print(f"Generating user name for {users}")
     if len(users) == 1:
         return users[0]
     domain_users = {}
@@ -577,8 +578,10 @@ def gen_user_name(users, max_len=255):
     for domain in sorted(domain_users.keys()):
         users += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
     user = user[:-1]
+    print(f"Generated user name: {user}")
     if len(user) > max_len:
         user = user[:max_len-3] + "..."
+        print(f"Trimmed user name to {user}")
     return user
 
 
@@ -721,5 +724,5 @@ if __name__ == "__main__":
         else:
             print(f"Skipping {folder}")
         if final_outputs and args.user_emails:
-            merge_json(args.user_emails, final_outputs, merged_json)
+            merge_json(usernames, final_outputs, merged_json)
     print(f"Processed {cnt} out of {len(folder_list)}")
