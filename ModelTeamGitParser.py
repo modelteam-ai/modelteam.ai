@@ -564,7 +564,7 @@ def load_label_files(lf_name):
     return label_files
 
 
-def gen_user_name(users, team_name, max_len=255, ):
+def gen_user_name(users, team_name, max_len=255):
     if not users:
         return team_name
     if len(users) == 1:
@@ -577,9 +577,9 @@ def gen_user_name(users, team_name, max_len=255, ):
         domain_users[domain].append(user)
     user = ""
     for domain in sorted(domain_users.keys()):
-        users = domain_users[domain]
-        if len(users) == 1:
-            user += users[0] + "@"
+        du = domain_users[domain]
+        if len(du) == 1:
+            user += du[0] + ","
         else:
             user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
     user = user[:-1]
