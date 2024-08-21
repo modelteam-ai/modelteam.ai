@@ -278,7 +278,7 @@ if __name__ == "__main__":
         print("Please accept the terms and conditions to proceed.")
         sys.exit(1)
     result = edit_profile(merged_profile, choices_file, args.cli_mode)
-    if result == 0:
+    if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
         apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
         hc = generate_hc(edited_file)
