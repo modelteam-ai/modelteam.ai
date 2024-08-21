@@ -3,9 +3,9 @@ source mdltm/bin/activate
 #!/bin/bash
 
 usage() {
-  echo "Usage: $0 -r <repo_path> [-e <email_ids_as_csv>] [-t <team_name>] [-n <num_years>]"
+  echo "Usage: $0 -r <repo_path> -t <team_name> [-e <email_ids_as_csv>] [-n <num_years>]"
   echo "e.g. $0 -r /home/user/repos -e user1@org.ai,user2@org.ai -t model_team -n 3"
-  echo "One of email_ids_as_csv or email_ids_as_csv is required"
+  echo "If email_ids are not provided, profiles will be generated for all users in the repos"
   echo "Default num_years is 5"
   exit 1
 }
@@ -30,8 +30,7 @@ if [ -z "$input_path" ]; then
   usage
 fi
 
-# Check if either email_id_csv or team_name is provided
-if [ -z "$email_id_csv" ] && [ -z "$team_name" ]; then
+if [ -z "$team_name" ]; then
   usage
 fi
 
@@ -39,11 +38,15 @@ if ! [[ "$num_years" =~ ^[0-9]+$ ]]; then
   echo "num_years should be a number"
   usage
 fi
+email_option=""
+if [ -n "$email_id_csv" ]; then
+  email_option="--user_emails $email_id_csv"
+fi
 
 curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
 output_path="$curr_dir/model_team_profile/$curr_date"
 echo "Creating ModelTeam profile in $output_path directory"
-HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_emails "$email_id_csv" --num_years $num_years --team_name "$team_name"
+HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini "$email_option" --num_years $num_years --team_name "$team_name" --compress_output
 echo "$output_path" > model_team_profile_path.txt
 echo "ModelTeam profile created in $output_path directory"

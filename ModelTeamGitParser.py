@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import datetime
+import gzip
 import json
 import os
 import random
@@ -588,7 +589,7 @@ def gen_user_name(users, team_name, max_len=255):
     return user
 
 
-def merge_json(users, output_file_list, merged_json_file_name, team_name):
+def merge_json(users, output_file_list, merged_json_file_name, team_name, compress_output):
     user = gen_user_name(users, team_name)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
@@ -599,36 +600,42 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name):
     languages = set()
     skills = set()
 
-    with open(merged_json_file_name, "w") as merged_json_writer:
-        for profile_json in output_file_list:
-            with open(profile_json, "r") as f:
-                for line in f:
-                    profile = json.loads(line)
-                    if LANGS in profile[STATS]:
-                        for lang in profile[STATS][LANGS]:
-                            if TIME_SERIES in profile[STATS][LANGS][lang]:
-                                for month in profile[STATS][LANGS][lang][TIME_SERIES]:
-                                    if month not in months:
-                                        months.add(month)
-                                    if lang not in languages:
-                                        languages.add(lang)
-                                    lines_added += profile[STATS][LANGS][lang][TIME_SERIES][month][ADDED]
-                    if SKILLS in profile[STATS]:
-                        for skill in profile[STATS][SKILLS]:
-                            if skill not in skills:
-                                skills.add(skill)
-                    merged_profile[PROFILES].append(profile)
-        print("Stats for", user)
-        end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        time_taken_in_minutes = round((end_ts - utc_now) / 60)
-        data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
-                ["Number of repositories analyzed", len(output_file_list)],
-                ["Number of months analyzed", len(months)],
-                ["Number of lines analyzed", lines_added],
-                ["Number of skills extracted", len(skills)]]
-        print(tabulate(data, headers=["Metric", "Value"], tablefmt="psql", showindex=False, colalign=("left", "right")))
-        print(f"Final Output: {merged_json_file_name}")
-        json.dump(merged_profile, merged_json_writer)
+    for profile_json in output_file_list:
+        with open(profile_json, "r") as f:
+            for line in f:
+                profile = json.loads(line)
+                if LANGS in profile[STATS]:
+                    for lang in profile[STATS][LANGS]:
+                        if TIME_SERIES in profile[STATS][LANGS][lang]:
+                            for month in profile[STATS][LANGS][lang][TIME_SERIES]:
+                                if month not in months:
+                                    months.add(month)
+                                if lang not in languages:
+                                    languages.add(lang)
+                                lines_added += profile[STATS][LANGS][lang][TIME_SERIES][month][ADDED]
+                if SKILLS in profile[STATS]:
+                    for skill in profile[STATS][SKILLS]:
+                        if skill not in skills:
+                            skills.add(skill)
+                merged_profile[PROFILES].append(profile)
+    print("Stats for", user)
+    end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    end_date = datetime.datetime.utcfromtimestamp(end_ts).strftime('%Y-%m-%d')
+    time_taken_in_minutes = round((end_ts - utc_now) / 60)
+    data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
+            ["Number of repositories analyzed", len(output_file_list)],
+            ["Number of months analyzed", len(months)],
+            ["Number of lines analyzed", lines_added],
+            ["Number of skills extracted", len(skills)]]
+    print(tabulate(data, headers=["Metric", "Value"], tablefmt="psql", showindex=False, colalign=("left", "right")))
+    if compress_output:
+        merged_json_file_name = f"{merged_json_file_name}_{end_date}.gz"
+        with gzip.open(merged_json_file_name, "wt") as merged_json_writer:
+            json.dump(merged_profile, merged_json_writer)
+    else:
+        with open(merged_json_file_name, "w") as merged_json_writer:
+            json.dump(merged_profile, merged_json_writer)
+    print(f"Final Output: {merged_json_file_name}")
 
 
 if __name__ == "__main__":
@@ -650,6 +657,8 @@ if __name__ == "__main__":
     parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
+    # Only needed for team profile
+    parser.add_argument('--compress_output', default=False, help='Compress the output', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -737,5 +746,5 @@ if __name__ == "__main__":
         else:
             print(f"Skipping {folder}")
     if final_outputs and (args.user_emails or args.team_name):
-        merge_json(usernames, final_outputs, merged_json, args.team_name)
+        merge_json(usernames, final_outputs, merged_json, args.team_name, args.compress_output)
     print(f"Processed {cnt} out of {len(folder_list)}")

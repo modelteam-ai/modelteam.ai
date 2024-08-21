@@ -87,7 +87,8 @@ cd modelteam.ai
 # e.g. ./build_team_profile.sh -r /home/user/repos -e user1@org.ai,user2@org.ai -t model_team -n 3
 ```
 
-### 3. Verify & Upload
+### 3. Upload
+#### 3.a. For Individuals
 - Verify the generated profile and remove any unwanted/confidential information
 - Encrypt the JSON file using the provided key and upload it to your account in modelteam.ai
   - Key will be emailed to you
@@ -97,3 +98,5 @@ cd modelteam.ai
 # e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c --cli_mode
 # e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS
 ```
+#### 3.b. For Organizations
+- Just upload the generated JSON file to create your team in modelteam.ai
