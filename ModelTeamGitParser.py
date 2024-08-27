@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import datetime
+import gzip
 import json
 import os
 import random
@@ -8,15 +9,15 @@ import re
 import sys
 
 import torch
+from tabulate import tabulate
 
-from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME,
-                                       END_TIME, MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
+from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
+                                       MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
-                                       SCORES, SIG_CODE_SNIPPETS,
-                                       SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION, PROFILES, PHC, TIMESTAMP)
-from modelteam_utils.constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, \
-    MODEL_TYPES, I2S
+                                       SCORES, SIG_CODE_SNIPPETS, SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION,
+                                       PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
+                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
@@ -53,23 +54,24 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, min_months, num_months, username=None):
+    def get_commits_for_each_user(self, repo_path, min_months, num_months, usernames=set()):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
-        :param username:
+        :param usernames:
         :return:
         """
         commits = {}
-        command = self.get_commit_log_command(repo_path, username, num_months)
+        command = self.get_commit_log_command(repo_path, usernames, num_months)
         result = run_commandline_command(command)
         if result:
             lines = result.strip().split('\n')
             user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
-                if username and author_email != username:
-                    print(f"ERROR: EmailID mismatch. Given email {username} but found {author_email}")
+                # TODO: Check if this is needed
+                if usernames and author_email not in usernames:
+                    print(f"ERROR: EmailID mismatch. Given email {usernames} but found {author_email}")
                     continue
                 # ignore if email is empty
                 if not author_email:
@@ -87,9 +89,10 @@ class ModelTeamGitParser:
         return commits
 
     @staticmethod
-    def get_commit_log_command(repo_path, username, num_months):
-        if username:
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  --author="{username}" --since="{num_months} months ago"'
+    def get_commit_log_command(repo_path, usernames, num_months):
+        if usernames:
+            usernames_pattern = " ".join([f"--author={user}" for user in usernames])
+            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  {usernames_pattern} --since="{num_months} months ago"'
         else:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
@@ -148,8 +151,8 @@ class ModelTeamGitParser:
         # If allowed_users is empty, then all users are allowed
         return True
 
-    def generate_user_profiles(self, repo_path, user_stats, labels, username, repo_name, min_months, num_months):
-        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, username)
+    def generate_user_profiles(self, repo_path, user_stats, labels, usernames, repo_name, min_months, num_months):
+        user_commits = self.get_commits_for_each_user(repo_path, min_months, num_months, usernames)
         ignored_users = 0
         if user_commits:
             for user in user_commits.keys():
@@ -160,7 +163,7 @@ class ModelTeamGitParser:
             if ignored_users:
                 print(f"Ignored {ignored_users} users for {repo_name}", flush=True)
         else:
-            print(f"Not enough contribution for {username} in {repo_name} ({min_months} months)", flush=True)
+            print(f"Not enough contribution for {usernames} in {repo_name} ({min_months} months)", flush=True)
 
     def process_user(self, labels, repo_path, user, user_commits, user_stats):
         commits = user_commits[user]
@@ -314,7 +317,7 @@ class ModelTeamGitParser:
                     repo_level_data[LIBS][file_name] = lib_data[IMPORTS]
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                            final_output, min_months, username, num_months):
+                            final_output, min_months, usernames, num_months):
         skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
         lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
         min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
@@ -322,7 +325,7 @@ class ModelTeamGitParser:
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = repo_path.split("/")[-1]
-            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, username, repo_name, min_months,
+            self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
                                         num_months)
             if repo_level_data[LIBS]:
                 self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
@@ -562,43 +565,77 @@ def load_label_files(lf_name):
     return label_files
 
 
-def merge_json(user, output_file_list, merged_json):
+def gen_user_name(users, team_name, max_len=255):
+    if not users:
+        return team_name
+    if len(users) == 1:
+        return users[0]
+    domain_users = {}
+    for user in users:
+        domain = user.split("@")[1]
+        if domain not in domain_users:
+            domain_users[domain] = []
+        domain_users[domain].append(user)
+    user = ""
+    for domain in sorted(domain_users.keys()):
+        du = domain_users[domain]
+        if len(du) == 1:
+            user += du[0] + ","
+        else:
+            user += "(" + ",".join(domain_users[domain]) + ")@" + domain + ","
+    user = user[:-1]
+    if len(user) > max_len:
+        user = user[:max_len - 3] + "..."
+    return user
+
+
+def merge_json(users, output_file_list, merged_json_file_name, team_name, compress_output):
+    user = gen_user_name(users, team_name)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
+    if team_name:
+        merged_profile[TEAM] = team_name
     lines_added = 0
     months = set()
     languages = set()
     skills = set()
 
-    with open(merged_json, "w") as merged_json_writer:
-        for profile_json in output_file_list:
-            with open(profile_json, "r") as f:
-                for line in f:
-                    profile = json.loads(line)
-                    if LANGS in profile[STATS]:
-                        for lang in profile[STATS][LANGS]:
-                            if TIME_SERIES in profile[STATS][LANGS][lang]:
-                                for month in profile[STATS][LANGS][lang][TIME_SERIES]:
-                                    if month not in months:
-                                        months.add(month)
-                                    if lang not in languages:
-                                        languages.add(lang)
-                                    lines_added += profile[STATS][LANGS][lang][TIME_SERIES][month][ADDED]
-                    if SKILLS in profile[STATS]:
-                        for skill in profile[STATS][SKILLS]:
-                            if skill not in skills:
-                                skills.add(skill)
-                    merged_profile[PROFILES].append(profile)
-        print("Stats for", user)
-        print("Number of repositories analyzed:", len(output_file_list))
-        print("Number of months analyzed:", len(months))
-        print("Kinds of file analyzed:", ", ".join(languages))
-        print("Number of lines analyzed:", lines_added)
-        print("Number of skills extracted:", len(skills))
-        end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        time_taken_in_minutes = round((end_ts - utc_now) / 60)
-        print("Time taken: ", time_taken_in_minutes, "minutes")
-        json.dump(merged_profile, merged_json_writer)
+    for profile_json in output_file_list:
+        with open(profile_json, "r") as f:
+            for line in f:
+                profile = json.loads(line)
+                if LANGS in profile[STATS]:
+                    for lang in profile[STATS][LANGS]:
+                        if TIME_SERIES in profile[STATS][LANGS][lang]:
+                            for month in profile[STATS][LANGS][lang][TIME_SERIES]:
+                                if month not in months:
+                                    months.add(month)
+                                if lang not in languages:
+                                    languages.add(lang)
+                                lines_added += profile[STATS][LANGS][lang][TIME_SERIES][month][ADDED]
+                if SKILLS in profile[STATS]:
+                    for skill in profile[STATS][SKILLS]:
+                        if skill not in skills:
+                            skills.add(skill)
+                merged_profile[PROFILES].append(profile)
+    print("Stats for", user)
+    end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    end_date = datetime.datetime.utcfromtimestamp(end_ts).strftime('%Y-%m-%d')
+    time_taken_in_minutes = round((end_ts - utc_now) / 60)
+    data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
+            ["Number of repositories analyzed", len(output_file_list)],
+            ["Number of months analyzed", len(months)],
+            ["Number of lines analyzed", lines_added],
+            ["Number of skills extracted", len(skills)]]
+    print(tabulate(data, headers=["Metric", "Value"], tablefmt="psql", showindex=False, colalign=("left", "right")))
+    if compress_output:
+        merged_json_file_name = f"{merged_json_file_name}_{end_date}.gz"
+        with gzip.open(merged_json_file_name, "wt") as merged_json_writer:
+            json.dump(merged_profile, merged_json_writer)
+    else:
+        with open(merged_json_file_name, "w") as merged_json_writer:
+            json.dump(merged_profile, merged_json_writer)
+    print(f"Final Output: {merged_json_file_name}")
 
 
 if __name__ == "__main__":
@@ -606,20 +643,27 @@ if __name__ == "__main__":
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
-    parser.add_argument('--user_email', type=str, help='User email, if present will generate stats only for that user')
+    parser.add_argument('--user_emails', type=str,
+                        help='User emails as CSV, if present will generate stats only for those users')
+    # Used only for giving a team name when using multiple emails or for generating profiles for all users
+    parser.add_argument('--team_name', type=str, help='Team Name', default=None)
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
+
+    # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
                         action='store_true')
-    parser.add_argument('--allow_list', type=str, help='List of repos,users to ignore', default=None)
+    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
-    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
+    # Only needed for team profile
+    parser.add_argument('--compress_output', default=False, help='Compress the output', action='store_true')
 
     args = parser.parse_args()
     input_path = args.input_path
     output_path = args.output_path
-    username = args.user_email
+    usernames = args.user_emails
     config_file = args.config
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -631,9 +675,15 @@ if __name__ == "__main__":
     if not input_path or not output_path:
         print("Invalid arguments")
         exit(1)
-    if not username:
+    if not usernames:
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
+    else:
+        # split, trim and convert to set
+        usernames = set([x.strip() for x in usernames.split(",")])
+        if len(usernames) > 5:
+            print("Error: Too many users. Please provide no more than 5 users", flush=True)
+            exit(1)
 
     cnt = 0
     # iterate through all the folders in base_path and use it as repo_path
@@ -690,11 +740,11 @@ if __name__ == "__main__":
                 print(f"Skipping {final_output} as it is already processed")
             else:
                 git_parser.process_single_repo(repo_path, user_stats_output_file_name, repo_lib_output_file_name,
-                                               final_output, min_months, username, num_months)
+                                               final_output, min_months, usernames, num_months)
             if os.path.exists(final_output):
                 final_outputs.append(final_output)
         else:
             print(f"Skipping {folder}")
-        if final_outputs and args.user_email:
-            merge_json(args.user_email, final_outputs, merged_json)
+    if final_outputs and (args.user_emails or args.team_name):
+        merge_json(usernames, final_outputs, merged_json, args.team_name, args.compress_output)
     print(f"Processed {cnt} out of {len(folder_list)}")

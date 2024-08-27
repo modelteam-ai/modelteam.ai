@@ -15,7 +15,7 @@ from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, MLC, \
-    I2S, LANGS, TIME_SERIES, SKILLS, TOP_SECRET, NOT_RELEVANT
+    I2S, LANGS, TIME_SERIES, SKILLS
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.GoPL import GoPL
@@ -207,6 +207,11 @@ def sha256_hash(input_string):
 def consistent_hash_code(input_string):
     sha256_hash = hashlib.sha256(input_string.encode()).hexdigest()
     return int(sha256_hash, 16)
+
+
+def get_salted_hash(string):
+    salt = os.urandom(32)
+    return hashlib.sha256(string.encode() + salt).hexdigest()
 
 
 def is_test(id_str, test_ratio=20):
