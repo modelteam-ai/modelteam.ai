@@ -206,7 +206,7 @@ def sha256_hash(input_string):
 
 def consistent_hash_code(input_string):
     sha256_hash = hashlib.sha256(input_string.encode()).hexdigest()
-    return int(sha256_hash, 16)
+    return int(sha256_hash[-15:], 16)
 
 
 def get_salted_hash(string):
