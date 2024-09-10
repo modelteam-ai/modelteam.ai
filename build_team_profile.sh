@@ -38,15 +38,16 @@ if ! [[ "$num_years" =~ ^[0-9]+$ ]]; then
   echo "num_years should be a number"
   usage
 fi
-email_option=""
-if [ -n "$email_id_csv" ]; then
-  email_option="--user_emails $email_id_csv"
-fi
+
 
 curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
 output_path="$curr_dir/model_team_profile/$curr_date"
 echo "Creating ModelTeam profile in $output_path directory"
-HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini "$email_option" --num_years $num_years --team_name "$team_name" --compress_output
+if [ -n "$email_id_csv" ]; then
+  HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_emails "$email_id_csv" --num_years $num_years --team_name "$team_name" --compress_output
+else
+  HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --num_years $num_years --team_name "$team_name" --compress_output
+fi
 echo "$output_path" > model_team_profile_path.txt
 echo "ModelTeam profile created in $output_path directory"
