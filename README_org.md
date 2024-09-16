@@ -1,8 +1,14 @@
 ![modelteam.ai](images/modelteam_logo.jpg)
 
-**ModelTeam** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
-Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
-Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
+At **ModelTeam**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
+capabilities by examining code and technical documentations. We use these models, learned from a training set of
+millions of engineers, to develop a unique data assets that powers a vertical talent insight platform for software
+engineers. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
+right roles, optimizing performance and success.
+
+Our AI platform extracts insights from engineering team's day-to-day work products, including code and technical
+documentation. Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and
+coding quality.
 
 ModelTeam is built on a robust foundation of training data from over a million engineers' contributions to open-source
 projects, spanning 9 programming languages.
@@ -64,7 +70,7 @@ cd modelteam.ai
 ./setup.sh
 ```
 
-### 2 Build your profile
+### 2 Build Team profile
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Copy all the repositories you want to include in your profile to a single folder e.g. `~/modelteam/repos`
@@ -81,26 +87,18 @@ cp -r <repo3> .
 ...
 ...
 ```
-- Build your profile
+
+- Build your team's profile. If your team is big, we recommend generating profiles only for the team members who are
+  actively contributing to the repositories and are relevant to the team's skills.
 
 ```bash
-# Generates your profile. Takes email used in git commits and optionally number of years to consider
-# Number of years is optional and defaults to 5 years. It's recommended to change it to your years of experience
-./build_my_profile.sh -r <repos_path> -e <email> [-n <number_of_years>]
-# e.g. ./build_my_profile.sh -r ~/modelteam/repos -e user@org.ai -n 5
+# Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
+# Number of years is optional and defaults to 5 years. It's recommended to reduce it as per your needs
+./build_team_profile.sh -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
+# e.g. ./build_team_profile.sh -r ~/modelteam/repos -e user1@org.ai,user2@org.ai -t model_team -n 3
+# e.g. ./build_team_profile.sh -r ~/modelteam/repos -t model_team -n 3
 ```
 
 ### 3. Upload
 
-- Verify the generated profile edit it using the provided tool (Don't edit the JSON file directly)
-    - Remove any unwanted/confidential information
-    - Encrypt the JSON file using the provided key
-        - Key will be emailed to you when you sign up
-- Upload the file to your account in modelteam.ai
-
-```bash
-# If you are using linux server without GUI, use --cli_mode
-./edit_and_sign.sh <key> [--cli_mode]
-# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c --cli_mode
-# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS
-```
+- Just upload the generated JSON file to create your team in modelteam.ai
