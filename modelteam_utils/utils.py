@@ -74,8 +74,7 @@ def run_commandline_command(command):
     try:
         check_for_unsafe_command(command)
         result = subprocess.check_output(command, shell=True, universal_newlines=True)
-        if not result:
-            return "True"
+        # TODO: Handle empty results
         return result
     except Exception as e:
         print(f"Error running command: {command} with error {e}", flush=True)
