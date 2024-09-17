@@ -647,7 +647,7 @@ if __name__ == "__main__":
                         help='User emails as CSV, if present will generate stats only for those users')
     # Used only for giving a team name when using multiple emails or for generating profiles for all users
     parser.add_argument('--team_name', type=str, help='Team Name', default=None)
-    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=5)
+    parser.add_argument('--num_years', type=int, help='Number of years to consider', default=2)
 
     # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
