@@ -318,9 +318,6 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, usernames, num_months):
-        skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
-        lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
-        min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
@@ -336,6 +333,9 @@ class ModelTeamGitParser:
                     for user in user_profiles:
                         self.write_user_profile_to_file(f, repo_name, repo_path, user, user_profiles[user])
         if not args.skip_model_eval and os.path.exists(user_stats_output_file_name):
+            skill_min_score = float(self.config['modelteam.ai']['skill_min_score'])
+            lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
+            min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
             if not os.path.exists(final_output):
                 if not repo_level_data[LIBS]:
                     self.load_library_data(repo_lib_output_file_name, repo_level_data)
@@ -641,6 +641,7 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, compre
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
+    parser.add_argument('--repo_name', type=str, help='Name of single repo to process')
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
     parser.add_argument('--user_emails', type=str,
@@ -690,7 +691,10 @@ if __name__ == "__main__":
     if args.start_from_tmp:
         folder_list = os.listdir(f"{output_path}/tmp-stats")
     else:
-        folder_list = os.listdir(input_path)
+        if args.repo_name:
+            folder_list = [args.repo_name]
+        else:
+            folder_list = os.listdir(input_path)
     randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
@@ -727,7 +731,7 @@ if __name__ == "__main__":
                 file_prefix = folder.replace(".jsonl", "")
             else:
                 repo_path = f"{input_path}/{folder}"
-                file_prefix = f"""{repo_path.replace("/", "_")}"""
+                file_prefix = folder
             # check if the repo is no longer open. Ignore if it asks for password
             # result = run_commandline_command(f"git -C {repo_path} pull --rebase")
             # if not result:
