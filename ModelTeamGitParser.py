@@ -368,14 +368,8 @@ class ModelTeamGitParser:
                         # Evaluate 1 model at a time to avoid memory issues
                         model_data = init_model(model_path, model_type, self.config, device)
                         if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
-                            for user in user_profiles:
-                                user_profile = user_profiles[user]
-                                if SKILLS not in user_profile:
-                                    user_profile[SKILLS] = {}
-                                if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
-                                    continue
-                                has_new_data += self.extract_skills(user_profile, repo_level_data, min_months,
-                                                                    model_data, repo_name)
+                            has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
+                                                                model_data, repo_name)
                 if has_new_data == 0:
                     print(f"No users with extracted skills found for {repo_path}", flush=True)
                     return
@@ -403,56 +397,67 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profile, repo_level_data, min_months, model_data, repo_name):
+    def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name):
         global label_file_list
+        has_features = 0
         features = []
-        if LANGS not in user_profile:
-            return 0
-        lang_stats = user_profile[LANGS]
-        # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
-        for lang in lang_stats:
-            if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+        for user in user_profiles:
+            user_profile = user_profiles[user]
+            if SKILLS not in user_profile:
+                user_profile[SKILLS] = {}
+            if TMP_MAX_YYYY_MM in user_profile and user_profile[TMP_MAX_YYYY_MM] < min_months:
                 continue
-            num_months = len(lang_stats[lang][TIME_SERIES])
-            if TMP_MAX_YYYY_MM not in user_profile:
-                user_profile[TMP_MAX_YYYY_MM] = num_months
-            else:
-                user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], num_months)
-            if TIME_SERIES not in lang_stats[lang] or num_months < min_months:
-                continue
-            sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
-            for yyyy_mm in sig_code_snippets.keys():
-                monthly_snippets = sig_code_snippets[yyyy_mm]
-                for i in range(len(monthly_snippets)):
-                    snippets = monthly_snippets[i]
-                    file_name = snippets[0]
-                    key = get_repo_user_key(repo_name, file_name)
-                    is_labeled_file = 0
-                    if key in label_file_list:
-                        is_labeled_file = 1
-                    snippet_list = snippets[1]
-                    for snippet in snippet_list:
-                        file_extension = get_file_extension(file_name)
-                        parser = get_language_parser(file_extension, snippet, file_name,
-                                                     self.keep_only_public_libraries)
-                        if not parser:
-                            continue
-                        chunks = break_code_snippets_to_chunks(file_name, snippet, T5_CHUNK_CHAR_LIMIT)
-                        for chunk in chunks:
-                            lines = chunk.split("\n")
-                            line_count = len(lines)
-                            doc_string_line_count = self.get_docstring_line_count(lines, parser)
-                            libs_in_file = ""
-                            if file_name in repo_level_data[LIBS]:
-                                libs_in_file = repo_level_data[LIBS][file_name]
-                            features.append({"lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm, "snippet": chunk,
-                                             "libs": libs_in_file, "line_count": line_count,
-                                             "is_labeled_file": is_labeled_file,
-                                             "doc_string_line_count": doc_string_line_count})
-        if features:
-            self.eval_llm_model(model_data, features, user_profile)
-            return len(features)
-        return 0
+            if LANGS not in user_profile:
+                return 0
+            lang_stats = user_profile[LANGS]
+            # lang, file_name, yyyy_mm, snippet, libs_added, line_count, doc_string_line_count
+            for lang in lang_stats:
+                if SIG_CODE_SNIPPETS not in lang_stats[lang]:
+                    continue
+                num_months = len(lang_stats[lang][TIME_SERIES])
+                if TMP_MAX_YYYY_MM not in user_profile:
+                    user_profile[TMP_MAX_YYYY_MM] = num_months
+                else:
+                    user_profile[TMP_MAX_YYYY_MM] = max(user_profile[TMP_MAX_YYYY_MM], num_months)
+                if TIME_SERIES not in lang_stats[lang] or num_months < min_months:
+                    continue
+                sig_code_snippets = lang_stats[lang][SIG_CODE_SNIPPETS]
+                for yyyy_mm in sig_code_snippets.keys():
+                    monthly_snippets = sig_code_snippets[yyyy_mm]
+                    for i in range(len(monthly_snippets)):
+                        snippets = monthly_snippets[i]
+                        file_name = snippets[0]
+                        key = get_repo_user_key(repo_name, file_name)
+                        is_labeled_file = 0
+                        if key in label_file_list:
+                            is_labeled_file = 1
+                        snippet_list = snippets[1]
+                        for snippet in snippet_list:
+                            file_extension = get_file_extension(file_name)
+                            parser = get_language_parser(file_extension, snippet, file_name,
+                                                         self.keep_only_public_libraries)
+                            if not parser:
+                                continue
+                            chunks = break_code_snippets_to_chunks(file_name, snippet, T5_CHUNK_CHAR_LIMIT)
+                            for chunk in chunks:
+                                lines = chunk.split("\n")
+                                line_count = len(lines)
+                                doc_string_line_count = self.get_docstring_line_count(lines, parser)
+                                libs_in_file = ""
+                                if file_name in repo_level_data[LIBS]:
+                                    libs_in_file = repo_level_data[LIBS][file_name]
+                                features.append({"user": user, "lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm,
+                                                 "snippet": chunk, "libs": libs_in_file, "line_count": line_count,
+                                                 "is_labeled_file": is_labeled_file,
+                                                 "doc_string_line_count": doc_string_line_count})
+            if len(features) == 1000:
+                self.eval_llm_model(model_data, features, user_profiles)
+                has_features += len(features)
+                features = []
+        if len(features) > 0:
+            self.eval_llm_model(model_data, features, user_profiles)
+            has_features += len(features)
+        return has_features
 
     @staticmethod
     def get_docstring_line_count(lines, parser):
@@ -465,9 +470,8 @@ class ModelTeamGitParser:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
 
-    def eval_llm_model(self, model_data, features, user_profile):
-        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}",
-              flush=True)
+    def eval_llm_model(self, model_data, features, user_profiles):
+        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}", flush=True)
         snippet_key = "snippet"
         if model_data['model_type'] == I2S:
             snippet_key = "libs"
@@ -476,7 +480,6 @@ class ModelTeamGitParser:
             limit = LIFE_OF_PY_PREDICTION_LIMIT
         else:
             limit = SKILL_PREDICTION_LIMIT
-        # TODO: Add support for batch processing
         skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
                                                                            model_data['model'], snippets,
                                                                            model_data['new_tokens'], limit)
@@ -486,8 +489,8 @@ class ModelTeamGitParser:
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
             is_labeled_file = features[i]["is_labeled_file"]
-            ModelTeamGitParser.accumulate_score(user_profile, lang, yyyy_mm, score_list[i], sm_score_list[i],
-                                                skill_list[i], line_count, doc_string_line_count,
+            ModelTeamGitParser.accumulate_score(user_profiles[features[i]["user"]], lang, yyyy_mm, score_list[i],
+                                                sm_score_list[i], skill_list[i], line_count, doc_string_line_count,
                                                 model_data['model_tag'], model_data['model_type'] == C2S,
                                                 is_labeled_file)
 
