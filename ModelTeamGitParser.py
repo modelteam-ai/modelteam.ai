@@ -572,7 +572,7 @@ def gen_user_name(users, team_name, max_len=255):
     if not users:
         return team_name
     if len(users) == 1:
-        return users[0]
+        return next(iter(users))
     domain_users = {}
     for user in users:
         domain = user.split("@")[1]
