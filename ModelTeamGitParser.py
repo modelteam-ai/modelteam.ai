@@ -450,10 +450,10 @@ class ModelTeamGitParser:
                                                  "snippet": chunk, "libs": libs_in_file, "line_count": line_count,
                                                  "is_labeled_file": is_labeled_file,
                                                  "doc_string_line_count": doc_string_line_count})
-            if len(features) == 1000:
-                self.eval_llm_model(model_data, features, user_profiles)
-                has_features += len(features)
-                features = []
+                                if len(features) == 1000:
+                                    self.eval_llm_model(model_data, features, user_profiles)
+                                    has_features += len(features)
+                                    features = []
         if len(features) > 0:
             self.eval_llm_model(model_data, features, user_profiles)
             has_features += len(features)
