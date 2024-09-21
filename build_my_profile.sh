@@ -33,6 +33,11 @@ if ! [[ "$num_years" =~ ^[0-9]+$ ]]; then
   usage
 fi
 
+if [[ "$email_id" == *","* ]]; then
+  echo "Please provide only one email id"
+  usage
+fi
+
 curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
 output_path="$curr_dir/model_team_profile/$curr_date"
