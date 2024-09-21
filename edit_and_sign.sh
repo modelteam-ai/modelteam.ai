@@ -1,4 +1,5 @@
 set -e
+echo "Loading ModelTeam profile..."
 source mdltm/bin/activate
 if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
   echo "Usage: $0 <key> [--cli_mode]"
