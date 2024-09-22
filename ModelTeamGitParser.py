@@ -144,10 +144,10 @@ class ModelTeamGitParser:
         return file_line_stats
 
     def is_allowed_user(self, repo_name, user):
-        global allowed_users
-        if allowed_users:
+        global users_to_filter
+        if users_to_filter:
             key = get_repo_user_key(repo_name, user)
-            return key in allowed_users
+            return key not in users_to_filter
         # If allowed_users is empty, then all users are allowed
         return True
 
@@ -658,7 +658,7 @@ if __name__ == "__main__":
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
     parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
                         action='store_true')
-    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed', default=None)
+    parser.add_argument('--filter_list', type=str, help='List of repos,users to be filtered', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
     # Only needed for team profile
@@ -675,7 +675,7 @@ if __name__ == "__main__":
     min_months = int(config['modelteam.ai']['min_months'])
     num_months = args.num_years * 12
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-    allowed_users = load_repo_user_list(args.allow_list)
+    users_to_filter = load_repo_user_list(args.filter_list)
     label_file_list = load_label_files(args.label_file_list)
     if not input_path or not output_path:
         print("Invalid arguments")
