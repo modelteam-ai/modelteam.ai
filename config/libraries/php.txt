@@ -1,14 +1,2 @@
-$PHPUNIT_DIR/$PHPUNIT_VERSION_DIR/phpunit	1	2
-%path%foo.php	2	2
-PEAR.php	3	2
-autoload.php	4	3
-common.php	5	3
-config.php	6	5
-vendor/autoload.php	7	24
-assets/css/options-panel.css	8	2
-assets/js/options-panel.js	9	2
-comment-input.php	10	2
-components/link-editor.php	11	2
-config/config.php	12	2
-functions.php	13	3
-modules/config.php	14	2
+config.php	1	8
+vendor/autoload.php	2	36
