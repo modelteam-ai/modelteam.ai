@@ -485,12 +485,12 @@ def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model)
 
 
 def get_life_of_py_bucket(change):
-    if change < 0:
+    if change < 30:
         return LIFE_OF_PY_BUCKETS[0]
-    if change >= 100:
-        return LIFE_OF_PY_BUCKETS[-1]
-    bucket = LIFE_OF_PY_BUCKETS[change // 20]
-    return bucket
+    else:
+        return LIFE_OF_PY_BUCKETS[1]
+    # bucket = LIFE_OF_PY_BUCKETS[change // 20]
+    # return bucket
 
 
 def is_documentation(input_string):
