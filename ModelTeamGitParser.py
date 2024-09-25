@@ -718,11 +718,11 @@ if __name__ == "__main__":
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             if args.parallel_mode:
                 par_md = int(args.parallel_mode)
-                if cnt % 100 == 0:
+                if cnt % 10 == 0 and os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):
+                    print("Kill switch detected. Exiting")
+                    break
+                if cnt % 1000 == 0:
                     print(f"Processed {cnt} out of {len(folder_list)} and {skip} skipped")
-                    if os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):
-                        print("Kill switch detected. Exiting")
-                        break
                 if 0 <= par_md <= 1:
                     hc = consistent_hash_code(folder)
                     if hc % 2 != par_md:
