@@ -11,6 +11,7 @@ import sys
 import torch
 from tabulate import tabulate
 
+from modelteam.modelteam_utils.utils import consistent_hash_code
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
                                        MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -656,8 +657,9 @@ if __name__ == "__main__":
     # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
     parser.add_argument('--keep_repo_name', default=False, help='Retain Full Repo Name', action='store_true')
-    parser.add_argument('--parallel_mode', default=False, help='Multiple Runs may run, check for touch files',
-                        action='store_true')
+    parser.add_argument('--parallel_mode', type=str,
+                        help='Check for touch files. Can be -1, 0, 1. -1 -> Run for all 0, 1 -> Run only if hashcode(folder) == value',
+                        default=None)
     parser.add_argument('--filter_list', type=str, help='List of repos,users to be filtered', default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
@@ -691,6 +693,7 @@ if __name__ == "__main__":
             exit(1)
 
     cnt = 0
+    skip = 0
     # iterate through all the folders in base_path and use it as repo_path
     if args.start_from_tmp:
         folder_list = os.listdir(f"{output_path}/tmp-stats")
@@ -714,9 +717,21 @@ if __name__ == "__main__":
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
             if args.parallel_mode:
+                par_md = int(args.parallel_mode)
+                if cnt % 100 == 0:
+                    print(f"Processed {cnt} out of {len(folder_list)} and {skip} skipped")
+                    if os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):
+                        print("Kill switch detected. Exiting")
+                        break
+                if 0 <= par_md <= 1:
+                    hc = consistent_hash_code(folder)
+                    if hc % 2 != par_md:
+                        skip += 1
+                        continue
                 touch_file = f"{output_path}/touch-files/{folder}"
                 if os.path.exists(touch_file):
                     print(f"Skipping {folder} as it is already processed")
+                    skip += 1
                     continue
                 else:
                     # There is a very tiny chance that another process might create the file
