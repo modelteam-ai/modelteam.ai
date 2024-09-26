@@ -716,7 +716,7 @@ if __name__ == "__main__":
             continue
         if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
                 f"{input_path}/{folder}/.git")) or args.start_from_tmp:
-            if args.parallel_mode:
+            if args.parallel_mode is not None:
                 par_md = int(args.parallel_mode)
                 if cnt % 10 == 0 and os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):
                     print("Kill switch detected. Exiting")
@@ -743,7 +743,7 @@ if __name__ == "__main__":
                         print(f"Rare Exception: Skipping {folder} as it is already processed")
                         continue
             cnt += 1
-            print(f"Processing {folder}", flush=True)
+            print(f"Processing {folder} Count: {cnt}", flush=True)
             if args.start_from_tmp:
                 # Repo path won't be real as it reads from tmp-stats
                 repo_path = f"{output_path}/tmp-stats/{folder}"
