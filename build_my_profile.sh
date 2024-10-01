@@ -10,6 +10,7 @@ usage() {
 input_path=""
 email_id=""
 num_years=5
+rm -f model_team_profile_path.txt
 
 while getopts "r:e:n:" opt; do
   case $opt in
@@ -33,9 +34,17 @@ if ! [[ "$num_years" =~ ^[0-9]+$ ]]; then
   usage
 fi
 
+if [[ "$email_id" == *","* ]]; then
+  echo "Please provide only one email id"
+  usage
+fi
+
 curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
-output_path="$curr_dir/model_team_profile/$curr_date"
+# sanitize emailid for file path
+email_path=$(echo "$email_id" | sed 's/@/_/g' | sed 's/\./_/g')
+output_path="$curr_dir/model_team_profile/$email_path/$curr_date"
+mkdir -p "$output_path"
 echo "Creating ModelTeam profile in $output_path directory"
 HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_emails "$email_id" --num_years $num_years
 echo "$output_path" > model_team_profile_path.txt

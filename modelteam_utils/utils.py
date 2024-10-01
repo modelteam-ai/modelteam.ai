@@ -74,6 +74,7 @@ def run_commandline_command(command):
     try:
         check_for_unsafe_command(command)
         result = subprocess.check_output(command, shell=True, universal_newlines=True)
+        # TODO: Handle empty results
         return result
     except Exception as e:
         print(f"Error running command: {command} with error {e}", flush=True)
@@ -364,7 +365,7 @@ def softmax(x):
     return exp_x / np.sum(exp_x, axis=0).tolist()
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
+def eval_llm_batch_with_scores_old(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
     skill_list = []
     next_best_prob_list = []
     soft_max_list = []
@@ -398,6 +399,43 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
             skill_list.append(tmp_results)
             next_best_prob_list.append(tmp_scores)
             soft_max_list.append(tmp_orig_scores)
+    return skill_list, next_best_prob_list, soft_max_list
+
+
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
+    skill_list = []
+    next_best_prob_list = []
+    soft_max_list = []
+    with torch.no_grad():
+        input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
+            device)
+        output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
+                                no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
+    for i in range(len(codes)):
+        score_map = {}
+        soft_max_map = {}
+        new_token_scores = []
+        words = []
+        for j in new_tokens:
+            word = tokenizer.decode(j)
+            score_map[word] = output.scores[1][i][j].item()
+            new_token_scores.append(score_map[word])
+            words.append(word)
+        soft_max_scores = softmax(new_token_scores)
+        for w, s in zip(words, soft_max_scores):
+            soft_max_map[w] = s
+        tmp_results = []
+        tmp_scores = []
+        tmp_orig_scores = []
+        top_n = sorted(score_map, key=score_map.get, reverse=True)[:limit]
+        next_best_pr = next_best_prob(soft_max_map, top_n)
+        for word in top_n:
+            tmp_results.append(word)
+            tmp_scores.append(next_best_pr[word])
+            tmp_orig_scores.append(soft_max_map[word])
+        skill_list.append(tmp_results)
+        next_best_prob_list.append(tmp_scores)
+        soft_max_list.append(tmp_orig_scores)
     return skill_list, next_best_prob_list, soft_max_list
 
 
@@ -447,12 +485,12 @@ def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model)
 
 
 def get_life_of_py_bucket(change):
-    if change < 0:
+    if change < 30:
         return LIFE_OF_PY_BUCKETS[0]
-    if change >= 100:
-        return LIFE_OF_PY_BUCKETS[-1]
-    bucket = LIFE_OF_PY_BUCKETS[change // 20]
-    return bucket
+    else:
+        return LIFE_OF_PY_BUCKETS[1]
+    # bucket = LIFE_OF_PY_BUCKETS[change // 20]
+    # return bucket
 
 
 def is_documentation(input_string):
