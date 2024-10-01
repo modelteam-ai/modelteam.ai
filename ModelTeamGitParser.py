@@ -665,7 +665,7 @@ if __name__ == "__main__":
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
     # Only needed for team profile
     parser.add_argument('--compress_output', default=False, help='Compress the output', action='store_true')
-    parser.add_argument('--batch_size', type=int, help='Batch size for model evaluation', default=100)
+    parser.add_argument('--batch_size', type=int, help='Batch size for model evaluation', default=20)
 
     args = parser.parse_args()
     input_path = args.input_path
@@ -743,7 +743,7 @@ if __name__ == "__main__":
                         print(f"Rare Exception: Skipping {folder} as it is already processed")
                         continue
             cnt += 1
-            print(f"Processing {folder} Count: {cnt}", flush=True)
+            print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
                 # Repo path won't be real as it reads from tmp-stats
                 repo_path = f"{output_path}/tmp-stats/{folder}"
