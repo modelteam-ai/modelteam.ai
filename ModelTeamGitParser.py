@@ -55,13 +55,15 @@ class ModelTeamGitParser:
         else:
             commits[LANGS][file_extension][TIME_SERIES][yyyy_mm][key] += inc_count
 
-    def get_commits_for_each_user(self, repo_path, min_months, num_months, usernames=set()):
+    def get_commits_for_each_user(self, repo_path, min_months, num_months, usernames=None):
         """
         Get the list of commits for each user in the given repo. If username is None, then get commits for all users
         :param repo_path:
         :param usernames:
         :return:
         """
+        if not usernames:
+            usernames = set()
         commits = {}
         command = self.get_commit_log_command(repo_path, usernames, num_months)
         result = run_commandline_command(command)
@@ -141,6 +143,7 @@ class ModelTeamGitParser:
                         language[END_TIME] = yyyy_mm
                     elif language[END_TIME] < yyyy_mm:
                         language[END_TIME] = yyyy_mm
+                    # Special case. Dealing with git diff. "/" is used as separator even in windows
                     file_line_stats[f"{repo_path}/{file_path}"] = [added, deleted]
         return file_line_stats
 
@@ -215,11 +218,13 @@ class ModelTeamGitParser:
 
     def break_diff_and_process_each_file(self, commit_hash, git_diff, repo_path, file_line_stats, user_commit_stats,
                                          labels, yyyy_mm, curr_user, src_prefix, dest_prefix):
+        # Even in windows git diff uses / as separator
         file_diffs = re.split(fr'diff --git {src_prefix}/', git_diff)
 
         for file_diff in file_diffs[1:]:  # ignore the first element
             file_lines = file_diff.split('\n')
             file_name = file_lines[0].strip().split(f" {dest_prefix}/")[1]
+            # Special case. Dealing with git diff. "/" is used as separator even in windows
             filename_with_path = f"{repo_path}/{file_name}"
             if filename_with_path not in file_line_stats:
                 # Not a big change, so ignoring
@@ -231,7 +236,7 @@ class ModelTeamGitParser:
             if not parser:
                 # Not a supported language, so ignoring
                 continue
-            if file_name not in labels[LIBS] and os.path.isfile(f"{repo_path}/{file_name}"):
+            if file_name not in labels[LIBS] and os.path.isfile(os.path.join(repo_path, file_name)):
                 library_names = parser.get_library_names(include_all_libraries=True)
                 if library_names:
                     labels[LIBS][file_name] = library_names
@@ -272,6 +277,7 @@ class ModelTeamGitParser:
         dest_prefix = random.randint(0, 1000)
         # Analyze the actual code changes in the given commit
         file_list = ""
+        # even in windows git diff uses / as separator
         for file in file_line_stats.keys():
             file = file.replace(repo_path + "/", "")
             file_list += f'"{file}" '
@@ -322,7 +328,7 @@ class ModelTeamGitParser:
         user_profiles = {}
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
-            repo_name = repo_path.split("/")[-1]
+            repo_name = os.path.basename(repo_path)
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
                                         num_months)
             if repo_level_data[LIBS]:
@@ -624,7 +630,8 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, compre
                 merged_profile[PROFILES].append(profile)
     print("Stats for", user)
     end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-    end_date = datetime.datetime.utcfromtimestamp(end_ts).strftime('%Y-%m-%d')
+    end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
+
     time_taken_in_minutes = round((end_ts - utc_now) / 60)
     data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
             ["Number of repositories analyzed", len(output_file_list)],
@@ -696,7 +703,7 @@ if __name__ == "__main__":
     skip = 0
     # iterate through all the folders in base_path and use it as repo_path
     if args.start_from_tmp:
-        folder_list = os.listdir(f"{output_path}/tmp-stats")
+        folder_list = os.listdir(os.path.join(output_path, "tmp-stats"))
     else:
         if args.repo_name:
             folder_list = [args.repo_name]
@@ -705,11 +712,12 @@ if __name__ == "__main__":
     randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
-    os.makedirs(f"{output_path}/tmp-stats", exist_ok=True)
-    os.makedirs(f"{output_path}/touch-files", exist_ok=True)
-    os.makedirs(f"{output_path}/final-stats", exist_ok=True)
-    merged_json = f"{output_path}/mt_profile.json"
+    os.makedirs(os.path.join(output_path, "tmp-stats"), exist_ok=True)
+    os.makedirs(os.path.join(output_path, "touch-files"), exist_ok=True)
+    os.makedirs(os.path.join(output_path, "final-stats"), exist_ok=True)
+    merged_json = os.path.join(output_path, "mt_profile.json")
     final_outputs = []
+    kill_switch = os.path.join(output_path, "touch-files", "kill_switch_mtgp")
     for folder in randomized_folder_list:
         if folder.endswith("_libs.jsonl"):
             continue
@@ -717,7 +725,7 @@ if __name__ == "__main__":
                 os.path.join(input_path, folder, ".git"))) or args.start_from_tmp:
             if args.parallel_mode is not None:
                 par_md = int(args.parallel_mode)
-                if cnt % 10 == 0 and os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):
+                if cnt % 10 == 0 and os.path.exists(kill_switch):
                     print("Kill switch detected. Exiting")
                     break
                 if cnt % 1000 == 0:
@@ -727,7 +735,7 @@ if __name__ == "__main__":
                     if hc % 2 != par_md:
                         skip += 1
                         continue
-                touch_file = f"{output_path}/touch-files/{folder}"
+                touch_file = os.path.join(output_path, "touch-files", folder)
                 if os.path.exists(touch_file):
                     print(f"Skipping {folder} as it is already processed")
                     skip += 1
@@ -745,19 +753,19 @@ if __name__ == "__main__":
             print(f"Processing {folder}", flush=True)
             if args.start_from_tmp:
                 # Repo path won't be real as it reads from tmp-stats
-                repo_path = f"{output_path}/tmp-stats/{folder}"
+                repo_path = os.path.join(output_path, "tmp-stats", folder)
                 file_prefix = folder.replace(".jsonl", "")
             else:
-                repo_path = f"{input_path}/{folder}"
+                repo_path = os.path.join(input_path, folder)
                 file_prefix = folder
             # check if the repo is no longer open. Ignore if it asks for password
             # result = run_commandline_command(f"git -C {repo_path} pull --rebase")
             # if not result:
             #     print(f"Skipping {folder} as it is no longer open")
             #     continue
-            user_stats_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}.jsonl"""
-            repo_lib_output_file_name = f"""{output_path}/tmp-stats/{file_prefix}_libs.jsonl"""
-            final_output = f"""{output_path}/final-stats/{file_prefix}_user_profile.jsonl"""
+            user_stats_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}.jsonl")
+            repo_lib_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}_libs.jsonl")
+            final_output = os.path.join(output_path, "final-stats", f"{file_prefix}_user_profile.jsonl")
             if os.path.exists(final_output):
                 print(f"Skipping {final_output} as it is already processed")
             else:
