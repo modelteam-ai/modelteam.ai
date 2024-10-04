@@ -253,7 +253,7 @@ def display_t_and_c(email_id):
                f"\t1. I am the owner of the email address {email_id} associated with this profile",
                "\t2. I own the code contributions associated with this email address",
                "\t3. I will remove any confidential skills from the profile before submitting"]
-    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: ")
+    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: \n")
     return res.lower()
 
 
@@ -285,7 +285,12 @@ if __name__ == "__main__":
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
-        print(f"Encrypted and compressed file saved as {encrypted_file}")
+        print("Modelteam Profile Ready to Upload...Encrypted and compressed file saved as below:")
+        print("-----------------------------------")
+        print(encrypted_file)
+        print("-----------------------------------")
+        print(
+            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
         sys.exit(1)

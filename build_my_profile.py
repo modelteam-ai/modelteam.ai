@@ -4,7 +4,7 @@ import re
 import sys
 from datetime import datetime
 
-from setup_utils import get_python_bin, run_command
+from setup_utils import get_python_bin, run_command, get_profile_path_fine_name
 
 
 def usage():
@@ -81,7 +81,7 @@ def main():
     print(f"Creating ModelTeam profile in {output_path} directory")
 
     # Remove the existing model_team_profile_path.txt if it exists
-    profile_path_file = os.path.join(curr_dir, "model_team_profile", "model_team_profile_path.txt")
+    profile_path_file = get_profile_path_fine_name()
     if os.path.exists(profile_path_file):
         os.remove(profile_path_file)
 

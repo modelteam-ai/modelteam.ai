@@ -36,3 +36,9 @@ def get_python_bin(create_venv=False):
     else:
         python_bin = os.path.join(venv_dir, "bin", "python")
     return python_bin
+
+
+def get_profile_path_fine_name():
+    curr_dir = os.getcwd()
+    profile_path_file = os.path.join(curr_dir, "model_team_profile", "model_team_profile_path.txt")
+    return profile_path_file

@@ -1,9 +1,5 @@
-import os
-import venv
-import platform
+from setup_utils import run_command, get_python_bin
 
-from modelteam.setup_utils import get_python_bin
-from setup_utils import run_command
 
 def main():
     print("Getting latest ModelTeam code")
@@ -20,6 +16,7 @@ def main():
     run_command([python_bin, "download_models.py", "--config", "config.ini"])
 
     print("ModelTeam setup complete")
+
 
 if __name__ == "__main__":
     main()
