@@ -566,14 +566,14 @@ def init_model(model_path, model_type, config, device):
         model_data["tokenizer"] = tokenizer
         model_data["new_tokens"] = new_tokens
     elif model_type == MLC:
-        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
+        with gzip.open(os.path.join(model_path, "model.pkl.gz"), "rb") as f:
             model = pickle.load(f)
             model_data["model"] = model
             model.eval()
-        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
+        libs = load_file_to_list(os.path.join(model_path, "lib_list.txt.gz"))
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
         model_data["lib_index"] = lib_index
-        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
+        skills = load_file_to_list(os.path.join(model_path, "skill_list.txt.gz"))
         skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
         model_data["skill_names"] = skill_names
     return model_data

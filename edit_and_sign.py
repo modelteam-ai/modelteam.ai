@@ -45,7 +45,7 @@ class App(QWidget):
         layout.addLayout(top_frame)
 
         # Add logo image (PNG)
-        pixmap = QPixmap("images/modelteam_logo.png")
+        pixmap = QPixmap(os.path.join("images", "modelteam_logo.png"))
         logo_label = QLabel()
         logo_label.setPixmap(pixmap)
         top_frame.addWidget(logo_label)
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
+        encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         print("Modelteam Profile Ready to Upload...Encrypted and compressed file saved as below:")
         print("-----------------------------------")

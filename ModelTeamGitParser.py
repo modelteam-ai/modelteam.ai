@@ -710,12 +710,11 @@ if __name__ == "__main__":
     os.makedirs(f"{output_path}/final-stats", exist_ok=True)
     merged_json = f"{output_path}/mt_profile.json"
     final_outputs = []
-    # TODO: Aggregate stats from all repos for a user
     for folder in randomized_folder_list:
         if folder.endswith("_libs.jsonl"):
             continue
-        if (os.path.isdir(f"{input_path}/{folder}") and os.path.isdir(
-                f"{input_path}/{folder}/.git")) or args.start_from_tmp:
+        if (os.path.isdir(os.path.join(input_path, folder)) and os.path.isdir(
+                os.path.join(input_path, folder, ".git"))) or args.start_from_tmp:
             if args.parallel_mode is not None:
                 par_md = int(args.parallel_mode)
                 if cnt % 10 == 0 and os.path.exists(f"{output_path}/touch-files/kill_switch_mtgp"):

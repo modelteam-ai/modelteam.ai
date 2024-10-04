@@ -42,7 +42,8 @@ class ProgrammingLanguage(ABC):
 
     def filter_non_public_libraries(self, libraries):
         if not ProgrammingLanguage.public_libraries:
-            ProgrammingLanguage.public_libraries = ProgrammingLanguage.load_public_libraries("config/libraries")
+            ProgrammingLanguage.public_libraries = ProgrammingLanguage.load_public_libraries(
+                os.path.join("config", "libraries"))
         return [library for library in libraries if library in ProgrammingLanguage.public_libraries[self.extension]]
 
     def get_name(self):
