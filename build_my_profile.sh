@@ -10,14 +10,13 @@ usage() {
 input_path=""
 email_id=""
 num_years=5
-rm -f model_team_profile_path.txt
 
 while getopts "r:e:n:" opt; do
   case $opt in
-    r) input_path="$OPTARG" ;;
-    e) email_id="$OPTARG" ;;
-    n) num_years="$OPTARG" ;;
-    *) usage ;;
+  r) input_path="$OPTARG" ;;
+  e) email_id="$OPTARG" ;;
+  n) num_years="$OPTARG" ;;
+  *) usage ;;
   esac
 done
 
@@ -39,6 +38,12 @@ if [[ "$email_id" == *","* ]]; then
   usage
 fi
 
+if [ ! -d "$input_path" ]; then
+  echo "Input path does not exist"
+  usage
+fi
+
+rm -f model_team_profile/model_team_profile_path.txt
 curr_dir=$(pwd)
 curr_date=$(date +"%Y-%m-%d")
 # sanitize emailid for file path
@@ -47,5 +52,5 @@ output_path="$curr_dir/model_team_profile/$email_path/$curr_date"
 mkdir -p "$output_path"
 echo "Creating ModelTeam profile in $output_path directory"
 HF_HUB_OFFLINE=1 caffeinate python3 -m ModelTeamGitParser --input_path "$input_path" --output_path "$output_path" --config config.ini --user_emails "$email_id" --num_years $num_years
-echo "$output_path" > model_team_profile_path.txt
+echo "$output_path" > model_team_profile/model_team_profile_path.txt
 echo "ModelTeam profile created in $output_path directory"
