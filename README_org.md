@@ -67,7 +67,7 @@ cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 # Generates venv and installs dependencies. It will download all the AI models
-./setup.sh
+python setup.py
 ```
 
 ### 2 Build Team profile
@@ -94,9 +94,9 @@ cp -r <repo3> .
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to reduce it as per your needs
-./build_team_profile.sh -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. ./build_team_profile.sh -r ~/modelteam/repos -e user1@org.ai,user2@org.ai -t model_team -n 3
-# e.g. ./build_team_profile.sh -r ~/modelteam/repos -t model_team -n 3
+python build_my_team_profile.py -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
+# e.g. python build_my_team_profile.py -r ~/modelteam/repos -e user1@org.ai,user2@org.ai -t model_team -n 3
+# e.g. python build_my_team_profile.py -r ~/modelteam/repos -t model_team -n 3
 ```
 
 ### 3. Upload

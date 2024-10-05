@@ -34,10 +34,8 @@ uploading to modelteam.ai.
 - Pip
 - Python-venv (if not included in Python installation)
 - Git (command line)
-- MacOS or Linux or Windows
+- MacOS or Linux (We didn't test on Windows yet)
 - caffeine (for linux). caffeinate (for MacOS, built-in)
-  - For windows you might need to disable sleep mode
-- Microsoft Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a minimum period of 3 months.
@@ -63,7 +61,7 @@ cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 # Generates venv and installs dependencies. It will download all the AI models
-./setup.sh
+python setup.py
 ```
 
 ### 2 Build your profile
@@ -88,8 +86,8 @@ cp -r <repo3> .
 ```bash
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to your years of experience
-./build_my_profile.sh -r <repos_path> -e <email> [-n <number_of_years>]
-# e.g. ./build_my_profile.sh -r ~/modelteam/repos -e user@org.ai -n 5
+python build_my_profile.py -r <repos_path> -e <email> [-n <number_of_years>]
+# e.g. python build_my_profile.py -r ~/modelteam/repos -e user@org.ai -n 5
 ```
 
 ### 3. Upload
@@ -102,7 +100,7 @@ cp -r <repo3> .
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
-./edit_and_sign.sh <key> [--cli_mode]
-# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c --cli_mode
-# e.g. ./edit_and_sign.sh 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS
+python sign_my_profile.py --key <key> [--cli_mode]
+# e.g. python sign_my_profile.py --key 2b7e151628aed2a6abf7158809cf4f3c --cli_mode
+# e.g. python sign_my_profile.py --key 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS
 ```
