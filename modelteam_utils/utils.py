@@ -456,6 +456,7 @@ def next_best_prob(word_probabilities, top_words):
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
+    print(f"Adding {len(new_words)} new words to tokenizer", flush=True)
     vocabulary = tokenizer.get_vocab().keys()
     for word in new_words:
         if word not in vocabulary:
@@ -552,6 +553,7 @@ def init_model(model_path, model_type, config, device):
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         model_path = get_hf_cache_path_if_present(model_path)
+        print("Loading model", model_path, "of type", model_type, "with base model", base_llm, flush=True)
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         model = AutoModelForSeq2SeqLM.from_pretrained(
