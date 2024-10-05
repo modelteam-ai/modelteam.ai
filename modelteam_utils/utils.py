@@ -545,7 +545,7 @@ def get_hf_cache_path_if_present(model_name):
     for file in file_list:
         filepath = try_to_load_from_cache(model_name, file)
         if isinstance(filepath, str):
-            return Path(filepath.replace(file, ''))
+            return filepath.replace(file, '')
     return model_name
 
 
