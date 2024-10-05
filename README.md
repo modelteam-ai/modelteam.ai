@@ -34,8 +34,10 @@ uploading to modelteam.ai.
 - Pip
 - Python-venv (if not included in Python installation)
 - Git (command line)
-- MacOS or Linux
+- MacOS or Linux or Windows
 - caffeine (for linux). caffeinate (for MacOS, built-in)
+  - For windows you might need to disable sleep mode
+- Microsoft Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a minimum period of 3 months.
