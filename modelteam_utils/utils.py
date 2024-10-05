@@ -540,8 +540,7 @@ def get_model_list(config, config_key):
 def get_hf_cache_path_if_present(model_name):
     if os.path.isdir(model_name):
         return model_name
-    file_list = ['config.json', 'adapter_config.json', 'adapter_model.safetensors', 'pytorch_model.bin',
-                 'model.safetensors']
+    file_list = ['adapter_model.safetensors', 'pytorch_model.bin', 'model.safetensors']
     for file in file_list:
         filepath = try_to_load_from_cache(model_name, file)
         if isinstance(filepath, str):
