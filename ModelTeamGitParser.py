@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import datetime
+import gc
 import gzip
 import json
 import os
@@ -377,6 +378,8 @@ class ModelTeamGitParser:
                         if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
                             has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
                                                                 model_data, repo_name)
+                        del model_data
+                        gc.collect()
                 if has_new_data == 0:
                     print(f"No users with extracted skills found for {repo_path}", flush=True)
                     return

@@ -1,4 +1,5 @@
 import argparse
+import gc
 from configparser import ConfigParser
 
 from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY, I2S
@@ -24,3 +25,5 @@ for model_type in MODEL_TYPES:
                                                                                model_data['model'], [code],
                                                                                model_data['new_tokens'], 3)
         print(f"Downloaded {model_path} with {model_type} model type")
+        del model_data
+        gc.collect()
