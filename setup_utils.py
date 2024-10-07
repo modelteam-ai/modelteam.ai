@@ -8,15 +8,12 @@ from datetime import datetime
 
 
 def run_command(command, shell=False):
-    # Open log file in append mode
     date = datetime.now().strftime("%Y-%m-%d")
     with open(f"log_{date}.txt", "a") as logfile:
-
         process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-
         for line in iter(process.stdout.readline, ''):
-            print(line, end='')  # Print to STDOUT
-            logfile.write(line)  # Write to log file
+            print(line, end='')
+            logfile.write(line)
 
         process.stdout.close()
         return_code = process.wait()
