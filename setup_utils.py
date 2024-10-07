@@ -79,7 +79,7 @@ def run_model_team_git_parser(input_path, email_id, num_years, team_name=None, c
     if email_id:
         cmd += ["--email_id", email_id]
     if team_name:
-        cmd += ["--team_name", team_name]
+        cmd += ["--team_name", team_name, "--compress_output", "True"]
 
     if sys.platform in ["darwin", "linux"] and shutil.which("caffeinate"):
         cmd = ["caffeinate"] + cmd
