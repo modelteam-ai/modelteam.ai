@@ -34,8 +34,9 @@ uploading to modelteam.ai.
 - Pip
 - Python-venv (if not included in Python installation)
 - Git (command line)
-- MacOS or Linux (We didn't test on Windows yet)
-- caffeine (for linux). caffeinate (for MacOS, built-in)
+- Turn off sleep mode so the script can run without interruptions
+  - caffeine (for linux). caffeinate (for MacOS, built-in)
+- Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a minimum period of 3 months.
@@ -77,6 +78,7 @@ mkdir ~/modelteam/repos
 cd ~/modelteam/repos
 git clone <repo1>
 git clone <repo2>
+# These should be copies of cloned repos, downloading just source code won't work
 cp -r <repo3> .
 ...
 ...
