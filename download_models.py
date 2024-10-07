@@ -26,10 +26,3 @@ for model_type in MODEL_TYPES:
         print(f"Downloaded {model_path} with {model_type} model type", flush=True)
         del model_data
         gc.collect()
-        # leaks = gc.garbage
-        # if leaks:
-        #     print("Memory leak detected! Uncollectable objects found:", flush=True)
-        #     for obj in leaks:
-        #         print(obj)
-        # else:
-        #     print("No memory leaks detected.", flush=True)
