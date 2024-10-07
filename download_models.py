@@ -11,7 +11,7 @@ args = arg_parser.parse_args()
 model_team_config = ConfigParser()
 model_team_config.read(args.config)
 device = "cpu"  # for GPU usage or "cpu" for CPU usage
-
+gc.set_debug(gc.DEBUG_LEAK)
 code = """
 def hello_world():
     print("Hello World! Thanks for using ModelTeam.AI!")
@@ -27,3 +27,10 @@ for model_type in MODEL_TYPES:
         print(f"Downloaded {model_path} with {model_type} model type")
         del model_data
         gc.collect()
+        leaks = gc.garbage
+        if leaks:
+            print("Memory leak detected! Uncollectable objects found:")
+            for obj in leaks:
+                print(obj)
+        else:
+            print("No memory leaks detected.")
