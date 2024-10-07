@@ -1,26 +1,52 @@
+import itertools
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import threading
+import time
 import venv
 from datetime import datetime
 
 
+def spinner():
+    # Spinner generator
+    for char in itertools.cycle('|/-\\'):
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        sys.stdout.write('\b')  # Backspace to overwrite the character
+        time.sleep(0.5)
+
+
 def run_command(command, shell=False):
-    # Start the subprocess
-    process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # Open log file in append mode
+    date = datetime.now().strftime("%Y-%m-%d")
+    with open(f"log_{date}.txt", "a") as logfile:
 
-    # Stream the output line by line
-    for line in iter(process.stdout.readline, ''):
-        print(line, end='')  # Print each line as it comes
+        # Start the spinner in a separate thread
+        spin_thread = threading.Thread(target=spinner)
+        spin_thread.start()
 
-    # Wait for the process to finish and get the final return code
-    process.stdout.close()
-    return_code = process.wait()
+        # Start the subprocess
+        process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-    if return_code != 0:
-        raise subprocess.CalledProcessError(return_code, command)
+        # Stream the output line by line
+        for line in iter(process.stdout.readline, ''):
+            sys.stdout.write('\b')  # Remove spinner before printing the line
+            print(line, end='')  # Print to STDOUT
+            logfile.write(line)  # Write to log file
+
+        # Wait for the process to finish and get the final return code
+        process.stdout.close()
+        return_code = process.wait()
+
+        # Stop the spinner
+        spin_thread.do_run = False  # Signal the spinner thread to stop
+        spin_thread.join()
+
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, command)
 
 
 def get_python_bin(create_venv=False):
