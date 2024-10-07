@@ -33,7 +33,6 @@ def run_command(command, shell=False):
 
         # Stream the output line by line
         for line in iter(process.stdout.readline, ''):
-            sys.stdout.write('\b')  # Remove spinner before printing the line
             print(line, end='')  # Print to STDOUT
             logfile.write(line)  # Write to log file
 
