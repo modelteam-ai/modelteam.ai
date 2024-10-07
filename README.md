@@ -35,7 +35,7 @@ uploading to modelteam.ai.
 - Python-venv (if not included in Python installation)
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
-  - caffeine (for linux). caffeinate (for MacOS, built-in)
+  - Optional: caffeine (for linux) 
 - Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
