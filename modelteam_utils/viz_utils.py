@@ -54,7 +54,7 @@ def generate_ts_plot(ts_stats, file_name):
 
 
 def generate_pdf(output_path, user, repo, languages, image_files):
-    pdf_file = f"{output_path}/{user}.pdf"
+    pdf_file = os.path.join(output_path, f"{user}.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
     c.setFont("Helvetica", 24)
     c.drawString(50, 700, "ModelTeam.AI")
@@ -74,7 +74,7 @@ def generate_pdf_report(merged_json, output_path):
     merged_skills = {}
     repo_list = []
     merged_lang_stats = {}
-    wc_file = f"{output_path}/wordcloud.png"
+    wc_file = os.path.join(output_path, "wordcloud.png")
     image_files = []
     with open(merged_json, "r") as f:
         merged_profile = json.load(f)
@@ -109,7 +109,7 @@ def generate_pdf_report(merged_json, output_path):
     if merged_lang_stats:
         for lang in merged_lang_stats:
             ts_stats = merged_lang_stats[lang]
-            ts_file = f"{output_path}/{user}_{lang}_ts.png"
+            ts_file = os.path.join(output_path, f"{lang}_ts.png")
             generate_ts_plot(ts_stats, ts_file)
             image_files.append(ts_file)
         lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
@@ -117,7 +117,7 @@ def generate_pdf_report(merged_json, output_path):
 
 
 def generate_multi_page_pdf(output_path, user, image_files):
-    pdf_file = f"{output_path}/{user}.pdf"
+    pdf_file = os.path.join(output_path, f"{user}.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
     c.setFont("Helvetica", 18)
     page_height = letter[1]

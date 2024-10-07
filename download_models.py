@@ -1,4 +1,5 @@
 import argparse
+import gc
 from configparser import ConfigParser
 
 from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY, I2S
@@ -10,7 +11,6 @@ args = arg_parser.parse_args()
 model_team_config = ConfigParser()
 model_team_config.read(args.config)
 device = "cpu"  # for GPU usage or "cpu" for CPU usage
-
 code = """
 def hello_world():
     print("Hello World! Thanks for using ModelTeam.AI!")
@@ -23,4 +23,6 @@ for model_type in MODEL_TYPES:
             skill_list, score_list, sm_score_list = eval_llm_batch_with_scores(model_data['tokenizer'], device,
                                                                                model_data['model'], [code],
                                                                                model_data['new_tokens'], 3)
-        print(f"Downloaded {model_path} with {model_type} model type")
+        print(f"Downloaded {model_path} with {model_type} model type", flush=True)
+        del model_data
+        gc.collect()

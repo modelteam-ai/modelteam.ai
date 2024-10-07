@@ -45,7 +45,7 @@ class App(QWidget):
         layout.addLayout(top_frame)
 
         # Add logo image (PNG)
-        pixmap = QPixmap("images/modelteam_logo.png")
+        pixmap = QPixmap(os.path.join("images", "modelteam_logo.png"))
         logo_label = QLabel()
         logo_label.setPixmap(pixmap)
         top_frame.addWidget(logo_label)
@@ -253,7 +253,7 @@ def display_t_and_c(email_id):
                f"\t1. I am the owner of the email address {email_id} associated with this profile",
                "\t2. I own the code contributions associated with this email address",
                "\t3. I will remove any confidential skills from the profile before submitting"]
-    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: ")
+    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: \n")
     return res.lower()
 
 
@@ -265,7 +265,6 @@ if __name__ == "__main__":
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
-    print("Loading...")
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
     file_name_without_extension = args.profile_json.replace(".json", "")
@@ -283,9 +282,14 @@ if __name__ == "__main__":
         apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        encrypted_file = f"{args.output_path}/mt_profile_{today}_{hc}.enc.gz"
+        encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
-        print(f"Encrypted and compressed file saved as {encrypted_file}")
+        print("Modelteam Profile Ready to Upload...\nEncrypted and compressed file saved as below:")
+        print("-----------------------------------")
+        print(encrypted_file)
+        print("-----------------------------------")
+        print(
+            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
         sys.exit(1)

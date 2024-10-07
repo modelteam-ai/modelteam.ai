@@ -7,6 +7,7 @@ import random
 import re
 import subprocess
 from calendar import monthrange
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -538,8 +539,7 @@ def get_model_list(config, config_key):
 def get_hf_cache_path_if_present(model_name):
     if os.path.isdir(model_name):
         return model_name
-    file_list = ['config.json', 'adapter_config.json', 'adapter_model.safetensors', 'pytorch_model.bin',
-                 'model.safetensors']
+    file_list = ['adapter_model.safetensors', 'pytorch_model.bin', 'model.safetensors']
     for file in file_list:
         filepath = try_to_load_from_cache(model_name, file)
         if isinstance(filepath, str):
@@ -566,14 +566,14 @@ def init_model(model_path, model_type, config, device):
         model_data["tokenizer"] = tokenizer
         model_data["new_tokens"] = new_tokens
     elif model_type == MLC:
-        with gzip.open(f"{model_path}/model.pkl.gz", "rb") as f:
+        with gzip.open(os.path.join(model_path, "model.pkl.gz"), "rb") as f:
             model = pickle.load(f)
             model_data["model"] = model
             model.eval()
-        libs = load_file_to_list(f"{model_path}/lib_list.txt.gz")
+        libs = load_file_to_list(os.path.join(model_path, "lib_list.txt.gz"))
         lib_index, lib_names = convert_list_to_index(libs, do_sort=False)
         model_data["lib_index"] = lib_index
-        skills = load_file_to_list(f"{model_path}/skill_list.txt.gz")
+        skills = load_file_to_list(os.path.join(model_path, "skill_list.txt.gz"))
         skill_index, skill_names = convert_list_to_index(skills, do_sort=False)
         model_data["skill_names"] = skill_names
     return model_data
