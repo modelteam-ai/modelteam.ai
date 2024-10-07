@@ -1,5 +1,6 @@
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import venv
@@ -75,9 +76,10 @@ def run_model_team_git_parser(input_path, email_id, num_years, team_name=None, c
         "--num_years", str(num_years)
     ]
 
-    # Check if running on macOS or Linux and add caffeinate if available
-    if sys.platform in ["darwin", "linux"]:
+    if sys.platform in ["darwin", "linux"] and shutil.which("caffeinate"):
         cmd = ["caffeinate"] + cmd
+    else:
+        print("WARNING!!! Caffeinate is not available on this system. Please turn off sleep mode manually.")
 
     # Run the process
     run_command(cmd)

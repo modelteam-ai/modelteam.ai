@@ -43,6 +43,7 @@ def main():
         print(f"{profile_path_file} not found.")
         sys.exit(1)
     output_path = f"{input_path}-signed"
+    print("Loading...", flush=True)
     run_edit_and_sign(input_path, key, cli_mode, output_path)
 
 

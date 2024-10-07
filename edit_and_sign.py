@@ -265,7 +265,6 @@ if __name__ == "__main__":
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
-    print("Loading...")
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
     file_name_without_extension = args.profile_json.replace(".json", "")
@@ -285,7 +284,7 @@ if __name__ == "__main__":
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
-        print("Modelteam Profile Ready to Upload...Encrypted and compressed file saved as below:")
+        print("Modelteam Profile Ready to Upload...\nEncrypted and compressed file saved as below:")
         print("-----------------------------------")
         print(encrypted_file)
         print("-----------------------------------")
