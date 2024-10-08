@@ -69,7 +69,11 @@ def generate_pdf(output_path, user, repo, languages, image_files):
     c.save()
 
 
-def generate_pdf_report(merged_json, output_path):
+def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
+    with open(pdf_stats_file, "r") as f:
+        pdf_stats = json.load(f)
+    with open(merged_json_file, "r") as f:
+        merged_json = json.load(f)
     lang_map = get_extension_to_language_map()
     merged_skills = {}
     repo_list = []

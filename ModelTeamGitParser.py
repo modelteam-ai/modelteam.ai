@@ -12,6 +12,7 @@ import sys
 import torch
 from tabulate import tabulate
 
+from modelteam.modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
                                        MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -26,6 +27,7 @@ from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_mo
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
+from shastraw_utils.ss_utils import yyyy_mm_to_quarter
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60
@@ -43,6 +45,7 @@ class ModelTeamGitParser:
     def __init__(self, config):
         self.keep_only_public_libraries = True
         self.config = config
+        self.pdf_stats = {}
 
     @staticmethod
     def add_to_time_series_stats(commits, file_extension, yyyy_mm, key, inc_count):
@@ -100,7 +103,7 @@ class ModelTeamGitParser:
         else:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
-    def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm):
+    def update_line_num_stats(self, repo_path, commit_hash, user_commit_stats, yyyy_mm, curr_user):
         # Get the line stats for each file in the given commit
         command = f'git -C {repo_path} show --numstat --diff-filter=d {commit_hash}'
         result = run_commandline_command(command)
@@ -144,6 +147,17 @@ class ModelTeamGitParser:
                         language[END_TIME] = yyyy_mm
                     elif language[END_TIME] < yyyy_mm:
                         language[END_TIME] = yyyy_mm
+                    # TODO: Add data for PDF report
+                    if curr_user == args.user_emails:
+                        qtr = yyyy_mm_to_quarter(yyyy_mm)
+                        if qtr not in self.pdf_stats:
+                            self.pdf_stats[qtr] = {"files": {}, "langs": {}}
+                        if file_path not in self.pdf_stats[qtr]["files"]:
+                            self.pdf_stats[qtr]["files"][file_path] = 0
+                        self.pdf_stats[qtr]["files"][file_path] += added
+                        if file_extension not in self.pdf_stats[qtr]["langs"]:
+                            self.pdf_stats[qtr]["langs"][file_extension] = 0
+                        self.pdf_stats[qtr]["langs"][file_extension] += added
                     # Special case. Dealing with git diff. "/" is used as separator even in windows
                     file_line_stats[f"{repo_path}/{file_path}"] = [added, deleted]
         return file_line_stats
@@ -292,7 +306,8 @@ class ModelTeamGitParser:
         commit_hash = commit[0]
         commit_timestamp = commit[1]
         yyyy_mm = timestamp_to_yyyy_mm(commit_timestamp)
-        file_list_with_sig_change = self.update_line_num_stats(repo_path, commit_hash, user_commit_stats, yyyy_mm)
+        file_list_with_sig_change = self.update_line_num_stats(repo_path, commit_hash, user_commit_stats, yyyy_mm,
+                                                               curr_user)
         if file_list_with_sig_change:
             # check if total lines added is < 5000 in all the files
             total_lines_added = 0
@@ -602,7 +617,7 @@ def gen_user_name(users, team_name, max_len=255):
     return user
 
 
-def merge_json(users, output_file_list, merged_json_file_name, team_name, compress_output):
+def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts):
     user = gen_user_name(users, team_name)
     phc = generate_hc(os.path.abspath(sys.argv[0]))
     merged_profile = {USER: user, TIMESTAMP: utc_now, PROFILES: [], PHC: phc}
@@ -632,8 +647,6 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, compre
                             skills.add(skill)
                 merged_profile[PROFILES].append(profile)
     print("Stats for", user)
-    end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-    end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
 
     time_taken_in_minutes = round((end_ts - utc_now) / 60)
     data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
@@ -642,14 +655,14 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, compre
             ["Number of lines analyzed", lines_added],
             ["Number of skills extracted", len(skills)]]
     print(tabulate(data, headers=["Metric", "Value"], tablefmt="psql", showindex=False, colalign=("left", "right")))
-    if compress_output:
-        merged_json_file_name = f"{merged_json_file_name}_{end_date}.gz"
+    if merged_json_file_name.endswith(".gz"):
         with gzip.open(merged_json_file_name, "wt") as merged_json_writer:
             json.dump(merged_profile, merged_json_writer)
     else:
         with open(merged_json_file_name, "w") as merged_json_writer:
             json.dump(merged_profile, merged_json_writer)
     print(f"Final Output: {merged_json_file_name}")
+    return merged_profile
 
 
 if __name__ == "__main__":
@@ -718,7 +731,6 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(output_path, "tmp-stats"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "touch-files"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "final-stats"), exist_ok=True)
-    merged_json = os.path.join(output_path, "mt_profile.json")
     final_outputs = []
     kill_switch = os.path.join(output_path, "touch-files", "kill_switch_mtgp")
     for folder in randomized_folder_list:
@@ -761,11 +773,6 @@ if __name__ == "__main__":
             else:
                 repo_path = os.path.join(input_path, folder)
                 file_prefix = folder
-            # check if the repo is no longer open. Ignore if it asks for password
-            # result = run_commandline_command(f"git -C {repo_path} pull --rebase")
-            # if not result:
-            #     print(f"Skipping {folder} as it is no longer open")
-            #     continue
             user_stats_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}.jsonl")
             repo_lib_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}_libs.jsonl")
             final_output = os.path.join(output_path, "final-stats", f"{file_prefix}_user_profile.jsonl")
@@ -779,5 +786,18 @@ if __name__ == "__main__":
         else:
             print(f"Skipping {folder}")
     if final_outputs and (args.user_emails or args.team_name):
-        merge_json(usernames, final_outputs, merged_json, args.team_name, args.compress_output)
+        merged_json = os.path.join(output_path, "mt_profile.json")
+        end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        if args.compress_output:
+            end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
+            merged_json = f"{merged_json}_{end_date}.gz"
+        merge_json(usernames, final_outputs, merged_json, args.team_name, end_ts)
+        if git_parser.pdf_stats:
+            # Single User Profile. Generate PDF Report
+            pdf_stats_file = os.path.join(output_path, "pdf_stats.json")
+            with open(pdf_stats_file, "w") as f:
+                json.dump(git_parser.pdf_stats, f)
+            pdf_report = os.path.join(output_path, "mt_profile.pdf")
+            generate_pdf_report(merged_json, pdf_stats_file, pdf_report)
+
     print(f"Processed {cnt} out of {len(folder_list)}")
