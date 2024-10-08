@@ -797,7 +797,7 @@ if __name__ == "__main__":
             pdf_stats_file = os.path.join(output_path, "pdf_stats.json")
             with open(pdf_stats_file, "w") as f:
                 json.dump(git_parser.pdf_stats, f)
-            pdf_report = os.path.join(output_path, "mt_profile.pdf")
-            generate_pdf_report(merged_json, pdf_stats_file, pdf_report)
+            # pdf_report = os.path.join(output_path, "mt_profile.pdf")
+            # generate_pdf_report(merged_json, pdf_stats_file, pdf_report)
 
     print(f"Processed {cnt} out of {len(folder_list)}")
