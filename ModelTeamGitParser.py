@@ -12,7 +12,7 @@ import sys
 import torch
 from tabulate import tabulate
 
-from modelteam.modelteam_utils.viz_utils import generate_pdf_report
+from modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
                                        MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -21,13 +21,12 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
                                        LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
 from modelteam_utils.crypto_utils import generate_hc
-from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills
+from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills, yyyy_mm_to_quarter
 from modelteam_utils.utils import consistent_hash_code
 from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
-from shastraw_utils.ss_utils import yyyy_mm_to_quarter
 
 TRAIN_FLAG = False
 ONE_MONTH = 30 * 24 * 60 * 60

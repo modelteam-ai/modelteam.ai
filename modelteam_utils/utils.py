@@ -7,7 +7,6 @@ import random
 import re
 import subprocess
 from calendar import monthrange
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -627,3 +626,9 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
         if skill in user_profile[SKILLS]:
             if skill in manual_edits or skill not in all_good_skills:
                 del user_profile[SKILLS][skill]
+
+
+def yyyy_mm_to_quarter(yyyymm):
+    yyyy = yyyymm // 100
+    mm = yyyymm % 100
+    return str(yyyy) + "Q" + str((mm - 1) // 3 + 1)
