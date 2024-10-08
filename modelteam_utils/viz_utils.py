@@ -6,8 +6,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
-from .constants import USER, REPO, STATS, SKILLS, LANGS, TIME_SERIES, ADDED, DELETED, PROFILES
-from .utils import get_extension_to_language_map
+from .constants import USER, REPO, STATS, SKILLS, LANGS, TIME_SERIES, ADDED, DELETED, PROFILES, NR_SKILLS
+from .utils import get_extension_to_language_map, yyyy_mm_to_quarter
 
 
 def generate_tag_cloud(skill_map, file_name):
@@ -28,11 +28,8 @@ def to_short_date(yyyymm):
     return f"{mon_str[month - 1]}\n{yyyymm[:4]}"
 
 
-def generate_ts_plot(ts_stats, file_name):
+def generate_ts_plot(ts_stats, file_name, language):
     years_months = sorted(ts_stats.keys())
-    readable_dates = []
-    for yyyymm in years_months:
-        readable_dates.append(to_short_date(yyyymm))
 
     # Extract added and deleted values
     added = [ts_stats[key][0] for key in years_months]
@@ -40,12 +37,12 @@ def generate_ts_plot(ts_stats, file_name):
 
     # Plotting
     plt.figure(figsize=(10, 5))
-    plt.plot(readable_dates, added, label='Lines Added')
-    plt.plot(readable_dates, deleted, label='Lines Deleted')
+    plt.plot(years_months, added, label='Lines Added')
+    plt.plot(years_months, deleted, label='Lines Deleted')
 
     plt.xlabel('Time', fontsize=15)
     plt.ylabel('Count', fontsize=15)
-    plt.title('Code Contribution Over Time', fontsize=24)
+    plt.title(language, fontsize=24)
     plt.tick_params(axis='both', which='major', labelsize=12)
     plt.legend(fontsize=15)
     plt.grid(True)
@@ -72,23 +69,24 @@ def generate_pdf(output_path, user, repo, languages, image_files):
 def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     with open(pdf_stats_file, "r") as f:
         pdf_stats = json.load(f)
-    with open(merged_json_file, "r") as f:
-        merged_json = json.load(f)
     lang_map = get_extension_to_language_map()
     merged_skills = {}
     repo_list = []
     merged_lang_stats = {}
     wc_file = os.path.join(output_path, "wordcloud.png")
     image_files = []
-    with open(merged_json, "r") as f:
+    with open(merged_json_file, "r") as f:
         merged_profile = json.load(f)
         for user_stats in merged_profile[PROFILES]:
             user = user_stats[USER]
             repo = user_stats[REPO]
+            non_relevant_skills = set(user_stats[NR_SKILLS])
             repo_list.append(repo)
             user_profile = user_stats[STATS]
             if SKILLS in user_profile:
                 for s in user_profile[SKILLS]:
+                    if s in non_relevant_skills:
+                        continue
                     if s not in merged_skills:
                         merged_skills[s] = 0
                     merged_skills[s] += user_profile[SKILLS][s]
@@ -100,23 +98,23 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
                 if TIME_SERIES in lang_stats[lang]:
                     time_series = lang_stats[lang][TIME_SERIES]
                     for yyyy_mm in time_series:
-                        if yyyy_mm not in lang_stats[lang]:
-                            merged_lang_stats[lang][yyyy_mm] = [0, 0]
+                        qtr = yyyy_mm_to_quarter(int(yyyy_mm))
+                        if qtr not in lang_stats[lang]:
+                            merged_lang_stats[lang][qtr] = [0, 0]
                         added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
                         deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
-                        merged_lang_stats[lang][yyyy_mm][0] += added
-                        merged_lang_stats[lang][yyyy_mm][1] += deleted
-    if merged_skills:
-        generate_tag_cloud(merged_skills, wc_file)
-        image_files.append(wc_file)
+                        merged_lang_stats[lang][qtr][0] += added
+                        merged_lang_stats[lang][qtr][1] += deleted
     lang_names = []
     if merged_lang_stats:
         for lang in merged_lang_stats:
             ts_stats = merged_lang_stats[lang]
             ts_file = os.path.join(output_path, f"{lang}_ts.png")
-            generate_ts_plot(ts_stats, ts_file)
+            generate_ts_plot(ts_stats, ts_file, lang_map[lang])
             image_files.append(ts_file)
-        lang_names = [lang_map[lang] for lang in merged_lang_stats.keys()]
+    if merged_skills:
+        generate_tag_cloud(merged_skills, wc_file)
+        image_files.append(wc_file)
     generate_multi_page_pdf(output_path, user, image_files)
 
 

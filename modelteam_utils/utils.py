@@ -632,3 +632,9 @@ def yyyy_mm_to_quarter(yyyymm):
     yyyy = yyyymm // 100
     mm = yyyymm % 100
     return str(yyyy) + "Q" + str((mm - 1) // 3 + 1)
+
+
+def yyyy_mm_to_half(yyyymm):
+    yyyy = yyyymm // 100
+    mm = yyyymm % 100
+    return str(yyyy) + "H" + str((mm - 1) // 6 + 1)
