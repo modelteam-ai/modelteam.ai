@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 
 from matplotlib import pyplot as plt
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
@@ -48,35 +49,15 @@ def generate_ts_plot(ts_stats, file_name, language, quarters):
     plt.savefig(file_name)
 
 
-def generate_pdf(output_path, user, repo, languages, image_files):
-    pdf_file = os.path.join(output_path, f"{user}.pdf")
-    c = canvas.Canvas(pdf_file, pagesize=letter)
-    c.setFont("Helvetica", 24)
-    c.drawString(50, 700, "ModelTeam.AI")
-    c.setFont("Helvetica", 12)
-    c.drawString(50, 650, f"User: {user}")
-    c.drawString(50, 630, f"Repo: {repo}")
-    c.drawString(50, 610, f"Languages: {','.join(languages)}")
-    top = 400
-    for image_file in image_files:
-        c.drawImage(image_file, 50, top, width=500, height=200)
-        top -= 250
-    c.save()
-
-
 def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)
     curr_date = datetime.now()
-    two_years_ago = curr_date.replace(year=curr_date.year - 2)
+    qtr_iter = curr_date.replace(year=curr_date.year - 2)
     quarters = []
-    # find all quarters in past 3 years
-    while two_years_ago < curr_date:
-        quarters.append(yyyy_mm_to_quarter(int(two_years_ago.strftime("%Y%m"))))
-        two_years_ago += timedelta(days=90)
-    with open(pdf_stats_file, "r") as f:
-        pdf_stats = json.load(f)
-        print(json.dumps(pdf_stats, indent=4))
+    while qtr_iter < curr_date:
+        quarters.append(yyyy_mm_to_quarter(int(qtr_iter.strftime("%Y%m"))))
+        qtr_iter += timedelta(days=90)
     lang_map = get_extension_to_language_map()
     merged_skills = {}
     repo_list = []
@@ -114,7 +95,6 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
                         deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
                         merged_lang_stats[disp_lang][qtr][0] += added
                         merged_lang_stats[disp_lang][qtr][1] += deleted
-    lang_names = []
     if merged_lang_stats:
         for lang in merged_lang_stats:
             ts_stats = merged_lang_stats[lang]
@@ -124,34 +104,51 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     if merged_skills:
         generate_tag_cloud(merged_skills, wc_file)
         image_files.append(wc_file)
-    generate_multi_page_pdf(output_path, user, image_files)
+    with open(pdf_stats_file, "r") as f:
+        pdf_stats = json.load(f)
+    pdf_file = os.path.join(output_path, f"{user}.pdf")
+    c = canvas.Canvas(pdf_file, pagesize=letter)
+    c.setFont("Helvetica", 12)
+    add_images_to_canvas(c, user, image_files)
+    c.save()
 
 
 def generate_multi_page_pdf(output_path, user, image_files):
     pdf_file = os.path.join(output_path, f"{user}.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
-    c.setFont("Helvetica", 18)
-    page_height = letter[1]
-    top = page_height - 50
-    top = pdf_header(c, top, user)
+    add_images_to_canvas(c, user, image_files)
+    c.save()
+
+
+def add_images_to_canvas(canvas_obj, user, image_files):
+    canvas_obj.setFont("Helvetica", 18)
+    top = pdf_header(canvas_obj, user)
     image_height = 200
     image_margin = 25
     for image_file in image_files:
         if os.path.exists(image_file):
             if top < image_height + image_margin:
-                c.showPage()
-                c.setFont("Helvetica", 18)
-                top = page_height - 50
-                top = pdf_header(c, top, user)
+                canvas_obj.showPage()
+                canvas_obj.setFont("Helvetica", 18)
+                top = pdf_header(canvas_obj, user)
             top -= (image_height + image_margin)
-            c.drawImage(image_file, 50, top, width=500, height=image_height)
-    c.save()
+            canvas_obj.drawImage(image_file, 50, top, width=500, height=image_height)
+    canvas_obj.showPage()
 
 
-def pdf_header(c, top, user):
-    c.drawImage("images/modelteam_logo.png", 50, top - 20, width=400, height=50)
-    top -= 30
+def pdf_header(c, user):
+    top = letter[1] - 30
+    c.setFont("Helvetica", 12)
+    c.setFillColor(colors.red)
+    warn1 = "This is a confidential document. Do not share with unauthorized personnel."
+    warn2 = "You can use this to understand your past contributions and improve your skills."
+    c.drawString(50, top, warn1)
+    c.drawString(50, top - 20, warn2)
+    top -= 50
+    c.setFillColor(colors.black)
+    c.setFont("Helvetica", 24)
+    c.drawString(50, top, "modelteam.ai")
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, top, f"{user}")
+    c.drawString(250, top, f"User: {user}")
     top -= 20
     return top
