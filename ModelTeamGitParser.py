@@ -148,16 +148,14 @@ class ModelTeamGitParser:
                     # TODO: Add data for PDF report
                     if curr_user == args.user_emails:
                         repo_name = os.path.basename(repo_path)
-                        full_path = f"{repo_name}::{file_path}"
                         qtr = yyyy_mm_to_quarter(yyyy_mm)
-                        if qtr not in self.pdf_stats:
-                            self.pdf_stats[qtr] = {"files": {}, "langs": {}}
-                        if full_path not in self.pdf_stats[qtr]["files"]:
-                            self.pdf_stats[qtr]["files"][full_path] = 0
-                        self.pdf_stats[qtr]["files"][full_path] += added
-                        if file_extension not in self.pdf_stats[qtr]["langs"]:
-                            self.pdf_stats[qtr]["langs"][file_extension] = 0
-                        self.pdf_stats[qtr]["langs"][file_extension] += added
+                        if repo_name not in self.pdf_stats:
+                            self.pdf_stats[repo_name] = {}
+                        if qtr not in self.pdf_stats[repo_name]:
+                            self.pdf_stats[repo_name][qtr] = {}
+                        if file_path not in self.pdf_stats[repo_name][qtr]:
+                            self.pdf_stats[repo_name][qtr][file_path] = 0
+                        self.pdf_stats[repo_name][qtr][file_path]  += added
                     # Special case. Dealing with git diff. "/" is used as separator even in windows
                     file_line_stats[f"{repo_path}/{file_path}"] = [added, deleted]
         return file_line_stats

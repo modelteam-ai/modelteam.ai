@@ -65,6 +65,8 @@ def generate_pdf(output_path, user, repo, languages, image_files):
 
 
 def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
     curr_date = datetime.now()
     two_years_ago = curr_date.replace(year=curr_date.year - 2)
     quarters = []
