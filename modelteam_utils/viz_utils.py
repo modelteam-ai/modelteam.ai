@@ -32,19 +32,21 @@ def to_short_date(yyyymm):
 def generate_ts_plot(ts_stats, file_name, language, quarters):
     # Extract added values
     added = [ts_stats.get(key, [0, 0])[0] for key in quarters]
+    disp_quarters = [q.replace('Q', '\nQ') for q in quarters]
 
     # Plotting
     plt.figure(figsize=(10, 5))
-    plt.bar(quarters, added, color='blue')
-
+    plt.bar(disp_quarters, added, color='orange')
+    plt.ylim(top=5000)
     plt.xlabel('Time', fontsize=15)
     plt.ylabel('Lines Added', fontsize=15)
     plt.title(language, fontsize=24)
     plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.grid(True, axis='x')
-    plt.grid(True, axis='y')
+    # plt.grid(True, axis='x', linestyle='-')
+    plt.grid(True, axis='y', linestyle='-')
     plt.tight_layout()
     plt.savefig(file_name)
+
 
 def generate_pdf(output_path, user, repo, languages, image_files):
     pdf_file = os.path.join(output_path, f"{user}.pdf")
@@ -64,14 +66,15 @@ def generate_pdf(output_path, user, repo, languages, image_files):
 
 def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     curr_date = datetime.now()
-    three_years_ago = curr_date.replace(year=curr_date.year - 3)
+    two_years_ago = curr_date.replace(year=curr_date.year - 2)
     quarters = []
     # find all quarters in past 3 years
-    while three_years_ago < curr_date:
-        quarters.append(yyyy_mm_to_quarter(int(three_years_ago.strftime("%Y%m"))))
-        three_years_ago += timedelta(days=90)
+    while two_years_ago < curr_date:
+        quarters.append(yyyy_mm_to_quarter(int(two_years_ago.strftime("%Y%m"))))
+        two_years_ago += timedelta(days=90)
     with open(pdf_stats_file, "r") as f:
         pdf_stats = json.load(f)
+        print(json.dumps(pdf_stats, indent=4))
     lang_map = get_extension_to_language_map()
     merged_skills = {}
     repo_list = []
@@ -96,24 +99,25 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
             lang_stats = user_profile[LANGS]
             lang_list = lang_stats.keys()
             for lang in lang_list:
-                if lang not in merged_lang_stats:
-                    merged_lang_stats[lang] = {}
+                disp_lang = lang_map[lang] if lang in lang_map else lang
+                if disp_lang not in merged_lang_stats:
+                    merged_lang_stats[disp_lang] = {}
                 if TIME_SERIES in lang_stats[lang]:
                     time_series = lang_stats[lang][TIME_SERIES]
                     for yyyy_mm in time_series:
                         qtr = yyyy_mm_to_quarter(int(yyyy_mm))
                         if qtr not in lang_stats[lang]:
-                            merged_lang_stats[lang][qtr] = [0, 0]
+                            merged_lang_stats[disp_lang][qtr] = [0, 0]
                         added = time_series[yyyy_mm][ADDED] if ADDED in time_series[yyyy_mm] else 0
                         deleted = time_series[yyyy_mm][DELETED] if DELETED in time_series[yyyy_mm] else 0
-                        merged_lang_stats[lang][qtr][0] += added
-                        merged_lang_stats[lang][qtr][1] += deleted
+                        merged_lang_stats[disp_lang][qtr][0] += added
+                        merged_lang_stats[disp_lang][qtr][1] += deleted
     lang_names = []
     if merged_lang_stats:
         for lang in merged_lang_stats:
             ts_stats = merged_lang_stats[lang]
             ts_file = os.path.join(output_path, f"{lang}_ts.png")
-            generate_ts_plot(ts_stats, ts_file, lang_map[lang], quarters)
+            generate_ts_plot(ts_stats, ts_file, lang, quarters)
             image_files.append(ts_file)
     if merged_skills:
         generate_tag_cloud(merged_skills, wc_file)
@@ -135,16 +139,17 @@ def generate_multi_page_pdf(output_path, user, image_files):
             if top < image_height + image_margin:
                 c.showPage()
                 c.setFont("Helvetica", 18)
-                pdf_header(c, top, user)
                 top = page_height - 50
+                top = pdf_header(c, top, user)
             top -= (image_height + image_margin)
             c.drawImage(image_file, 50, top, width=500, height=image_height)
     c.save()
 
 
 def pdf_header(c, top, user):
-    c.drawString(50, top, "modelteam.ai")
-    c.setFont("Helvetica-Bold", 16)
-    top -= 50
-    c.drawString(50, top, f"Summary for {user}")
+    c.drawImage("images/modelteam_logo.png", 50, top - 20, width=400, height=50)
+    top -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, top, f"{user}")
+    top -= 20
     return top

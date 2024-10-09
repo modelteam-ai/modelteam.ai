@@ -147,12 +147,13 @@ class ModelTeamGitParser:
                         language[END_TIME] = yyyy_mm
                     # TODO: Add data for PDF report
                     if curr_user == args.user_emails:
+                        full_path = os.path.join(repo_path, file_path)
                         qtr = yyyy_mm_to_quarter(yyyy_mm)
                         if qtr not in self.pdf_stats:
                             self.pdf_stats[qtr] = {"files": {}, "langs": {}}
-                        if file_path not in self.pdf_stats[qtr]["files"]:
-                            self.pdf_stats[qtr]["files"][file_path] = 0
-                        self.pdf_stats[qtr]["files"][file_path] += added
+                        if full_path not in self.pdf_stats[qtr]["files"]:
+                            self.pdf_stats[qtr]["files"][full_path] = 0
+                        self.pdf_stats[qtr]["files"][full_path] += added
                         if file_extension not in self.pdf_stats[qtr]["langs"]:
                             self.pdf_stats[qtr]["langs"][file_extension] = 0
                         self.pdf_stats[qtr]["langs"][file_extension] += added
