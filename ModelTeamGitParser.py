@@ -105,8 +105,14 @@ class ModelTeamGitParser:
         # Get the line stats for each file in the given commit
         command = f'git -C {repo_path} show --numstat --diff-filter=d {commit_hash}'
         result = run_commandline_command(command)
+        total_added = 0
         file_line_stats = {}  # Dictionary to store file line stats
+        add_pdf_stats = curr_user == args.user_emails
         if result:
+            if add_pdf_stats:
+                repo_name = os.path.basename(repo_path)
+                if repo_name not in self.pdf_stats:
+                    self.pdf_stats[repo_name] = {"big_commits": {}, "files": {}}
             file_stats = result.strip().split('\n')
             for stats in file_stats:
                 parts = stats.split('\t')
@@ -136,6 +142,15 @@ class ModelTeamGitParser:
                 language = user_commit_stats[LANGS][file_extension]
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, ADDED, added)
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, DELETED, deleted)
+                # TODO: Add data for PDF report
+                if add_pdf_stats:
+                    total_added += added
+                    qtr = yyyy_mm_to_quarter(yyyy_mm)
+                    if qtr not in self.pdf_stats[repo_name]["files"]:
+                        self.pdf_stats[repo_name]["files"][qtr] = {}
+                    if file_path not in self.pdf_stats[repo_name]["files"][qtr]:
+                        self.pdf_stats[repo_name]["files"][qtr][file_path] = 0
+                    self.pdf_stats[repo_name]["files"][qtr][file_path] += added
                 if added > MIN_LINES_ADDED:
                     if START_TIME not in language:
                         language[START_TIME] = yyyy_mm
@@ -145,19 +160,10 @@ class ModelTeamGitParser:
                         language[END_TIME] = yyyy_mm
                     elif language[END_TIME] < yyyy_mm:
                         language[END_TIME] = yyyy_mm
-                    # TODO: Add data for PDF report
-                    if curr_user == args.user_emails:
-                        repo_name = os.path.basename(repo_path)
-                        qtr = yyyy_mm_to_quarter(yyyy_mm)
-                        if repo_name not in self.pdf_stats:
-                            self.pdf_stats[repo_name] = {}
-                        if qtr not in self.pdf_stats[repo_name]:
-                            self.pdf_stats[repo_name][qtr] = {}
-                        if file_path not in self.pdf_stats[repo_name][qtr]:
-                            self.pdf_stats[repo_name][qtr][file_path] = 0
-                        self.pdf_stats[repo_name][qtr][file_path]  += added
                     # Special case. Dealing with git diff. "/" is used as separator even in windows
                     file_line_stats[f"{repo_path}/{file_path}"] = [added, deleted]
+            if add_pdf_stats and total_added > 100:
+                self.pdf_stats[repo_name]["big_commits"][commit_hash] = total_added
         return file_line_stats
 
     def is_allowed_user(self, repo_name, user):
