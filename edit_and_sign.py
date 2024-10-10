@@ -9,8 +9,9 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
+from modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
-    NR_SKILLS, TIMESTAMP
+    NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
 
@@ -217,7 +218,7 @@ def cli_choices(choices_file, email, repos, skills):
     choices_dict = {}
     for skill in skills:
         while True:
-            choice = input(f"Skill: {skill.title()}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
+            choice = input(f"Skill: {skill.title()}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]:\n")
             if not choice:
                 choice = "1"
             if choice in ["1", "2", "3"]:
@@ -229,7 +230,7 @@ def cli_choices(choices_file, email, repos, skills):
         json.dump(choices_dict, f)
 
 
-def apply_choices(merged_profile, choices_file, edited_file, formatted_file, output_path):
+def apply_choices(merged_profile, choices_file, edited_file, formatted_file):
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
@@ -250,8 +251,8 @@ def apply_choices(merged_profile, choices_file, edited_file, formatted_file, out
 
 def display_t_and_c(email_id):
     t_and_c = ["\nI certify that,",
-               f"\t1. I am the owner of the email address {email_id} associated with this profile",
-               "\t2. I own the code contributions associated with this email address",
+               f"\t1. I am the owner of the id {email_id} associated with this profile",
+               "\t2. I own the code contributions associated with this id",
                "\t3. I will remove any confidential skills from the profile before submitting"]
     res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: \n")
     return res.lower()
@@ -259,19 +260,19 @@ def display_t_and_c(email_id):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--profile_json", type=str, required=True)
+    arg_parser.add_argument("--profile_path", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
-    arg_parser.add_argument("--output_path", type=str, required=True)
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
-    file_name_without_extension = args.profile_json.replace(".json", "")
+    profile_json = os.path.join(args.profile_path, MT_PROFILE_JSON)
+    pdf_stats_json = os.path.join(args.profile_path, PDF_STATS_JSON)
+    file_name_without_extension = profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
+    pdf_path = os.path.join(args.profile_path, "pdf")
     formatted_file = f"{file_name_without_extension}.edited.formatted.json"
-    with open(args.profile_json, "r") as f:
+    with open(profile_json, "r") as f:
         merged_profile = json.load(f)
     if display_t_and_c(merged_profile[USER]) != "i agree":
         print("Please accept the terms and conditions to proceed.")
@@ -279,15 +280,16 @@ if __name__ == "__main__":
     result = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
-        apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
+        apply_choices(merged_profile, choices_file, edited_file, formatted_file)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
+        encrypted_file = os.path.join(args.profile_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
-        print("Modelteam Profile Ready to Upload...\nEncrypted and compressed file saved as below:")
-        print("-----------------------------------")
+        generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
+        print('*' * 50)
+        print("modelteam Profile Ready to Upload...")
         print(encrypted_file)
-        print("-----------------------------------")
+        print('*' * 50)
         print(
             "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:

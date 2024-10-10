@@ -74,7 +74,7 @@ def run_model_team_git_parser(input_path, email_id, num_years, team_name=None, c
         "--num_years", str(num_years)
     ]
     if email_id:
-        cmd += ["--email_id", email_id]
+        cmd += ["--user_emails", email_id]
     if team_name:
         cmd += ["--team_name", team_name, "--compress_output"]
 

@@ -46,6 +46,8 @@ LIFE_OF_PY = 'life_of_py'
 NR_SKILLS = 'nr_skills'
 LIFE_OF_PY_BUCKET_SIZE = 100
 LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_0", f"{LIFE_OF_PY}_1"]
+MT_PROFILE_JSON = "mt_profile.json"
+PDF_STATS_JSON = "pdf_stats.json"
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'
