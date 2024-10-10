@@ -14,7 +14,7 @@ def run_edit_and_sign(input_path, user_key, cli_mode, output_path):
     python_bin = get_python_bin(create_venv=False)
     edit_and_sign_command = [
         python_bin, "-m", "edit_and_sign",
-        "--profile_json", os.path.join(input_path, "mt_profile.json"),
+        "--profile_path", input_path,
         "--user_key", user_key,
         "--output_path", output_path
     ]

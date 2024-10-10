@@ -12,6 +12,7 @@ import sys
 import torch
 from tabulate import tabulate
 
+from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
                                        MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -790,7 +791,7 @@ if __name__ == "__main__":
         else:
             print(f"Skipping {folder}")
     if final_outputs and (args.user_emails or args.team_name):
-        merged_json = os.path.join(output_path, "mt_profile.json")
+        merged_json = os.path.join(output_path, MT_PROFILE_JSON)
         end_ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         if args.compress_output:
             end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
@@ -798,7 +799,7 @@ if __name__ == "__main__":
         merge_json(usernames, final_outputs, merged_json, args.team_name, end_ts)
         if git_parser.pdf_stats:
             # Single User Profile. Generate PDF Report
-            pdf_stats_file = os.path.join(output_path, "pdf_stats.json")
+            pdf_stats_file = os.path.join(output_path, PDF_STATS_JSON)
             with open(pdf_stats_file, "w") as f:
                 json.dump(git_parser.pdf_stats, f)
     print(f"Processed {cnt} out of {len(folder_list)}")

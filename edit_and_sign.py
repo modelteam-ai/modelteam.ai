@@ -9,8 +9,9 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
+from modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
-    NR_SKILLS, TIMESTAMP
+    NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
 
@@ -229,7 +230,7 @@ def cli_choices(choices_file, email, repos, skills):
         json.dump(choices_dict, f)
 
 
-def apply_choices(merged_profile, choices_file, edited_file, formatted_file, output_path):
+def apply_choices(merged_profile, choices_file, edited_file, formatted_file):
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
@@ -259,7 +260,7 @@ def display_t_and_c(email_id):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--profile_json", type=str, required=True)
+    arg_parser.add_argument("--profile_path", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
     arg_parser.add_argument("--output_path", type=str, required=True)
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
@@ -267,11 +268,14 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    file_name_without_extension = args.profile_json.replace(".json", "")
+    profile_json = os.path.join(args.profile_path, MT_PROFILE_JSON)
+    pdf_stats_json = os.path.join(args.profile_path, PDF_STATS_JSON)
+    file_name_without_extension = profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     edited_file = f"{file_name_without_extension}.edited.json"
+    pdf_path = os.path.join(args.profile_path, "pdf")
     formatted_file = f"{file_name_without_extension}.edited.formatted.json"
-    with open(args.profile_json, "r") as f:
+    with open(profile_json, "r") as f:
         merged_profile = json.load(f)
     if display_t_and_c(merged_profile[USER]) != "i agree":
         print("Please accept the terms and conditions to proceed.")
@@ -279,11 +283,12 @@ if __name__ == "__main__":
     result = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
-        apply_choices(merged_profile, choices_file, edited_file, formatted_file, args.output_path)
+        apply_choices(merged_profile, choices_file, edited_file, formatted_file)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
+        generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print("Modelteam Profile Ready to Upload...\nEncrypted and compressed file saved as below:")
         print("-----------------------------------")
         print(encrypted_file)
