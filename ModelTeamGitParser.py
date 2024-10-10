@@ -547,7 +547,7 @@ class ModelTeamGitParser:
             if is_c2s:
                 if s not in user_profile[SKILLS]:
                     user_profile[SKILLS][s] = 0
-                user_profile[SKILLS][s] += sm_score * code_len
+                user_profile[SKILLS][s] += code_len
             if tag not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm]:
                 user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag] = {}
             if s not in user_profile[LANGS][lang][TIME_SERIES][yyyy_mm][tag]:
