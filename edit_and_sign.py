@@ -218,7 +218,7 @@ def cli_choices(choices_file, email, repos, skills):
     choices_dict = {}
     for skill in skills:
         while True:
-            choice = input(f"Skill: {skill.title()}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]: ")
+            choice = input(f"Skill: {skill.title()}\n1. Relevant\n2. Not Relevant\n3. Top Secret\nEnter choice [1]:\n")
             if not choice:
                 choice = "1"
             if choice in ["1", "2", "3"]:
@@ -251,8 +251,8 @@ def apply_choices(merged_profile, choices_file, edited_file, formatted_file):
 
 def display_t_and_c(email_id):
     t_and_c = ["\nI certify that,",
-               f"\t1. I am the owner of the email address {email_id} associated with this profile",
-               "\t2. I own the code contributions associated with this email address",
+               f"\t1. I am the owner of the id {email_id} associated with this profile",
+               "\t2. I own the code contributions associated with this id",
                "\t3. I will remove any confidential skills from the profile before submitting"]
     res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: \n")
     return res.lower()
