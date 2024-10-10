@@ -262,12 +262,9 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--profile_path", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
-    arg_parser.add_argument("--output_path", type=str, required=True)
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
 
     args = arg_parser.parse_args()
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
     profile_json = os.path.join(args.profile_path, MT_PROFILE_JSON)
     pdf_stats_json = os.path.join(args.profile_path, PDF_STATS_JSON)
     file_name_without_extension = profile_json.replace(".json", "")
@@ -286,7 +283,7 @@ if __name__ == "__main__":
         apply_choices(merged_profile, choices_file, edited_file, formatted_file)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
+        encrypted_file = os.path.join(args.profile_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print('*' * 50)

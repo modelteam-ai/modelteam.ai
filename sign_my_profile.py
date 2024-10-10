@@ -10,17 +10,16 @@ def usage():
     print("e.g. sign_my_profile.py --key 123456 --cli_mode")
 
 
-def run_edit_and_sign(input_path, user_key, cli_mode, output_path):
+def run_edit_and_sign(input_path, user_key, cli_mode):
     python_bin = get_python_bin(create_venv=False)
     edit_and_sign_command = [
         python_bin, "-m", "edit_and_sign",
         "--profile_path", input_path,
         "--user_key", user_key,
-        "--output_path", output_path
     ]
 
     if cli_mode:
-        edit_and_sign_command.append(cli_mode)
+        edit_and_sign_command.append('--cli_mode')
     run_command(edit_and_sign_command)
 
 
@@ -42,9 +41,8 @@ def main():
     except FileNotFoundError:
         print(f"{profile_path_file} not found.")
         sys.exit(1)
-    output_path = f"{input_path}-signed"
     print("Loading...", flush=True)
-    run_edit_and_sign(input_path, key, cli_mode, output_path)
+    run_edit_and_sign(input_path, key, cli_mode)
 
 
 if __name__ == "__main__":
