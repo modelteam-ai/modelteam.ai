@@ -196,21 +196,21 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     repo_stats_file_name = os.path.join(output_path, "repo_stats.png")
     generate_repo_plot(repo_qtr_stats, quarters, repo_stats_file_name)
     image_files.append(repo_stats_file_name)
-    pdf_file = os.path.join(output_path, f"{user}.pdf")
+    pdf_file = os.path.join(output_path, "modelteam_profile.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
     c.setFont("Courier", 12)
     add_images_to_canvas(c, user, image_files)
     for repo in pdf_stats.keys():
         add_commit_info_to_canvas(c, user, repo, pdf_stats[repo])
     c.save()
+    print('!' * 50)
     print("PDF report generated. This is for your personal use only and is not needed by modelteam.ai.")
-    print("-------------------")
     print(pdf_file)
-    print("-------------------")
+    print('!' * 50)
 
 
 def generate_multi_page_pdf(output_path, user, image_files):
-    pdf_file = os.path.join(output_path, f"{user}.pdf")
+    pdf_file = os.path.join(output_path, "modelteam_profile.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
     add_images_to_canvas(c, user, image_files)
     c.save()

@@ -289,10 +289,10 @@ if __name__ == "__main__":
         encrypted_file = os.path.join(args.output_path, f"mt_profile_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
-        print("Modelteam Profile Ready to Upload...\nEncrypted and compressed file saved as below:")
-        print("-----------------------------------")
+        print('*' * 50)
+        print("modelteam Profile Ready to Upload...")
         print(encrypted_file)
-        print("-----------------------------------")
+        print('*' * 50)
         print(
             "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:
