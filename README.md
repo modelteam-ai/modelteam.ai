@@ -1,6 +1,8 @@
-![modelteam.ai](images/modelteam_logo_blk.png)
+<div align="center">
+  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+</div>
 
-**ModelTeam** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
+**[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
 Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
 Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
 

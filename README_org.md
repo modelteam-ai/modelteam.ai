@@ -1,6 +1,8 @@
-![modelteam.ai](images/modelteam_logo_blk.png)
+<div align="center">
+  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+</div>
 
-At **ModelTeam**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
+At **[ModelTeam](https://modelteam.ai)**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
 capabilities by examining code and technical documentations. We use these models, learned from a training set of
 millions of engineers, to develop a unique data assets that powers a vertical talent insight platform for software
 engineers. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
