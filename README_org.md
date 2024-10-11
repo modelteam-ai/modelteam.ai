@@ -1,4 +1,4 @@
-![modelteam.ai](images/modelteam_logo.jpg)
+![modelteam.ai](images/modelteam_logo_blk.png)
 
 At **ModelTeam**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
 capabilities by examining code and technical documentations. We use these models, learned from a training set of
