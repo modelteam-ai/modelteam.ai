@@ -3,7 +3,7 @@ import gc
 from configparser import ConfigParser
 
 from modelteam_utils.constants import MODEL_TYPES, C2S, LIFE_OF_PY, I2S
-from modelteam_utils.utils import get_model_list, eval_llm_batch_with_scores, init_model
+from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 
 arg_parser = argparse.ArgumentParser(description="Download models")
 arg_parser.add_argument("--config", type=str, help="config file")

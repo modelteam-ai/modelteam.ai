@@ -23,7 +23,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills, yyyy_mm_to_quarter
 from modelteam_utils.utils import consistent_hash_code
-from modelteam_utils.utils import eval_llm_batch_with_scores, init_model, get_model_list
+from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
