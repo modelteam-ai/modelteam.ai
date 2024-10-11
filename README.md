@@ -1,4 +1,4 @@
-![modelteam.ai](images/modelteam_logo.jpg)
+![modelteam.ai](images/eng.gif)
 
 **ModelTeam** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
 Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
