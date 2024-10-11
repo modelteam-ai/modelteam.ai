@@ -1,6 +1,8 @@
-![modelteam.ai](images/modelteam_logo.jpg)
+<div align="center">
+  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+</div>
 
-**ModelTeam** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
+**[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
 Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
 Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
 
@@ -35,7 +37,7 @@ uploading to modelteam.ai.
 - Python-venv (if not included in Python installation)
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
-  - Optional: caffeine (for linux) 
+    - Optional: caffeine (for linux)
 - Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
@@ -69,7 +71,7 @@ python setup.py
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Copy all the repositories you want to include in your profile to a single folder e.g. `~/modelteam/repos`
-    - This can be any path, as long as they all are in a single folder. Same path should be used in the next step
+    - **This can be any path**, as long as they all are in a single folder. Same path should be used in the next step
 
 ```bash
 # Clone / Copy all the repositories you want to include in your profile
@@ -83,7 +85,9 @@ cp -r <repo3> .
 ...
 ...
 ```
+
 - Build your profile
+- `email` should be the id/email you have in your git commits.
 
 ```bash
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
@@ -94,11 +98,12 @@ python build_my_profile.py -r <repos_path> -e <email> [-n <number_of_years>]
 
 ### 3. Upload
 
-- Verify the generated profile edit it using the provided tool (Don't edit the JSON file directly)
-    - Remove any unwanted/confidential information
+- Verify the generated profile and edit it using `sign_my_profile.py` (Don't edit the JSON file directly)
+    - Remove any unwanted/confidential skills
     - Encrypt the JSON file using the provided key
         - Key will be emailed to you when you sign up
-- Upload the file to your account in modelteam.ai
+        - This helps us to verify that you own the email address
+- Upload the file to your account in [modelteam.ai](https://app.modelteam.ai)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode

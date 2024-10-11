@@ -1,6 +1,8 @@
-![modelteam.ai](images/modelteam_logo.jpg)
+<div align="center">
+  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+</div>
 
-At **ModelTeam**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
+At **[ModelTeam](https://modelteam.ai)**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
 capabilities by examining code and technical documentations. We use these models, learned from a training set of
 millions of engineers, to develop a unique data assets that powers a vertical talent insight platform for software
 engineers. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
@@ -41,7 +43,7 @@ uploading to modelteam.ai.
 - Python-venv (if not included in Python installation)
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
-  - Optional: caffeine (for linux)
+    - Optional: caffeine (for linux)
 - Visual C++ Redistributable (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
@@ -75,7 +77,7 @@ python setup.py
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Copy all the repositories you want to include in your profile to a single folder e.g. `~/modelteam/repos`
-    - This can be any path, as long as they all are in a single folder. Same path should be used in the next step
+    - **This can be any path**, as long as they all are in a single folder. Same path should be used in the next step
 
 ```bash
 # Clone / Copy all the repositories you want to include in your profile
@@ -92,15 +94,17 @@ cp -r <repo3> .
 
 - Build your team's profile. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
+- `email` should be the id/email you have in your git commits.
 
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
-# Number of years is optional and defaults to 5 years. It's recommended to reduce it as per your needs
+# Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
 python build_my_team_profile.py -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. python build_my_team_profile.py -r ~/modelteam/repos -e user1@org.ai,user2@org.ai -t model_team -n 3
+# e.g. python build_my_team_profile.py -r ~/modelteam/repos -e "user1@org.ai,user2@org.ai" -t model_team -n 3
 # e.g. python build_my_team_profile.py -r ~/modelteam/repos -t model_team -n 3
 ```
 
 ### 3. Upload
 
-- Just upload the generated JSON file to create your team in modelteam.ai
+- Just upload the generated JSON file to create your team in [modelteam.ai](https://app.modelteam.ai)
+

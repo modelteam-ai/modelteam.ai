@@ -10,7 +10,7 @@ def usage():
     print("Usage: build_my_team_profile.py -r <repo_path> -t <team_name> [-e <email_ids_as_csv>] [-n <num_years>]")
     print("e.g. build_my_team_profile.py -r /home/user/repos -e user1@org.ai,user2@org.ai -t model_team -n 3")
     print("If email_ids are not provided, profiles will be generated for all users in the repos")
-    print("Default num_years is 5")
+    print("Default num_years is 3")
     sys.exit(1)
 
 
@@ -30,7 +30,7 @@ def main():
     parser.add_argument("-r", "--repo_path", required=True, help="Path to the repository")
     parser.add_argument("-t", "--team_name", required=True, help="Name of the team")
     parser.add_argument("-e", "--email_ids", required=False, help="Email ID for the user")
-    parser.add_argument("-n", "--num_years", type=int, default=5, help="Number of years (default is 5)")
+    parser.add_argument("-n", "--num_years", type=int, default=3, help="Number of years (default is 3)")
 
     args = parser.parse_args()
     input_path = args.repo_path
