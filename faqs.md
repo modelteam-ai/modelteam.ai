@@ -1,3 +1,5 @@
+Refer here for [Latest FAQs](https://github.com/modelteam-ai/modelteam.ai/blob/main/faqs.md)
+
 **What languages does modelteam.ai support?**
 
 Our model supports Python, Javascript, Java, Go, C, C++, PHP, Ruby, and C#. We are working on adding more languages to our model.
