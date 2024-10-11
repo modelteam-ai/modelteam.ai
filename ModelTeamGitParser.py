@@ -714,11 +714,9 @@ if __name__ == "__main__":
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
     else:
-        # split, trim and convert to set
         usernames = set([x.strip() for x in usernames.split(",")])
         if len(usernames) > 5:
-            print("Error: Too many users. Please provide no more than 5 users", flush=True)
-            exit(1)
+            print("Warning: Too many users. This will take a very long time", flush=True)
 
     cnt = 0
     skip = 0
