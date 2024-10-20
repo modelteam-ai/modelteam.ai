@@ -97,7 +97,7 @@ python build_my_profile.py -l <repo_list_file_name> -e <email> [-n <number_of_ye
     - Encrypt the JSON file using the provided key
         - Key will be emailed to you when you sign up
         - This helps us to verify that you own the email address
-- Upload the file to your account in [modelteam.ai](https://app.modelteam.ai)
+- Upload the file(mt_profile_*****.enc.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
