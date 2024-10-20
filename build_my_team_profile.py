@@ -15,11 +15,8 @@ def usage():
     sys.exit(1)
 
 
-def validate_input(input_path, num_years, repo_list):
+def validate_input(num_years, repo_list):
     """Validate the command line inputs."""
-    if input_path and not os.path.isdir(input_path):
-        print("Repo path does not exist")
-        usage()
     if repo_list and not os.path.isfile(repo_list):
         print("Repo list file does not exist")
         usage()
@@ -31,23 +28,21 @@ def validate_input(input_path, num_years, repo_list):
 
 def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
-    parser.add_argument("-r", "--repo_path", required=False, help="Path to the repository")
-    parser.add_argument("-l", "--repo_list", required=False,
+    parser.add_argument("-l", "--repo_list", required=True,
                         help="Path to the file containing paths of local git repo folders")
     parser.add_argument("-t", "--team_name", required=True, help="Name of the team")
     parser.add_argument("-e", "--email_ids", required=False, help="Email ID for the user")
     parser.add_argument("-n", "--num_years", type=int, default=3, help="Number of years (default is 3)")
 
     args = parser.parse_args()
-    input_path = args.repo_path
     repo_list = args.repo_list
     team_name = args.team_name
     email_ids = args.email_ids
     num_years = args.num_years
 
-    validate_input(input_path, num_years, repo_list)
+    validate_input(num_years, repo_list)
 
-    output_path = run_model_team_git_parser(input_path, repo_list, email_ids, num_years, team_name)
+    output_path = run_model_team_git_parser(repo_list, email_ids, num_years, team_name)
     print(f"ModelTeam profile created in {output_path} directory")
 
 
