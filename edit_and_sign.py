@@ -288,7 +288,7 @@ if __name__ == "__main__":
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print('*' * 50)
-        print("modelteam Profile Ready to Upload...")
+        print("modelteam Profile Ready to Upload... Please upload the following file to https://app.modelteam.ai/jobs")
         print(encrypted_file)
         print('*' * 50)
         print(
