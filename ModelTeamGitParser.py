@@ -10,6 +10,7 @@ import re
 import sys
 
 import torch
+from sqlalchemy.orm import remote
 from tabulate import tabulate
 
 from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
@@ -406,8 +407,11 @@ class ModelTeamGitParser:
                 if not user_profiles:
                     print(f"No user profiles found for {repo_path}", flush=True)
                     return
+                remote_repo_path = run_commandline_command(f"git -C {repo_path} config --get remote.origin.url")
+                if not remote_repo_path:
+                    repo_path = remote_repo_path
                 if not args.keep_repo_name:
-                    repo_path = sha256_hash(repo_name)
+                    repo_path = sha256_hash(repo_path)
                     repo_name = anonymize(repo_name)
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
