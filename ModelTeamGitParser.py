@@ -414,7 +414,7 @@ class ModelTeamGitParser:
                 if not args.keep_repo_name:
                     # This hash is used to dedupe skill profiles in backend merger
                     if remote_repo_path:
-                        repo_path = sha256_hash(repo_path)
+                        repo_path = sha256_hash(remote_repo_path)
                     else:
                         repo_path = sha256_hash(repo_name)
                     repo_name = anonymize(repo_name)
@@ -742,7 +742,7 @@ if __name__ == "__main__":
             if input_path:
                 for folder in os.listdir(input_path):
                     tmp_folder_list.add(os.path.join(input_path, folder))
-            if os.path.exists(repo_list):
+            if repo_list and os.path.exists(repo_list):
                 with open(repo_list, "r") as f:
                     repo_list = f.read().splitlines()
                     for repo in repo_list:

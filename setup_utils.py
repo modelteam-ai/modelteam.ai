@@ -70,14 +70,13 @@ def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, co
         python_bin, "-m", "ModelTeamGitParser",
         "--output_path", output_path,
         "--config", config_file,
-        "--num_years", str(num_years)
+        "--num_years", str(num_years),
+        "--repo_list", repo_list
     ]
     if email_id:
         cmd += ["--user_emails", email_id]
     if team_name:
         cmd += ["--team_name", team_name, "--compress_output"]
-    if repo_list:
-        cmd += ["--repo_list", repo_list]
     if sys.platform in ["darwin", "linux"] and shutil.which("caffeinate"):
         cmd = ["caffeinate"] + cmd
     else:
