@@ -17,8 +17,11 @@ def usage():
 
 def validate_input(input_path, num_years, repo_list):
     """Validate the command line inputs."""
-    if not os.path.isdir(input_path) or not os.path.exists(repo_list):
-        print("Repo path or Repo List does not exist")
+    if input_path and not os.path.isdir(input_path):
+        print("Repo path does not exist")
+        usage()
+    if repo_list and not os.path.isfile(repo_list):
+        print("Repo list file does not exist")
         usage()
 
     if not re.match(r"^[0-9]+$", str(num_years)):

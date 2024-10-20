@@ -10,7 +10,6 @@ import re
 import sys
 
 import torch
-from sqlalchemy.orm import remote
 from tabulate import tabulate
 
 from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
@@ -734,8 +733,9 @@ if __name__ == "__main__":
             folder_list = [args.repo_name]
         else:
             tmp_folder_list = set()
-            for folder in os.listdir(input_path):
-                tmp_folder_list.add(os.path.join(input_path, folder))
+            if input_path:
+                for folder in os.listdir(input_path):
+                    tmp_folder_list.add(os.path.join(input_path, folder))
             if os.path.exists(repo_list):
                 with open(repo_list, "r") as f:
                     repo_list = f.read().splitlines()

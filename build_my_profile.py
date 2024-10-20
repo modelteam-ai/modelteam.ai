@@ -16,8 +16,11 @@ def usage():
 
 def validate_input(input_path, email_id, num_years, repo_list):
     """Validate the command line inputs."""
-    if not os.path.isdir(input_path) or not os.path.exists(repo_list):
-        print("Repo path or Repo List does not exist")
+    if input_path and not os.path.isdir(input_path):
+        print("Repo path does not exist")
+        usage()
+    if repo_list and not os.path.isfile(repo_list):
+        print("Repo list file does not exist")
         usage()
 
     if not re.match(r"^[0-9]+$", str(num_years)):
@@ -31,8 +34,10 @@ def validate_input(input_path, email_id, num_years, repo_list):
 
 def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
-    parser.add_argument("-r", "--repo_path", required=False, help="Path to the folder containing local git repositories")
-    parser.add_argument("-l", "--repo_list", required=False, help="Path to the file containing paths of local git repo folders")
+    parser.add_argument("-r", "--repo_path", required=False,
+                        help="Path to the folder containing local git repositories")
+    parser.add_argument("-l", "--repo_list", required=False,
+                        help="Path to the file containing paths of local git repo folders")
     parser.add_argument("-e", "--email_id", required=True, help="Email ID for the user")
     parser.add_argument("-n", "--num_years", type=int, default=5,
                         help="Number of years to lookback in git history (default is 5)")

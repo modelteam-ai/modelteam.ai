@@ -68,11 +68,12 @@ def run_model_team_git_parser(input_path, repo_list, email_id, num_years, team_n
     os.environ["HF_HUB_OFFLINE"] = "1"
     cmd = [
         python_bin, "-m", "ModelTeamGitParser",
-        "--input_path", input_path,
         "--output_path", output_path,
         "--config", config_file,
         "--num_years", str(num_years)
     ]
+    if input_path:
+        cmd += ["--input_path", input_path]
     if email_id:
         cmd += ["--user_emails", email_id]
     if team_name:
