@@ -407,11 +407,13 @@ class ModelTeamGitParser:
                     print(f"No user profiles found for {repo_path}", flush=True)
                     return
                 remote_repo_path = run_commandline_command(f"git -C {repo_path} config --get remote.origin.url")
-                if not remote_repo_path:
+                if remote_repo_path and repo_name in remote_repo_path:
                     repo_path = remote_repo_path
+                else:
+                    remote_repo_path = None
                 if not args.keep_repo_name:
                     # This hash is used to dedupe skill profiles in backend merger
-                    if not remote_repo_path:
+                    if remote_repo_path:
                         repo_path = sha256_hash(repo_path)
                     else:
                         repo_path = sha256_hash(repo_name)
