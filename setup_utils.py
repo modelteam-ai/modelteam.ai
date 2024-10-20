@@ -12,6 +12,8 @@ def run_command(command, shell=False):
     with open(f"log_{date}.txt", "a") as logfile:
         process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in iter(process.stdout.readline, ''):
+            if 'MallocStackLogging' in line:
+                continue
             print(line, end='')
             logfile.write(line)
 
