@@ -410,7 +410,11 @@ class ModelTeamGitParser:
                 if not remote_repo_path:
                     repo_path = remote_repo_path
                 if not args.keep_repo_name:
-                    repo_path = sha256_hash(repo_path)
+                    # This hash is used to dedupe skill profiles in backend merger
+                    if not remote_repo_path:
+                        repo_path = sha256_hash(repo_path)
+                    else:
+                        repo_path = sha256_hash(repo_name)
                     repo_name = anonymize(repo_name)
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
