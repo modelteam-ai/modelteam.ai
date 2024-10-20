@@ -50,7 +50,7 @@ def sanitize_email(email):
     return email.replace('@', '_').replace('.', '_')
 
 
-def run_model_team_git_parser(input_path, email_id, num_years, team_name=None, config_file="config.ini"):
+def run_model_team_git_parser(input_path, repo_list, email_id, num_years, team_name=None, config_file="config.ini"):
     """Run the ModelTeamGitParser script with the appropriate arguments."""
     curr_dir = os.getcwd()
     curr_date = datetime.now().strftime("%Y-%m-%d")
@@ -77,7 +77,8 @@ def run_model_team_git_parser(input_path, email_id, num_years, team_name=None, c
         cmd += ["--user_emails", email_id]
     if team_name:
         cmd += ["--team_name", team_name, "--compress_output"]
-
+    if repo_list:
+        cmd += ["--repo_list", repo_list]
     if sys.platform in ["darwin", "linux"] and shutil.which("caffeinate"):
         cmd = ["caffeinate"] + cmd
     else:

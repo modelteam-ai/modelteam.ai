@@ -44,7 +44,7 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- Visual C++ Redistributable (for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a minimum period of 3 months.
@@ -76,14 +76,14 @@ python setup.py
 ### 2 Build Team profile
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Copy all the repositories you want to include in your profile to a single folder e.g. `~/modelteam/repos`
+- Copy all the repositories you want to include in your profile to a single folder e.g. `~/my_repos`
     - **This can be any path**, as long as they all are in a single folder. Same path should be used in the next step
 
 ```bash
 # Clone / Copy all the repositories you want to include in your profile
 # This can be any path, as long as they all are in a single folder
-mkdir ~/modelteam/repos
-cd ~/modelteam/repos
+mkdir ~/my_repos
+cd ~/my_repos
 git clone <repo1>
 git clone <repo2>
 # These should be copies of cloned repos, downloading just source code won't work
@@ -100,8 +100,8 @@ cp -r <repo3> .
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
 # Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
 python build_my_team_profile.py -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. python build_my_team_profile.py -r ~/modelteam/repos -e "user1@org.ai,user2@org.ai" -t model_team -n 3
-# e.g. python build_my_team_profile.py -r ~/modelteam/repos -t model_team -n 3
+# e.g. python build_my_team_profile.py -r ~/my_repos -e "user1@org.ai,user2@org.ai" -t model_team -n 3
+# e.g. python build_my_team_profile.py -r ~/my_repos -t model_team -n 3
 ```
 
 ### 3. Upload
