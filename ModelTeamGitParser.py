@@ -406,8 +406,17 @@ class ModelTeamGitParser:
                 if not user_profiles:
                     print(f"No user profiles found for {repo_path}", flush=True)
                     return
+                remote_repo_path = run_commandline_command(f"git -C {repo_path} config --get remote.origin.url")
+                if remote_repo_path and repo_name in remote_repo_path:
+                    repo_path = remote_repo_path
+                else:
+                    remote_repo_path = None
                 if not args.keep_repo_name:
-                    repo_path = sha256_hash(repo_name)
+                    # This hash is used to dedupe skill profiles in backend merger
+                    if remote_repo_path:
+                        repo_path = sha256_hash(remote_repo_path)
+                    else:
+                        repo_path = sha256_hash(repo_name)
                     repo_name = anonymize(repo_name)
                 with open(final_output, "w") as fo:
                     for user in user_profiles:
@@ -673,6 +682,7 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
+    parser.add_argument('--repo_list', type=str, help='Path to the input file containing list of repos')
     parser.add_argument('--repo_name', type=str, help='Name of single repo to process')
     parser.add_argument('--output_path', type=str, help='Path to the output folder')
     parser.add_argument('--config', type=str, help='Config.ini path')
@@ -697,6 +707,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     input_path = args.input_path
+    repo_list = args.repo_list
     output_path = args.output_path
     usernames = args.user_emails
     config_file = args.config
@@ -707,7 +718,7 @@ if __name__ == "__main__":
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     users_to_filter = load_repo_user_list(args.filter_list)
     label_file_list = load_label_files(args.label_file_list)
-    if not input_path or not output_path:
+    if (not input_path and not repo_list) or not output_path:
         print("Invalid arguments")
         exit(1)
     if not usernames:
@@ -727,7 +738,19 @@ if __name__ == "__main__":
         if args.repo_name:
             folder_list = [args.repo_name]
         else:
-            folder_list = os.listdir(input_path)
+            tmp_folder_list = set()
+            if input_path:
+                for folder in os.listdir(input_path):
+                    tmp_folder_list.add(os.path.join(input_path, folder))
+            if repo_list and os.path.exists(repo_list):
+                with open(repo_list, "r") as f:
+                    repo_list = f.read().splitlines()
+                    for repo in repo_list:
+                        if os.path.isdir(repo):
+                            tmp_folder_list.add(repo)
+                        else:
+                            print(f"Skipping {repo} as it is not a directory")
+            folder_list = list(tmp_folder_list)
     randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
@@ -739,8 +762,7 @@ if __name__ == "__main__":
     for folder in randomized_folder_list:
         if folder.endswith("_libs.jsonl"):
             continue
-        if (os.path.isdir(os.path.join(input_path, folder)) and os.path.isdir(
-                os.path.join(input_path, folder, ".git"))) or args.start_from_tmp:
+        if (os.path.isdir(folder) and os.path.isdir(os.path.join(folder, ".git"))) or args.start_from_tmp:
             if args.parallel_mode is not None:
                 par_md = int(args.parallel_mode)
                 if cnt % 10 == 0 and os.path.exists(kill_switch):
@@ -774,8 +796,8 @@ if __name__ == "__main__":
                 repo_path = os.path.join(output_path, "tmp-stats", folder)
                 file_prefix = folder.replace(".jsonl", "")
             else:
-                repo_path = os.path.join(input_path, folder)
-                file_prefix = folder
+                repo_path = folder
+                file_prefix = os.path.basename(folder)
             user_stats_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}.jsonl")
             repo_lib_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}_libs.jsonl")
             final_output = os.path.join(output_path, "final-stats", f"{file_prefix}_user_profile.jsonl")

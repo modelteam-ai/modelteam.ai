@@ -9,11 +9,11 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.viz_utils import generate_pdf_report
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import encrypt_compress_file, generate_hc
 from modelteam_utils.utils import filter_skills
+from modelteam_utils.viz_utils import generate_pdf_report
 
 
 class App(QWidget):
@@ -183,7 +183,8 @@ These skills will further be scored by another model on the server side. Please 
         choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
         with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
-        QMessageBox.information(self, "Save Choices", "Choices saved successfully!")
+        QMessageBox.information(self, "Save Choices",
+                                "Choices saved successfully! Please check the CLI for full path of the output file.")
         self.close()
 
 
@@ -254,7 +255,7 @@ def display_t_and_c(email_id):
                f"\t1. I am the owner of the id {email_id} associated with this profile",
                "\t2. I own the code contributions associated with this id",
                "\t3. I will remove any confidential skills from the profile before submitting"]
-    res = input("\n".join(t_and_c) + "\nEnter 'I Agree' to proceed: \n")
+    res = input("\n".join(t_and_c) + "\nEnter \"Y\" to proceed: \n")
     return res.lower()
 
 
@@ -274,9 +275,9 @@ if __name__ == "__main__":
     formatted_file = f"{file_name_without_extension}.edited.formatted.json"
     with open(profile_json, "r") as f:
         merged_profile = json.load(f)
-    if display_t_and_c(merged_profile[USER]) != "i agree":
+    if display_t_and_c(merged_profile[USER]) != "y":
         print("Please accept the terms and conditions to proceed.")
-        sys.exit(1)
+        sys.exit(0)
     result = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
@@ -287,7 +288,7 @@ if __name__ == "__main__":
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print('*' * 50)
-        print("modelteam Profile Ready to Upload...")
+        print("modelteam Profile Ready to Upload... Please upload the following file to https://app.modelteam.ai/jobs")
         print(encrypted_file)
         print('*' * 50)
         print(

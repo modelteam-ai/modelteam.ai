@@ -44,7 +44,7 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- Visual C++ Redistributable (for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a minimum period of 3 months.
@@ -76,20 +76,14 @@ python setup.py
 ### 2 Build Team profile
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Copy all the repositories you want to include in your profile to a single folder e.g. `~/modelteam/repos`
-    - **This can be any path**, as long as they all are in a single folder. Same path should be used in the next step
+- Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt` 
 
 ```bash
-# Clone / Copy all the repositories you want to include in your profile
-# This can be any path, as long as they all are in a single folder
-mkdir ~/modelteam/repos
-cd ~/modelteam/repos
-git clone <repo1>
-git clone <repo2>
-# These should be copies of cloned repos, downloading just source code won't work
-cp -r <repo3> .
-...
-...
+# Clone all your repositories that you want to include in your profile if it's not already cloned
+$ cat ~/repo_list.txt
+/Users/obuli/modelteam.ai/shastraw.ai
+/Users/obuli/modelteam.ai/shastraw.server
+/Users/obuli/repos/modelteam.ai
 ```
 
 - Build your team's profile. If your team is big, we recommend generating profiles only for the team members who are
@@ -99,9 +93,9 @@ cp -r <repo3> .
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
 # Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
-python build_my_team_profile.py -r <repos_path> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. python build_my_team_profile.py -r ~/modelteam/repos -e "user1@org.ai,user2@org.ai" -t model_team -n 3
-# e.g. python build_my_team_profile.py -r ~/modelteam/repos -t model_team -n 3
+python build_my_team_profile.py -l <repo_list_file_name> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
+# e.g. python build_my_team_profile.py -l ~/repo_list.txt -e "user1@org.ai,user2@org.ai" -t model_team -n 3
+# e.g. python build_my_team_profile.py -l ~/repo_list.txt -t model_team -n 3
 ```
 
 ### 3. Upload
