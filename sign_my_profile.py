@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from setup_utils import get_python_bin, run_command, get_profile_path_fine_name
+from setup_utils import get_python_bin, run_command, get_profile_path_file_name
 
 
 def usage():
@@ -26,20 +26,22 @@ def run_edit_and_sign(input_path, user_key, cli_mode):
 def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
     parser.add_argument("-k", "--key", required=True, help="Validation Key")
+    parser.add_argument("-e", "--email_id", required=True, help="Email ID")
     parser.add_argument("-c", "--cli_mode", required=False, default=False, action='store_true', help="CLI Mode")
 
     args = parser.parse_args()
     key = args.key
+    email_id = args.email_id
     cli_mode = args.cli_mode
     if not key:
         usage()
         sys.exit(1)
-    profile_path_file = get_profile_path_fine_name()
+    profile_path_file = get_profile_path_file_name(email_id)
     try:
         with open(profile_path_file, "r") as f:
             input_path = f.read().strip()
     except FileNotFoundError:
-        print(f"{profile_path_file} not found.")
+        print(f"{profile_path_file} not found. First run build_my_profile.py")
         sys.exit(1)
     print("Loading...", flush=True)
     run_edit_and_sign(input_path, key, cli_mode)

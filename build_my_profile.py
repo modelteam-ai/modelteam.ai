@@ -3,7 +3,7 @@ import os
 import re
 import sys
 
-from setup_utils import get_profile_path_fine_name, run_model_team_git_parser
+from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
@@ -44,7 +44,7 @@ def main():
 
     validate_input(email_id, num_years, repo_list)
 
-    profile_path_file = get_profile_path_fine_name()
+    profile_path_file = get_profile_path_file_name()
     if os.path.exists(profile_path_file):
         os.remove(profile_path_file)
 
