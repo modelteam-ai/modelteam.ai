@@ -101,7 +101,7 @@ python build_my_profile.py -l <repo_list_file_name> -e <email> [-n <number_of_ye
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
-python sign_my_profile.py --key <key> [--cli_mode]
-# e.g. python sign_my_profile.py --key 2b7e151628aed2a6abf7158809cf4f3c  # For MacOS/Windows
-# e.g. python sign_my_profile.py --key 2b7e151628aed2a6abf7158809cf4f3c --cli_mode # For Linux
+python sign_my_profile.py -k <key> -e <email> [--cli_mode]
+# e.g. python sign_my_profile.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai # For MacOS/Windows
+# e.g. python sign_my_profile.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai --cli_mode # For Linux
 ```

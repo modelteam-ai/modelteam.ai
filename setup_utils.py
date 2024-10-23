@@ -41,9 +41,15 @@ def get_python_bin(create_venv=False):
     return python_bin
 
 
-def get_profile_path_fine_name():
+def get_output_path(email_or_team_name):
     curr_dir = os.getcwd()
-    profile_path_file = os.path.join(curr_dir, "model_team_profile", "model_team_profile_path.txt")
+    sanitized_path = sanitize_email(email_or_team_name)
+    profile_path_file = os.path.join(curr_dir, "model_team_profile", sanitized_path)
+    return profile_path_file
+
+def get_profile_path_file_name(email_id):
+    out_path = get_output_path(email_id)
+    profile_path_file = os.path.join(out_path, "model_team_profile_path.txt")
     return profile_path_file
 
 
@@ -54,14 +60,14 @@ def sanitize_email(email):
 
 def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, config_file="config.ini"):
     """Run the ModelTeamGitParser script with the appropriate arguments."""
-    curr_dir = os.getcwd()
     curr_date = datetime.now().strftime("%Y-%m-%d")
     if team_name:
-        output_path = os.path.join(curr_dir, "model_team_profile", team_name, curr_date)
+        team_path = get_output_path(team_name)
+        output_path = os.path.join(team_path, curr_date)
     else:
         # Sanitize the email ID for the output path
-        email_path = sanitize_email(email_id)
-        output_path = os.path.join(curr_dir, "model_team_profile", email_path, curr_date)
+        email_path = get_output_path(email_id)
+        output_path = os.path.join(email_path, curr_date)
 
     # Create the output directory
     os.makedirs(output_path, exist_ok=True)

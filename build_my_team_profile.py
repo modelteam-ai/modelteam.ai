@@ -3,7 +3,7 @@ import os
 import re
 import sys
 
-from setup_utils import get_profile_path_fine_name, run_model_team_git_parser
+from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
