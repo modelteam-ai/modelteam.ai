@@ -44,7 +44,7 @@ def main():
 
     validate_input(email_id, num_years, repo_list)
 
-    profile_path_file = get_profile_path_file_name()
+    profile_path_file = get_profile_path_file_name(email_id)
     if os.path.exists(profile_path_file):
         os.remove(profile_path_file)
 
