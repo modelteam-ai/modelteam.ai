@@ -6,8 +6,8 @@ from setup_utils import get_python_bin, run_command, get_profile_path_file_name
 
 
 def usage():
-    print("Usage: sign_my_profile.py --key <validation_key> [--cli_mode]")
-    print("e.g. sign_my_profile.py --key 123456 --cli_mode")
+    print("Usage: sign_my_file.py --key <validation_key> [--cli_mode]")
+    print("e.g. sign_my_file.py --key 123456 --cli_mode")
 
 
 def run_edit_and_sign(input_path, user_key, cli_mode):
@@ -41,7 +41,7 @@ def main():
         with open(profile_path_file, "r") as f:
             input_path = f.read().strip()
     except FileNotFoundError:
-        print(f"{profile_path_file} not found. First run build_my_profile.py")
+        print(f"{profile_path_file} not found. First run gen_git_stats.py")
         sys.exit(1)
     print("Loading...", flush=True)
     run_edit_and_sign(input_path, key, cli_mode)

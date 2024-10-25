@@ -86,8 +86,8 @@ $ cat ~/repo_list.txt
 ```bash
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-python build_my_profile.py -l <repo_list_file_name> -e <email> [-n <number_of_years_to_look_back>]
-# e.g. python build_my_profile.py -l ~/repo_list.txt -e user@org.ai -n 5
+python gen_git_stats.py -l <repo_list_file_name> -e <email> [-n <number_of_years_to_look_back>]
+# e.g. python gen_git_stats.py -l ~/repo_list.txt -e user@org.ai -n 5
 ```
 
 ### 3. Upload
@@ -101,7 +101,7 @@ python build_my_profile.py -l <repo_list_file_name> -e <email> [-n <number_of_ye
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
-python sign_my_profile.py -k <key> -e <email> [--cli_mode]
-# e.g. python sign_my_profile.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai # For MacOS/Windows
-# e.g. python sign_my_profile.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai --cli_mode # For Linux
+python sign_my_file.py -k <key> -e <email> [--cli_mode]
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai # For MacOS/Windows
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai --cli_mode # For Linux
 ```
