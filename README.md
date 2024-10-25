@@ -67,7 +67,7 @@ cd modelteam.ai
 python setup.py
 ```
 
-### 2 Build your profile
+### 2 Gen your skill stats
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt` 
@@ -91,7 +91,7 @@ Author: XYZ <userXYZ@org.ai>
 ```
 
 ```bash
-# Generates your profile. Takes email used in git commits and optionally number of years to consider
+# Generates your skill stats. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
 python gen_git_stats.py -l <repo_list_file_name> -e <email/gitid> [-n <number_of_years_to_look_back>]
 # e.g. python gen_git_stats.py -l ~/repo_list.txt -e userXYZ@org.ai -n 5
@@ -100,13 +100,13 @@ python gen_git_stats.py -l <repo_list_file_name> -e <email/gitid> [-n <number_of
 
 ### 3. Upload
 
-- Verify the generated profile and edit it using `sign_my_profile.py` (Don't edit the JSON file directly)
+- Verify the generated skill stats file and edit it using `sign_my_file.py` (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
     - Encrypt the JSON file using the provided key
         - Key will be emailed to you when you sign up
         - This helps us to verify that you own the email address
         - If your git id is different from your email, it will be tagged for manual verification
-- Upload the file(mt_profile_*****.enc.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
+- Upload the file(mt_metrics_*****.enc.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
