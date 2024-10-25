@@ -73,7 +73,7 @@ cd modelteam.ai
 python setup.py
 ```
 
-### 2 Build Team profile
+### 2 Generating Team Stats
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt` 
@@ -86,7 +86,7 @@ $ cat ~/repo_list.txt
 /Users/obuli/repos/modelteam.ai
 ```
 
-- Build your team's profile. If your team is big, we recommend generating profiles only for the team members who are
+- Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
 - `email` should be the id/email you have in your git commits.
 ```bash
@@ -107,5 +107,6 @@ python gen_team_git_stats.py -l <repo_list_file_name> [-e "<email1>,<email2>,...
 
 ### 3. Upload
 
-- Just upload the generated JSON file to create your team in [modelteam.ai](https://app.modelteam.ai)
+- Just upload the generated JSON file to create your team in [modelteam.ai](https://app.modelteam.ai/org/teams)
+- Our AI models will analyze the data and generate a profile for your team (<30 minutes)
 
