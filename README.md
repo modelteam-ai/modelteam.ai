@@ -82,12 +82,20 @@ $ cat ~/repo_list.txt
 
 - Build your profile
 - `email` should be the id/email you have in your git commits.
+```bash
+# Example:
+git log | grep XYZ | head -3
+Author: XYZ <userXYZ@org.ai>
+Author: XYZ <1234567+XYZ@users.noreply.github.com>
+Author: XYZ <userXYZ@org.ai>
+```
 
 ```bash
 # Generates your profile. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-python gen_git_stats.py -l <repo_list_file_name> -e <email> [-n <number_of_years_to_look_back>]
-# e.g. python gen_git_stats.py -l ~/repo_list.txt -e user@org.ai -n 5
+python gen_git_stats.py -l <repo_list_file_name> -e <email/gitid> [-n <number_of_years_to_look_back>]
+# e.g. python gen_git_stats.py -l ~/repo_list.txt -e userXYZ@org.ai -n 5
+# e.g. python gen_git_stats.py -l ~/repo_list.txt -e 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
 ### 3. Upload
@@ -97,11 +105,12 @@ python gen_git_stats.py -l <repo_list_file_name> -e <email> [-n <number_of_years
     - Encrypt the JSON file using the provided key
         - Key will be emailed to you when you sign up
         - This helps us to verify that you own the email address
+        - If your git id is different from your email, it will be tagged for manual verification
 - Upload the file(mt_profile_*****.enc.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
-python sign_my_file.py -k <key> -e <email> [--cli_mode]
-# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai # For MacOS/Windows
-# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e user@org.ai --cli_mode # For Linux
+python sign_my_file.py -k <key> -e <email/gitid> [--cli_mode]
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e userXYZ@org.ai # For MacOS/Windows
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e 1234567+XYZ@users.noreply.github.com --cli_mode # For Linux
 ```
