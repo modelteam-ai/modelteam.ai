@@ -89,6 +89,13 @@ $ cat ~/repo_list.txt
 - Build your team's profile. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
 - `email` should be the id/email you have in your git commits.
+```bash
+# Example:
+git log | grep XYZ | head -3
+Author: XYZ <userXYZ@org.ai>
+Author: XYZ <1234567+XYZ@users.noreply.github.com>
+Author: XYZ <userXYZ@org.ai>
+```
 
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
