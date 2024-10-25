@@ -284,7 +284,7 @@ if __name__ == "__main__":
         apply_choices(merged_profile, choices_file, edited_file, formatted_file)
         hc = generate_hc(edited_file)
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        encrypted_file = os.path.join(args.profile_path, f"mt_profile_{today}_{hc}.enc.gz")
+        encrypted_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.enc.gz")
         encrypt_compress_file(edited_file, encrypted_file, args.user_key)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print('*' * 50)

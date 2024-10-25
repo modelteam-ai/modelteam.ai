@@ -7,9 +7,9 @@ from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
-    print("Usage: build_my_profile.py -e <email_id> [-r <repo_path>] [-l <repo_list.txt>] [-n <num_years>]")
-    print("e.g. build_my_profile.py -r /home/user/repos -e user@org.ai -n 5")
-    print("e.g. build_my_profile.py -l /home/user/repo_list.txt -e user@org.ai -n 5")
+    print("Usage: gen_git_stats.py -e <email_id> [-r <repo_path>] [-l <repo_list.txt>] [-n <num_years>]")
+    print("e.g. gen_git_stats.py -r /home/user/repos -e user@org.ai -n 5")
+    print("e.g. gen_git_stats.py -l /home/user/repo_list.txt -e user@org.ai -n 5")
     print("Default num_years is 5")
     sys.exit(1)
 
