@@ -7,9 +7,9 @@ from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
-    print("Usage: gen_team_git_stats.py [-r <repo_path>] [-l <repo_list.txt>] -t <team_name> [-e <email_ids_as_csv>] [-n <num_years>]")
-    print("e.g. gen_team_git_stats.py -r /home/user/repos -e user1@org.ai,user2@org.ai -t model_team -n 3")
-    print("e.g. gen_team_git_stats.py -l /home/user/repo_list.txt -e user1@org.ai,user2@org.ai -t model_team -n 3")
+    print("Usage: gen_team_git_stats.py [-r <repo_list.txt>] -t <team_name> [-e <email_ids_as_csv>] [-n <num_years>]")
+    print("e.g. gen_team_git_stats.py -r /home/user/repo_list.txt -e user1@org.ai,user2@org.ai -t model_team -n 3")
+    print("e.g. gen_team_git_stats.py -r /home/user/repo_list.txt -t model_team -n 3")
     print("If email_ids are not provided, profiles will be generated for all users in the repos")
     print("Default num_years is 3")
     sys.exit(1)
@@ -28,7 +28,7 @@ def validate_input(num_years, repo_list):
 
 def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
-    parser.add_argument("-l", "--repo_list", required=True,
+    parser.add_argument("-r", "--repo_list", required=True,
                         help="Path to the file containing paths of local git repo folders")
     parser.add_argument("-t", "--team_name", required=True, help="Name of the team")
     parser.add_argument("-e", "--email_ids", required=False, help="Email ID for the user")

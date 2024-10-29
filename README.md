@@ -93,9 +93,9 @@ Author: XYZ <userXYZ@org.ai>
 ```bash
 # Generates your skill stats. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-python gen_git_stats.py -l <repo_list_file_name> -e <email/gitid> [-n <number_of_years_to_look_back>]
-# e.g. python gen_git_stats.py -l ~/repo_list.txt -e userXYZ@org.ai -n 5
-# e.g. python gen_git_stats.py -l ~/repo_list.txt -e 1234567+XYZ@users.noreply.github.com -n 5
+python gen_git_stats.py -r <repo_list_file_name> -e <email/gitid> [-n <number_of_years_to_look_back>]
+# e.g. python gen_git_stats.py -r ~/repo_list.txt -e userXYZ@org.ai -n 5
+# e.g. python gen_git_stats.py -r ~/repo_list.txt -e 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
 ### 3. Upload

@@ -100,9 +100,9 @@ Author: XYZ <userXYZ@org.ai>
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
 # Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
-python gen_team_git_stats.py -l <repo_list_file_name> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. python gen_team_git_stats.py -l ~/repo_list.txt -e "user1@org.ai,user2@org.ai" -t model_team -n 3
-# e.g. python gen_team_git_stats.py -l ~/repo_list.txt -t model_team -n 3
+python gen_team_git_stats.py -r <repo_list_file_name> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
+# e.g. python gen_team_git_stats.py -r ~/repo_list.txt -e "user1@org.ai,user2@org.ai" -t model_team -n 3
+# e.g. python gen_team_git_stats.py -r ~/repo_list.txt -t model_team -n 3
 ```
 
 ### 3. Upload

@@ -7,10 +7,9 @@ from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
-    print("Usage: gen_git_stats.py -e <email_id> [-r <repo_path>] [-l <repo_list.txt>] [-n <num_years>]")
-    print("e.g. gen_git_stats.py -r /home/user/repos -e user@org.ai -n 5")
-    print("e.g. gen_git_stats.py -l /home/user/repo_list.txt -e user@org.ai -n 5")
-    print("Default num_years is 5")
+    print("Usage: gen_git_stats.py -e <email_id> [-r <repo_list.txt>] [-n <num_years_lookback>]")
+    print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -e user@org.ai -n 5")
+    print("Default num_years_lookback is 5")
     sys.exit(1)
 
 
@@ -31,7 +30,7 @@ def validate_input(email_id, num_years, repo_list):
 
 def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
-    parser.add_argument("-l", "--repo_list", required=True,
+    parser.add_argument("-r", "--repo_list", required=True,
                         help="Path to the file containing paths of local git repo folders")
     parser.add_argument("-e", "--email_id", required=True, help="Email ID for the user")
     parser.add_argument("-n", "--num_years", type=int, default=5,
