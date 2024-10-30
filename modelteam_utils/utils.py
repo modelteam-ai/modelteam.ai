@@ -171,7 +171,7 @@ def get_team_mates_key(u1, u2):
         return f"{u2}:{u1}"
 
 
-def anonymize(input_string, max_show_percent=0.35):
+def anonymize(input_string, max_show_percent=0.5):
     if not input_string:
         return input_string
     num_chars = len(input_string)
