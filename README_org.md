@@ -2,7 +2,8 @@
   <img src="images/modelteam_logo_blk.png" alt="modelteam">
 </div>
 
-At **[ModelTeam](https://modelteam.ai)**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’ skills and
+At **[ModelTeam](https://modelteam.ai)**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’
+skills and
 capabilities by examining code and technical documentations. We use these models, learned from a training set of
 millions of engineers, to develop a unique data assets that powers a vertical talent insight platform for software
 engineers. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
@@ -44,10 +45,29 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
-- Minimum 8GB RAM
-- ~15GB free disk space
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
+  for Windows)
 - You should have made contributions for a minimum period of 3 months.
+
+### Compute Needs
+
+- If your team is under 10, your laptop or small server should be sufficient.
+- If your team is larger, you may need a server with more resources. We recommend using a server with at least 32GB RAM
+  and 8 cores.
+- Following is sample runtime. ~10 hours for analyzing ~1M lines of code. (32GB machine with 8 cores).
+
+```mono
++---------------------------------+-------------+
+| Metric                          |       Value |
+|---------------------------------+-------------|
+| Time taken                      | 566 minutes |
+| Kinds of files analyzed         |          go |
+| Number of repositories analyzed |           1 |
+| Number of months analyzed       |          37 |
+| Number of lines analyzed        |      949114 |
+| Number of skills extracted      |          89 |
++---------------------------------+-------------+
+```
 
 ## Getting Started
 
@@ -76,7 +96,7 @@ python setup.py
 ### 2 Generating Team Stats
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt` 
+- Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt`
 
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
@@ -89,6 +109,7 @@ $ cat ~/repo_list.txt
 - Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
 - `email` should be the id/email you have in your git commits.
+
 ```bash
 # Example:
 git log | grep XYZ | head -3
