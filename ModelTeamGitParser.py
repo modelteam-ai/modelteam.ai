@@ -109,6 +109,7 @@ class ModelTeamGitParser:
         total_added = 0
         file_line_stats = {}  # Dictionary to store file line stats
         add_pdf_stats = curr_user == args.user_emails
+        #FIXME: Ignore major changes like >10K line commits
         if result:
             if add_pdf_stats:
                 repo_name = os.path.basename(repo_path)
@@ -125,6 +126,7 @@ class ModelTeamGitParser:
                     continue
                 added_lines, deleted_lines, file_path = stats.split('\t')
                 # ignore if these are not valid numbers
+                #FIXME: Is added_lines + deleted_lines == 0 a valid check?
                 if not added_lines.isdigit() or not deleted_lines.isdigit() or added_lines + deleted_lines == 0:
                     continue
                 # handle renames /home/{ xyx => abc }/test.py -> /home/abc/test.py
@@ -261,6 +263,7 @@ class ModelTeamGitParser:
                 if library_names:
                     labels[LIBS][file_name] = library_names
             if len(file_diff) > TOO_BIG_TO_ANALYZE_LIMIT:
+                #TODO: Handle this scenario in ADDED and DELETED stats
                 # Any single file diff with more than 10000 chars changed is too big to analyze
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, TOO_BIG_TO_ANALYZE, 1)
                 continue

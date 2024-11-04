@@ -5,26 +5,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
-def encrypt_compress_file(input_file, output_file, key_hex):
+def compress_file(input_file, output_file):
     with open(input_file, 'rb') as f:
-        plaintext = f.read()
+        data = f.read()
 
-    plaintext_gz = compress_data(plaintext)
-    ciphertext = encrypt(plaintext_gz, key_hex)
+    compressed_data = compress_data(data)
 
     with open(output_file, 'wb') as f:
-        f.write(ciphertext)
-
-
-def decrypt_decompress_file(input_file, output_file, key_hex):
-    with open(input_file, 'rb') as f:
-        ciphertext = f.read()
-
-    decrypted_gz = decrypt(ciphertext, key_hex)
-    plaintext = decompress_data(decrypted_gz)
-
-    with open(output_file, 'wb') as f:
-        f.write(plaintext)
+        f.write(compressed_data)
 
 
 def encrypt(data, key_hex):
