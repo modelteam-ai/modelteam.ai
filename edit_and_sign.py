@@ -9,11 +9,10 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam.modelteam_utils.utils import sha256_hash
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import compress_file, generate_hc
-from modelteam_utils.utils import filter_skills
+from modelteam_utils.utils import filter_skills, sha256_hash
 from modelteam_utils.viz_utils import generate_pdf_report
 
 
@@ -110,9 +109,8 @@ These skills will further be scored by another model on the server side. Please 
         self.save_button.setFont(font)
         self.save_button.setFixedWidth(150)
         self.save_button.setFixedHeight(30)
-        self.save_button.setStyleSheet("background-color: #808080; color: white;")
+        self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
         self.save_button.clicked.connect(self.save_choices)
-        self.save_button.setEnabled(False)
         button_layout.addWidget(self.save_button)
         layout.addLayout(button_layout)
 
@@ -165,20 +163,11 @@ These skills will further be scored by another model on the server side. Please 
             radio.setAccessibleName(name)
             if name == def_enabled:
                 radio.setChecked(True)
-            radio.toggled.connect(self.check_filled)
             button_group.addButton(radio)
             radio_layout.addWidget(radio)
             frame_layout.addLayout(radio_layout)
         self.choices[skill] = button_group
         layout.addWidget(frame)
-
-    def check_filled(self):
-        if all(group.checkedButton() for group in self.choices.values()):
-            self.save_button.setEnabled(True)
-            self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
-        else:
-            self.save_button.setEnabled(False)
-            self.save_button.setStyleSheet("background-color: #808080; color: white;")
 
     def save_choices(self):
         choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
@@ -279,7 +268,8 @@ if __name__ == "__main__":
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        edited_file = f"mt_stats_{today}.json"
+        edited_file = os.path.join(args.profile_path, f"mt_stats_{today}.json")
+        print(f"Edited file: {edited_file}")
         apply_choices(merged_profile, choices_file, edited_file)
         hc = sha256_hash(generate_hc(edited_file) + args.user_key)
         final_output_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.json.gz")

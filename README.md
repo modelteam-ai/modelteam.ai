@@ -106,7 +106,7 @@ python gen_git_stats.py -r <repo_list_file_name> -e <email/gitid> [-n <number_of
         - Key will be emailed to you when you sign up
         - This helps us to verify that you own the email address
         - If your git id is different from your email, it will be tagged for manual verification
-- Upload the file(mt_metrics_*****.enc.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) to your account in [modelteam.ai](https://app.modelteam.ai/jobs)
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 
 ```bash
