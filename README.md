@@ -103,7 +103,7 @@ python gen_git_stats.py -r <repo_list> -e <email/gitid> [-n <number_of_years_to_
 
 - Verify the generated skill stats file and edit it using `sign_my_file.py` (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
-    - Encrypt the JSON file using the provided key
+    - Sign the JSON file using the provided key
         - Key will be emailed to you when you sign up
         - This helps us to verify that you own the email address
         - If your git id is different from your email, it will be tagged for manual verification
