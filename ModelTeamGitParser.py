@@ -12,7 +12,7 @@ import sys
 import torch
 from tabulate import tabulate
 
-from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
+from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
                                        MIN_LINES_ADDED, SIGNIFICANT_CONTRIBUTION, REFORMAT_CHAR_LIMIT,
                                        TOO_BIG_TO_ANALYZE_LIMIT, TOO_BIG_TO_ANALYZE,
@@ -20,10 +20,10 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SCORES, SIG_CODE_SNIPPETS, SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION,
                                        PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
                                        LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
+from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills, yyyy_mm_to_quarter
 from modelteam_utils.utils import consistent_hash_code
-from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 from modelteam_utils.utils import get_file_extension, run_commandline_command, timestamp_to_yyyy_mm, \
     get_num_chars_changed, get_language_parser, normalize_docstring
 from modelteam_utils.utils import sha256_hash, anonymize, load_repo_user_list, get_repo_user_key
@@ -38,6 +38,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
+
+
+def is_huge_commit(total_added, total_deleted):
+    if total_added > 5000 or total_deleted > 5000:
+        return True
 
 
 class ModelTeamGitParser:
@@ -107,27 +112,29 @@ class ModelTeamGitParser:
         command = f'git -C {repo_path} show --numstat --diff-filter=d {commit_hash}'
         result = run_commandline_command(command)
         total_added = 0
+        total_deleted = 0
         file_line_stats = {}  # Dictionary to store file line stats
         add_pdf_stats = curr_user == args.user_emails
-        #FIXME: Ignore major changes like >10K line commits
         if result:
             if add_pdf_stats:
                 repo_name = os.path.basename(repo_path)
                 if repo_name not in self.pdf_stats:
                     self.pdf_stats[repo_name] = {"big_commits": {}, "files": {}}
             file_stats = result.strip().split('\n')
+            parsed_stats = []
             for stats in file_stats:
+                if not stats:
+                    continue
                 parts = stats.split('\t')
-                # ignore lines if it doesnt start with a number
-                if not stats or not stats[0].isdigit():
-                    continue
                 if len(parts) != 3:
-                    print(f"Error parsing line stats {repo_path} - {commit_hash} - {stats}", flush=True)
                     continue
-                added_lines, deleted_lines, file_path = stats.split('\t')
+                added_lines, deleted_lines, file_path = parts
                 # ignore if these are not valid numbers
-                #FIXME: Is added_lines + deleted_lines == 0 a valid check?
-                if not added_lines.isdigit() or not deleted_lines.isdigit() or added_lines + deleted_lines == 0:
+                if not added_lines.isdigit() or not deleted_lines.isdigit():
+                    continue
+                added = int(added_lines)
+                deleted = int(deleted_lines)
+                if added + deleted == 0:
                     continue
                 # handle renames /home/{ xyx => abc }/test.py -> /home/abc/test.py
                 if "=>" in file_path:
@@ -137,8 +144,13 @@ class ModelTeamGitParser:
                 parser = get_language_parser(file_extension, None, file_path, self.keep_only_public_libraries)
                 if not parser:
                     continue
-                added = int(added_lines)
-                deleted = int(deleted_lines)
+                parsed_stats.append((file_path, file_extension, added, deleted))
+                total_added += added
+                total_deleted += deleted
+            if is_huge_commit(total_added, total_deleted):
+                print(f"Huge (5K+ lines) commit detected. Ignoring {commit_hash}")
+                return file_line_stats
+            for file_path, file_extension, added, deleted in parsed_stats:
                 if file_extension not in user_commit_stats[LANGS]:
                     user_commit_stats[LANGS][file_extension] = {}
                     user_commit_stats[LANGS][file_extension][TIME_SERIES] = {}
@@ -147,7 +159,6 @@ class ModelTeamGitParser:
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, DELETED, deleted)
                 # TODO: Add data for PDF report
                 if add_pdf_stats:
-                    total_added += added
                     qtr = yyyy_mm_to_quarter(yyyy_mm)
                     if qtr not in self.pdf_stats[repo_name]["files"]:
                         self.pdf_stats[repo_name]["files"][qtr] = {}
@@ -263,7 +274,6 @@ class ModelTeamGitParser:
                 if library_names:
                     labels[LIBS][file_name] = library_names
             if len(file_diff) > TOO_BIG_TO_ANALYZE_LIMIT:
-                #TODO: Handle this scenario in ADDED and DELETED stats
                 # Any single file diff with more than 10000 chars changed is too big to analyze
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, TOO_BIG_TO_ANALYZE, 1)
                 continue

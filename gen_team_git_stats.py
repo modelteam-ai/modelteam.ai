@@ -17,8 +17,8 @@ def usage():
 
 def validate_input(num_years, repo_list):
     """Validate the command line inputs."""
-    if repo_list and not os.path.isfile(repo_list):
-        print("Repo list file does not exist")
+    if repo_list and not os.path.isfile(repo_list) and not os.path.isdir(repo_list):
+        print("Repo list does not exist")
         usage()
 
     if not re.match(r"^[0-9]+$", str(num_years)):
@@ -35,7 +35,7 @@ def main():
     parser.add_argument("-n", "--num_years", type=int, default=3, help="Number of years (default is 3)")
 
     args = parser.parse_args()
-    repo_list = args.repo_list
+    repo_list = args.repos
     team_name = args.team_name
     email_ids = args.email_ids
     num_years = args.num_years
