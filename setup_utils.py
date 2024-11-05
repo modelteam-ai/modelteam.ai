@@ -79,8 +79,16 @@ def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, co
         "--output_path", output_path,
         "--config", config_file,
         "--num_years", str(num_years),
-        "--repo_list", repo_list
     ]
+    # if repo_list is a file, pass it as --repo_list else pass it as --input_path
+    if os.path.isfile(repo_list):
+        cmd += ["--repo_list", repo_list]
+    elif os.path.isdir(repo_list):
+        cmd += ["--input_path", repo_list]
+    else:
+        print("Error: Invalid input. Please provide a valid repo_list file or directory.")
+        sys.exit(1)
+
     if email_id:
         cmd += ["--user_emails", email_id]
     if team_name:

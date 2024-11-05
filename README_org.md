@@ -101,9 +101,9 @@ python setup.py
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
 $ cat ~/repo_list.txt
-/Users/obuli/modelteam.ai/shastraw.ai
-/Users/obuli/modelteam.ai/shastraw.server
-/Users/obuli/repos/modelteam.ai
+/Users/xyz/repos/shastraw.ai
+/Users/xyz/repos/shastraw.server
+/Users/xyz/repos/modelteam.ai
 ```
 
 - Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
@@ -121,9 +121,10 @@ Author: XYZ <userXYZ@org.ai>
 ```bash
 # Generates your team profile. Takes a list of emails or team name and optionally number of years to consider
 # Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
-python gen_team_git_stats.py -r <repo_list_file_name> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
+# repo_list can be a file with list of repos or a directory containing all the repos
+python gen_team_git_stats.py -r <repo_list> [-e "<email1>,<email2>,..."] -t "team_name" [-n <number_of_years>]
 # e.g. python gen_team_git_stats.py -r ~/repo_list.txt -e "user1@org.ai,user2@org.ai" -t model_team -n 3
-# e.g. python gen_team_git_stats.py -r ~/repo_list.txt -t model_team -n 3
+# e.g. python gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3
 ```
 
 ### 3. Upload

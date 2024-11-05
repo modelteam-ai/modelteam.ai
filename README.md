@@ -75,9 +75,9 @@ python setup.py
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
 $ cat ~/repo_list.txt
-/Users/obuli/modelteam.ai/shastraw.ai
-/Users/obuli/modelteam.ai/shastraw.server
-/Users/obuli/repos/modelteam.ai
+/Users/xyz/repos/shastraw.ai
+/Users/xyz/repos/shastraw.server
+/Users/xyz/repos/modelteam.ai
 ```
 
 - Build your profile
@@ -93,9 +93,10 @@ Author: XYZ <userXYZ@org.ai>
 ```bash
 # Generates your skill stats. Takes email used in git commits and optionally number of years to consider
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-python gen_git_stats.py -r <repo_list_file_name> -e <email/gitid> [-n <number_of_years_to_look_back>]
+# repo_list can be a file with list of repos or a directory containing all the repos
+python gen_git_stats.py -r <repo_list> -e <email/gitid> [-n <number_of_years_to_look_back>]
 # e.g. python gen_git_stats.py -r ~/repo_list.txt -e userXYZ@org.ai -n 5
-# e.g. python gen_git_stats.py -r ~/repo_list.txt -e 1234567+XYZ@users.noreply.github.com -n 5
+# e.g. python gen_git_stats.py -r /Users/xyz/repos/ -e 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
 ### 3. Upload
