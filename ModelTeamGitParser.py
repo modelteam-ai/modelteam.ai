@@ -769,7 +769,7 @@ if __name__ == "__main__":
     os.makedirs(output_path, exist_ok=True)
     os.makedirs(os.path.join(output_path, "tmp-stats"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "touch-files"), exist_ok=True)
-    os.makedirs(os.path.join(output_path, "final-stats"), exist_ok=True)
+    os.makedirs(os.path.join(output_path, "repo-stats"), exist_ok=True)
     final_outputs = []
     kill_switch = os.path.join(output_path, "touch-files", "kill_switch_mtgp")
     for folder in randomized_folder_list:
@@ -813,7 +813,7 @@ if __name__ == "__main__":
                 file_prefix = os.path.basename(folder)
             user_stats_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}.jsonl")
             repo_lib_output_file_name = os.path.join(output_path, "tmp-stats", f"{file_prefix}_libs.jsonl")
-            final_output = os.path.join(output_path, "final-stats", f"{file_prefix}_user_profile.jsonl")
+            final_output = os.path.join(output_path, "repo-stats", f"{file_prefix}_user_profile.jsonl")
             if os.path.exists(final_output):
                 print(f"Skipping {final_output} as it is already processed")
             else:
@@ -832,7 +832,7 @@ if __name__ == "__main__":
         merge_json(usernames, final_outputs, merged_json, args.team_name, end_ts)
         if git_parser.pdf_stats:
             # Single User Profile. Generate PDF Report
-            pdf_stats_file = os.path.join(output_path, PDF_STATS_JSON)
+            pdf_stats_file = os.path.join(output_path, "tmp-stats", PDF_STATS_JSON)
             with open(pdf_stats_file, "w") as f:
                 json.dump(git_parser.pdf_stats, f)
     print(f"Processed {cnt} out of {len(folder_list)}")

@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
     profile_json = os.path.join(args.profile_path, MT_PROFILE_JSON)
-    pdf_stats_json = os.path.join(args.profile_path, PDF_STATS_JSON)
+    pdf_stats_json = os.path.join(args.profile_path, "tmp-stats", PDF_STATS_JSON)
     file_name_without_extension = profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     pdf_path = os.path.join(args.profile_path, "pdf")
