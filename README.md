@@ -70,7 +70,7 @@ python setup.py
 ### 2 Generate your skill stats
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt` 
+- Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g. `~/repo_list.txt`. This file will be used later as input.
 
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
