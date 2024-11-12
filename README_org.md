@@ -77,7 +77,7 @@ uploading to modelteam.ai.
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**
     - Our AI models run locally on your machine and does not send any data outside your machine.
-    - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
+    - Generates a JSON file for creating your modelteam.ai verified profile
 
 ### 1. Setup
 
@@ -96,8 +96,8 @@ python setup.py
 ### 2 Generating Team Stats
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Add full local paths of your git repos to a text file. 1 line for each repo. e.g. `~/repo_list.txt`
-
+- Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g. `~/repo_list.txt`. This file will be used later as input.
+  - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
 $ cat ~/repo_list.txt
@@ -108,7 +108,7 @@ $ cat ~/repo_list.txt
 
 - Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
-- `email` should be the id/email you have in your git commits.
+- `email` should be the id/email that are in the user's git commits.
 
 ```bash
 # Example:

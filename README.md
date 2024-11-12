@@ -71,6 +71,7 @@ python setup.py
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g. `~/repo_list.txt`. This file will be used later as input.
+  - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
 
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
