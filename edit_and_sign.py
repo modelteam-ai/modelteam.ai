@@ -197,9 +197,9 @@ def edit_profile(merged_profile, choices_file, cli_mode):
 
 
 def cli_choices(choices_file, email, repos, skills):
-    RELEVANT = 'relevant'
-    NOT_RELEVANT = 'not_relevant'
-    TOP_SECRET = 'top_secret'
+    RELEVANT = 'Relevant'
+    NOT_RELEVANT = 'Not Relevant'
+    TOP_SECRET = 'Top Secret'
 
     print(f"Email: {email}")
     print(f"Repos: {', '.join(repos)}")
@@ -227,17 +227,8 @@ def cli_choices(choices_file, email, repos, skills):
     else:
         not_relevant_numbers = set()
 
-    # Ask the user to enter the numbers of skills to mark as 'Top Secret'
-    top_secret_input = input("Enter the numbers of skills to mark as 'Top Secret' (separated by commas, or press Enter to skip): ")
-    if top_secret_input.strip():
-        top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
-    else:
-        top_secret_numbers = set()
-
-    # Update choices_dict based on user input
+    # Update choices_dict based on user input for 'Not Relevant' skills
     not_relevant_skills = []
-    top_secret_skills = []
-
     for num in not_relevant_numbers:
         if 1 <= num <= len(skills):
             skill = skills[num - 1]
@@ -247,14 +238,24 @@ def cli_choices(choices_file, email, repos, skills):
             print(f"Invalid skill number: {num}")
 
     # Confirmation of skills marked for removal
-    print("\nConfirmation:")
+    print("\nConfirmation: Not Relevant")
     if not_relevant_skills:
         print("Skills marked as 'Not Relevant' and will be removed from your profile on the server:")
         for skill in not_relevant_skills:
             print(f"- {skill}")
     else:
         print("No skills marked as 'Not Relevant'.")
+    print("\n")
 
+    # Ask the user to enter the numbers of skills to mark as 'Top Secret'
+    top_secret_input = input("Enter the numbers of skills to mark as 'Top Secret' (separated by commas, or press Enter to skip): ")
+    if top_secret_input.strip():
+        top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
+    else:
+        top_secret_numbers = set()
+
+    # Update choices_dict based on user input
+    top_secret_skills = []
     for num in top_secret_numbers:
         if 1 <= num <= len(skills):
             skill = skills[num - 1]
@@ -264,13 +265,14 @@ def cli_choices(choices_file, email, repos, skills):
             print(f"Invalid skill number: {num}")
 
     # Confirmation of skills marked as 'Top Secret'
-    print("\nConfirmation:")
+    print("\nConfirmation: Top Secret")
     if top_secret_skills:
         print("\nSkills marked as 'Top Secret' and will not be sent to the server:")
         for skill in top_secret_skills:
             print(f"- {skill}")
     else:
         print("\nNo skills marked as 'Top Secret'.")
+    print("\n")
 
     # Save the choices to the file
     with open(choices_file, 'w') as f:
