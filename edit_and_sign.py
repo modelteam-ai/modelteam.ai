@@ -206,73 +206,102 @@ def cli_choices(choices_file, email, repos, skills):
     print(f"Total Skills: {len(skills)}")
     print("These are the skills that our models predicted after analyzing your code contributions.")
     print("These skills will further be scored by another model on the server side.")
+    print('\n')
+
+    # Display the list of skills in 3 columns
+    print("Skills:")
+    number_of_columns = 3
+    total_skills = len(skills)
+    number_of_rows = (total_skills + number_of_columns - 1) // number_of_columns  # Ceiling division
+
+    # Arrange skills into columns
+    columns = [[] for _ in range(number_of_columns)]
+    for idx, skill in enumerate(skills):
+        column_index = idx % number_of_columns
+        skill_number = idx + 1
+        columns[column_index].append(f"{skill_number}. {skill.title()}")
+
+    # Pad columns to have equal length
+    max_col_length = max(len(col) for col in columns)
+    for col in columns:
+        while len(col) < max_col_length:
+            col.append('')
+
+    # Print the columns side by side
+    for row in range(max_col_length):
+        for col in columns:
+            print(f"{col[row]:<35}", end='')
+        print()
+
+    # Initialize choices_dict with all skills marked as RELEVANT
+    choices_dict = {skill: RELEVANT for skill in skills}
+
+    # Loop to get user confirmation
     print("\nBy default, all skills are marked as 'Relevant' and will be kept in your profile.")
     print("Please select the skills you wish to remove or mark differently.\n")
     print("Options:")
     print("1. Not Relevant: Mark as not relevant and remove from profile on the server.")
     print("2. Top Secret: Remove from profile and DON'T even send it to the server.\n")
-
-    # Display the list of skills with numbers
-    print("Skills:")
-    for idx, skill in enumerate(skills, 1):
-        print(f"{idx}. {skill.title()}")
-
-    # Initialize choices_dict with all skills marked as RELEVANT
-    choices_dict = {skill: RELEVANT for skill in skills}
-
-    # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
-    not_relevant_input = input("\nEnter the numbers of skills to mark as 'Not Relevant' (separated by commas, or press Enter to skip): ")
-    if not_relevant_input.strip():
-        not_relevant_numbers = set(int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
-    else:
-        not_relevant_numbers = set()
-
-    # Update choices_dict based on user input for 'Not Relevant' skills
-    not_relevant_skills = []
-    for num in not_relevant_numbers:
-        if 1 <= num <= len(skills):
-            skill = skills[num - 1]
-            choices_dict[skill] = NOT_RELEVANT
-            not_relevant_skills.append(skill.title())
+    while True:
+        # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
+        not_relevant_input = input("\nEnter the numbers of skills to mark as 'Not Relevant' (separated by commas, or press Enter to skip): ")
+        if not_relevant_input.strip():
+            not_relevant_numbers = set(int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
         else:
-            print(f"Invalid skill number: {num}")
+            not_relevant_numbers = set()
 
-    # Confirmation of skills marked for removal
-    print("\nConfirmation: Not Relevant")
-    if not_relevant_skills:
-        print("Skills marked as 'Not Relevant' and will be removed from your profile on the server:")
-        for skill in not_relevant_skills:
-            print(f"- {skill}")
-    else:
-        print("No skills marked as 'Not Relevant'.")
-    print("\n")
-
-    # Ask the user to enter the numbers of skills to mark as 'Top Secret'
-    top_secret_input = input("Enter the numbers of skills to mark as 'Top Secret' (separated by commas, or press Enter to skip): ")
-    if top_secret_input.strip():
-        top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
-    else:
-        top_secret_numbers = set()
-
-    # Update choices_dict based on user input
-    top_secret_skills = []
-    for num in top_secret_numbers:
-        if 1 <= num <= len(skills):
-            skill = skills[num - 1]
-            choices_dict[skill] = TOP_SECRET
-            top_secret_skills.append(skill.title())
+        # Ask the user to enter the numbers of skills to mark as 'Top Secret'
+        top_secret_input = input("Enter the numbers of skills to mark as 'Top Secret' (separated by commas, or press Enter to skip): ")
+        if top_secret_input.strip():
+            top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
         else:
-            print(f"Invalid skill number: {num}")
+            top_secret_numbers = set()
 
-    # Confirmation of skills marked as 'Top Secret'
-    print("\nConfirmation: Top Secret")
-    if top_secret_skills:
-        print("\nSkills marked as 'Top Secret' and will not be sent to the server:")
-        for skill in top_secret_skills:
-            print(f"- {skill}")
-    else:
-        print("\nNo skills marked as 'Top Secret'.")
-    print("\n")
+        # Update choices_dict based on user input
+        not_relevant_skills = []
+        top_secret_skills = []
+
+        for num in not_relevant_numbers:
+            if 1 <= num <= len(skills):
+                skill = skills[num - 1]
+                choices_dict[skill] = NOT_RELEVANT
+                not_relevant_skills.append(skill.title())
+            else:
+                print(f"Invalid skill number: {num}")
+
+        for num in top_secret_numbers:
+            if 1 <= num <= len(skills):
+                skill = skills[num - 1]
+                choices_dict[skill] = TOP_SECRET
+                top_secret_skills.append(skill.title())
+            else:
+                print(f"Invalid skill number: {num}")
+
+        # Remove duplicates in case a skill is marked both 'Not Relevant' and 'Top Secret'
+        not_relevant_skills = [skill for skill in not_relevant_skills if skill not in top_secret_skills]
+
+        # Confirmation of skills marked for removal
+        print("\nConfirmation:")
+        if not_relevant_skills:
+            print("Skills marked as 'Not Relevant' and will be removed from your profile on the server:")
+            for skill in not_relevant_skills:
+                print(f"- {skill}")
+        else:
+            print("No skills marked as 'Not Relevant'.")
+
+        if top_secret_skills:
+            print("\nSkills marked as 'Top Secret' and will not be sent to the server:")
+            for skill in top_secret_skills:
+                print(f"- {skill}")
+        else:
+            print("\nNo skills marked as 'Top Secret'.")
+
+        # Ask user to confirm or re-enter selections
+        confirmation = input("\nAre you satisfied with these selections? (yes/no): ").strip().lower()
+        if confirmation in ['yes', 'y']:
+            break
+        else:
+            print("\nLet's try again.")
 
     # Save the choices to the file
     with open(choices_file, 'w') as f:
