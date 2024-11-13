@@ -201,9 +201,15 @@ def cli_choices(choices_file, email, repos, skills):
     NOT_RELEVANT = 'Not Relevant'
     TOP_SECRET = 'Top Secret'
 
-    print(f"Email: {email}")
+    # ANSI escape codes for text formatting
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    RED = '\033[31m'
+
+    print(f"Email: {BOLD}{email}{RESET}")
     print(f"Repos: {', '.join(repos)}")
-    print(f"Total Skills: {len(skills)}")
+    print(f"Total Skills: {BOLD}{len(skills)}{RESET}")
     print("These are the skills that our models predicted after analyzing your code contributions.")
     print("These skills will further be scored by another model on the server side.")
     print('\n')
@@ -219,7 +225,7 @@ def cli_choices(choices_file, email, repos, skills):
     for idx, skill in enumerate(skills):
         column_index = idx % number_of_columns
         skill_number = idx + 1
-        columns[column_index].append(f"{skill_number}. {skill.title()}")
+        columns[column_index].append(f"{BOLD}{skill_number}{RESET}. {skill.title()}")
 
     # Pad columns to have equal length
     max_col_length = max(len(col) for col in columns)
@@ -230,28 +236,28 @@ def cli_choices(choices_file, email, repos, skills):
     # Print the columns side by side
     for row in range(max_col_length):
         for col in columns:
-            print(f"{col[row]:<35}", end='')
+            print(f"{col[row]:<45}", end='')
         print()
 
     # Initialize choices_dict with all skills marked as RELEVANT
     choices_dict = {skill: RELEVANT for skill in skills}
 
     # Loop to get user confirmation
-    print("\nBy default, all skills are marked as 'Relevant' and will be kept in your profile.")
+    print(f"\nBy default, all skills are marked as {UNDERLINE}Relevant{RESET} and will be kept in your profile.")
     print("Please select the skills you wish to remove or mark differently.\n")
     print("Options:")
-    print("1. Not Relevant: Mark as not relevant and remove from profile on the server.")
-    print("2. Top Secret: Remove from profile and DON'T even send it to the server.\n")
+    print(f"{BOLD}Not Relevant{RESET}: Mark as not relevant and {BOLD}remove{RESET} from profile on the server.")
+    print(f"{BOLD}Top Secret{RESET}: Remove from profile and {BOLD}DON'T{RESET} even send it to the server.\n")
     while True:
         # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
-        not_relevant_input = input("\nEnter the numbers of skills to mark as 'Not Relevant' (separated by commas, or press Enter to skip): ")
+        not_relevant_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip): ")
         if not_relevant_input.strip():
             not_relevant_numbers = set(int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
         else:
             not_relevant_numbers = set()
 
         # Ask the user to enter the numbers of skills to mark as 'Top Secret'
-        top_secret_input = input("Enter the numbers of skills to mark as 'Top Secret' (separated by commas, or press Enter to skip): ")
+        top_secret_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Top Secret{RESET} (separated by commas, or press Enter to skip): ")
         if top_secret_input.strip():
             top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
         else:
