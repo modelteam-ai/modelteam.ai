@@ -197,10 +197,6 @@ def edit_profile(merged_profile, choices_file, cli_mode):
 
 
 def cli_choices(choices_file, email, repos, skills):
-    RELEVANT = 'Relevant'
-    NOT_RELEVANT = 'Not Relevant'
-    TOP_SECRET = 'Top Secret'
-
     # ANSI escape codes for text formatting
     RESET = '\033[0m'
     BOLD = '\033[1m'
