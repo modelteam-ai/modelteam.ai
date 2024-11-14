@@ -246,14 +246,14 @@ def cli_choices(choices_file, email, repos, skills):
     print(f"{BOLD}Top Secret{RESET}: Remove from profile and {BOLD}DON'T{RESET} even send it to the server.\n")
     while True:
         # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
-        not_relevant_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip): ")
+        not_relevant_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip):\n")
         if not_relevant_input.strip():
             not_relevant_numbers = set(int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
         else:
             not_relevant_numbers = set()
 
         # Ask the user to enter the numbers of skills to mark as 'Top Secret'
-        top_secret_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Top Secret{RESET} (separated by commas, or press Enter to skip): ")
+        top_secret_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Top Secret{RESET} (separated by commas, or press Enter to skip):\n")
         if top_secret_input.strip():
             top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
         else:
@@ -299,7 +299,7 @@ def cli_choices(choices_file, email, repos, skills):
             print("\nNo skills marked as 'Top Secret'.")
 
         # Ask user to confirm or re-enter selections
-        confirmation = input("\nAre you satisfied with these selections? (yes/no): ").strip().lower()
+        confirmation = input("\nAre you satisfied with these selections? (yes/no):\n").strip().lower()
         if confirmation in ['yes', 'y']:
             break
         else:
