@@ -41,7 +41,7 @@ TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
 
 
 def is_huge_commit(total_added, total_deleted):
-    if total_added > 5000 or total_deleted > 5000:
+    if total_added > 10000 or total_deleted > 10000:
         return True
 
 
