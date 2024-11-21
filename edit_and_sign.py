@@ -366,7 +366,7 @@ if __name__ == "__main__":
         compress_file(edited_file, final_output_file)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print('*' * 50)
-        print("modelteam Profile Ready to Upload... Please upload the following file to https://app.modelteam.ai/jobs")
+        print("Please upload the following file to \033[94mhttps://app.modelteam.ai/experience\033[0m")
         print(final_output_file)
         print('*' * 50)
         print(

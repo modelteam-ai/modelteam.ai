@@ -81,23 +81,22 @@ $ cat ~/repo_list.txt
 /Users/xyz/repos/modelteam.ai
 ```
 
-- Build your profile
-- `email` should be the id/email you have in your git commits.
+- Run `gen_git_stats.py` to generate your skill stats
 ```bash
-# Example:
+# Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
+# repo_list can be a file with list of repos or a directory containing all the repos
+python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_back>]
+# e.g. python gen_git_stats.py -r ~/repo_list.txt -g userXYZ@org.ai -n 5
+# e.g. python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
+```
+- `git_id` should be the id you have in your git commits. You can get this by using `git log` command as shown below
+- If you have multiple git ids, you need to run the `gen_git_stats.py` script for each git id separately
+```bash
+# Example: Text between <> is the git_id
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>
 Author: XYZ <userXYZ@org.ai>
-```
-
-```bash
-# Generates your skill stats. Takes email used in git commits and optionally number of years to consider
-# Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-# repo_list can be a file with list of repos or a directory containing all the repos
-python gen_git_stats.py -r <repo_list> -e <email/gitid> [-n <number_of_years_to_look_back>]
-# e.g. python gen_git_stats.py -r ~/repo_list.txt -e userXYZ@org.ai -n 5
-# e.g. python gen_git_stats.py -r /Users/xyz/repos/ -e 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
 ### 3. Upload
@@ -105,16 +104,18 @@ python gen_git_stats.py -r <repo_list> -e <email/gitid> [-n <number_of_years_to_
 - Verify the generated skill stats file and edit it using `sign_my_file.py` (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
     - Sign the JSON file using the provided key
-        - Key will be emailed to you when you sign up and add your experience in [modelteam.ai](https://app.modelteam.ai/experience)
-        - This helps us to verify that you own the email address
-        - If your git id is different from your email, it will be tagged for manual verification
-- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience
+        - Key will be emailed to you when you sign up and add your experience in https://app.modelteam.ai/experience
+        - This helps us to verify that you own the email address. And your work email adds credibility to your profile
+        - **IMPORTANT! This email need not be same as the git id **
+          - If your git id is different from your email, it will be tagged for manual verification
+          - If your git id is same as your email, the key will help us to verify automatically
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in https://app.modelteam.ai/experience
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
 # key will be emailed when you create add your experience in https://app.modelteam.ai/experience
-python sign_my_file.py -k <key> -e <email/gitid> [--cli_mode]
-# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e userXYZ@org.ai # For MacOS/Windows
-# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -e 1234567+XYZ@users.noreply.github.com --cli_mode # For Linux
+python sign_my_file.py -k <key> -g <gitid> [--cli_mode]
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai # For MacOS/Windows
+# e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode # For Linux
 ```

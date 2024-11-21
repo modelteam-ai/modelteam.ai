@@ -7,13 +7,14 @@ from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
-    print("Usage: gen_git_stats.py -e <email_id> [-r <repo_list.txt>] [-n <num_years_lookback>]")
-    print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -e user@org.ai -n 5")
+    print("Usage: gen_git_stats.py -g <git_id> [-r <repo_list.txt>] [-n <num_years_lookback>]")
+    print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -g user@org.ai -n 5")
+    print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -g user@users.noreply.github.com -n 5")
     print("Default num_years_lookback is 5")
     sys.exit(1)
 
 
-def validate_input(email_id, num_years, repo_list):
+def validate_input(git_id, num_years, repo_list):
     """Validate the command line inputs."""
     if repo_list and not os.path.isfile(repo_list) and not os.path.isdir(repo_list):
         print("Repo list does not exist")
@@ -23,8 +24,8 @@ def validate_input(email_id, num_years, repo_list):
         print("num_years should be a number")
         usage()
 
-    if "," in email_id:
-        print("Please provide only one email id")
+    if "," in git_id:
+        print("Please provide only one git id")
         usage()
 
 
@@ -32,29 +33,28 @@ def main():
     parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
     parser.add_argument("-r", "--repos", required=True,
                         help="Path to the file containing paths of git folders or Path to directory containing git folders")
-    parser.add_argument("-e", "--email_id", required=True, help="Email ID for the user")
+    parser.add_argument("-g", "--git_id", required=True, help="Git ID of the user present in git log")
     parser.add_argument("-n", "--num_years", type=int, default=5,
                         help="Number of years to lookback in git history (default is 5)")
 
     args = parser.parse_args()
     repo_list = args.repos
-    email_id = args.email_id
+    git_id = args.git_id
     num_years = args.num_years
 
-    validate_input(email_id, num_years, repo_list)
+    validate_input(git_id, num_years, repo_list)
 
-    profile_path_file = get_profile_path_file_name(email_id)
+    profile_path_file = get_profile_path_file_name(git_id)
     if os.path.exists(profile_path_file):
         os.remove(profile_path_file)
 
-    output_path = run_model_team_git_parser(repo_list, email_id, num_years)
+    output_path = run_model_team_git_parser(repo_list, git_id, num_years)
 
     with open(profile_path_file, "w") as f:
         f.write(output_path)
 
-    print(f"ModelTeam profile created in {output_path} directory.")
-    print(f"Please run the following command to edit and sign your profile:")
-    print(f"python sign_my_file.py -e {email_id} -k <key> [--cli_mode]")
+    print(f"Please run the following command to edit and sign your stats file:")
+    print(f"\033[92mpython sign_my_file.py -g {git_id} -k <key> [--cli_mode]\033[0m")
 
 
 if __name__ == "__main__":
