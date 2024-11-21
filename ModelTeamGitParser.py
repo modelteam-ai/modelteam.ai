@@ -417,7 +417,7 @@ class ModelTeamGitParser:
                     print(f"No users with extracted skills found for {repo_path}", flush=True)
                     return
                 if not user_profiles:
-                    print(f"No user profiles found for {repo_path}", flush=True)
+                    print(f"No user data found for {repo_path}", flush=True)
                     return
                 remote_repo_path = run_commandline_command(f"git -C {repo_path} config --get remote.origin.url")
                 if remote_repo_path and repo_name in remote_repo_path:
