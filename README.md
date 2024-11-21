@@ -93,8 +93,7 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 - `git_id` should be the id you have in your git commits.
   - You can get this by using `git log` command as shown below
   - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
-```bash
-# Example: 
+```bash 
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>

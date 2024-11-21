@@ -110,7 +110,9 @@ $ cat ~/repo_list.txt
 
 - Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
-- `git_id` should be the id you have in your git commits. You can get this by using `git log` command as shown below
+- `git_id` should be the id you have in your git commits.
+  - You can get this by using `git log` command as shown below
+  - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
 ```bash
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
