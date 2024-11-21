@@ -654,11 +654,13 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
     months = set()
     languages = set()
     skills = set()
+    users = set()
 
     for profile_json in output_file_list:
         with open(profile_json, "r") as f:
             for line in f:
                 profile = json.loads(line)
+                users.add(profile[USER])
                 if LANGS in profile[STATS]:
                     for lang in profile[STATS][LANGS]:
                         if TIME_SERIES in profile[STATS][LANGS][lang]:
@@ -677,7 +679,7 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
 
     time_taken_in_minutes = round((end_ts - utc_now) / 60)
     data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
-            ["Number of repositories analyzed", len(output_file_list)],
+            ["Number of repositories analyzed", len(output_file_list)],["Number of users analyzed", len(users)],
             ["Number of months analyzed", len(months)],
             ["Number of lines analyzed", lines_added],
             ["Number of skills extracted", len(skills)]]
