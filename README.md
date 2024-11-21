@@ -56,6 +56,7 @@ uploading to modelteam.ai.
 ### 1. Setup
 
 - Run the setup script to download the dependencies and models to your local machine
+- This will create a virtual environment and install all the dependencies. It will not affect your system python.
 
 ```bash
 mkdir ~/modelteam
@@ -89,15 +90,18 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 # e.g. python gen_git_stats.py -r ~/repo_list.txt -g userXYZ@org.ai -n 5
 # e.g. python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
 ```
-- `git_id` should be the id you have in your git commits. You can get this by using `git log` command as shown below
-- If you have multiple git ids, you need to run the `gen_git_stats.py` script for each git id separately
+- `git_id` should be the id you have in your git commits.
+  - You can get this by using `git log` command as shown below
+  - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
 ```bash
-# Example: Text between <> is the git_id
+# Example: 
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>
 Author: XYZ <userXYZ@org.ai>
 ```
+- If you have multiple git ids, you need to run the `gen_git_stats.py` script for each git id separately
+
 
 ### 3. Upload
 
