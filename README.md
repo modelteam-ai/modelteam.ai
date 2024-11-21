@@ -99,7 +99,7 @@ Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>
 Author: XYZ <userXYZ@org.ai>
 ```
-- If you have multiple git ids, you need to run the `gen_git_stats.py` script for each git id separately
+- If you have multiple git ids, you need to run the entire flow (except for setup.py) for each git id separately
 
 
 ### 3. Upload
