@@ -2,7 +2,8 @@
   <img src="images/modelteam_logo_blk.png" alt="modelteam">
 </div>
 
-**[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate & showcase their skills.
+**[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate &
+showcase their skills.
 Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
 Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
 
@@ -38,7 +39,8 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
+  for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a **minimum period of 3 months**.
@@ -71,8 +73,9 @@ python setup.py
 ### 2 Generate your skill stats
 
 - For this step, no internet access is required. Everything stays on your local machine
-- Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g. `~/repo_list.txt`. This file will be used later as input.
-  - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
+- Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g.
+  `~/repo_list.txt`. This file will be used later as input.
+    - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
 
 ```bash
 # Clone all your repositories that you want to include in your profile if it's not already cloned
@@ -83,6 +86,7 @@ $ cat ~/repo_list.txt
 ```
 
 - Run `gen_git_stats.py` to generate your skill stats
+
 ```bash
 # Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
 # repo_list can be a file with list of repos or a directory containing all the repos
@@ -90,17 +94,19 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 # e.g. python gen_git_stats.py -r ~/repo_list.txt -g userXYZ@org.ai -n 5
 # e.g. python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
 ```
+
 - `git_id` should be the id you have in your git commits.
-  - You can get this by using `git log` command as shown below
-  - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
+    - You can get this by using `git log` command as shown below
+    - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
+
 ```bash 
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>
 Author: XYZ <userXYZ@org.ai>
 ```
-- If you have multiple git ids, you need to run the entire flow (except for setup.py) for each git id separately
 
+- If you have multiple git ids, you need to run the entire flow (except for setup.py) for each git id separately
 
 ### 3. Upload
 
@@ -108,10 +114,11 @@ Author: XYZ <userXYZ@org.ai>
     - Remove any unwanted/confidential skills
     - Sign the JSON file using the provided key
         - Key will be emailed to you when you sign up and add your experience in https://app.modelteam.ai/experience
-        - This helps us to verify that you own the email address. And your work email adds credibility to your profile
-        - **IMPORTANT! This email need not be same as the git id **
-          - If your git id is different from your email, it will be tagged for manual verification
-          - If your git id is same as your email, the key will help us to verify automatically
+        - Email address is used just to send the key. It can be any email (your work email adds extra credibility to
+          your profile)
+        - **IMPORTANT! This email need not be same as the git id**
+            - If your git id is different from your email, it will be tagged for manual verification
+            - If your git id is same as your email, the key will help us to verify automatically
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in https://app.modelteam.ai/experience
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 
