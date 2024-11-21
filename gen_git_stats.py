@@ -52,7 +52,9 @@ def main():
     with open(profile_path_file, "w") as f:
         f.write(output_path)
 
-    print(f"ModelTeam profile created in {output_path} directory")
+    print(f"ModelTeam profile created in {output_path} directory.")
+    print(f"Please run the following command to edit and sign your profile:")
+    print(f"python sign_my_file.py -e {email_id} -k <key> [--cli_mode]")
 
 
 if __name__ == "__main__":
