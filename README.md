@@ -85,17 +85,7 @@ $ cat ~/repo_list.txt
 /Users/xyz/repos/modelteam.ai
 ```
 
-- Run `gen_git_stats.py` to generate your skill stats
-
-```bash
-# Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
-# repo_list can be a file with list of repos or a directory containing all the repos
-python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_back>]
-# e.g. python gen_git_stats.py -r ~/repo_list.txt -g userXYZ@org.ai -n 5
-# e.g. python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
-```
-
-- `git_id` should be the id you have in your git commits.
+- Run `gen_git_stats.py` to generate your skill stats. `git_id` should be the id you have in your git commits.
     - You can get this by using `git log` command as shown below
     - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
@@ -106,6 +96,13 @@ Author: XYZ <1234567+XYZ@users.noreply.github.com>
 Author: XYZ <userXYZ@org.ai>
 ```
 
+```bash
+# Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
+# repo_list can be a file with list of repos or a directory containing all the repos
+python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_back>]
+# e.g. python gen_git_stats.py -r ~/repo_list.txt -g userXYZ@org.ai -n 5
+# e.g. python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
+```
 - If you have multiple git ids, you need to run the entire flow (except for setup.py) for each git id separately
 
 ### 3. Upload
