@@ -82,6 +82,8 @@ uploading to modelteam.ai.
 ### 1. Setup
 
 - Run the setup script to download the dependencies and models to your local machine
+- This will create a virtual environment and install all the dependencies. It will not affect your system python.
+
 
 ```bash
 mkdir ~/modelteam
@@ -110,7 +112,6 @@ $ cat ~/repo_list.txt
   actively contributing to the repositories and are relevant to the team's skills.
 - `git_id` should be the id you have in your git commits. You can get this by using `git log` command as shown below
 ```bash
-# Example: Text between <> is the git_id
 git log | grep XYZ | head -3
 Author: XYZ <userXYZ@org.ai>
 Author: XYZ <1234567+XYZ@users.noreply.github.com>
