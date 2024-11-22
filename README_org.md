@@ -45,8 +45,7 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
-  for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
 - You should have made contributions for a minimum period of 3 months.
 
 ### Compute Needs
@@ -81,7 +80,7 @@ uploading to modelteam.ai.
 
 ### 1. Setup
 
-- Run the setup script to download the dependencies and models to your local machine
+- Run [setup.py](setup.py) to download the dependencies and models to your local machine
 - This will create a virtual environment and install all the dependencies. It will not affect your system python.
 
 
@@ -108,7 +107,7 @@ $ cat ~/repo_list.txt
 /Users/xyz/repos/modelteam.ai
 ```
 
-- Extract Team stats. If your team is big, we recommend generating profiles only for the team members who are
+- Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
 - `git_id` should be the id you have in your git commits.
   - You can get this by using `git log` command as shown below
