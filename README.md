@@ -109,7 +109,7 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 - Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
     - Sign the JSON file using the key
-        - If you don't have a key, create an experience with the git id in https://app.modelteam.ai/experience
+        - If you don't have a key, create an experience with the git id in https://app.modelteam.ai/experience. The key will be generated for you
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 
