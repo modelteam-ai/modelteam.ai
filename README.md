@@ -39,8 +39,7 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
-  for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a **minimum period of 3 months**.
@@ -57,7 +56,7 @@ uploading to modelteam.ai.
 
 ### 1. Setup
 
-- Run the setup script to download the dependencies and models to your local machine
+- Run [setup.py](setup.py) script to download the dependencies and models to your local machine
 - This will create a virtual environment and install all the dependencies. It will not affect your system python.
 
 ```bash
@@ -85,7 +84,7 @@ $ cat ~/repo_list.txt
 /Users/xyz/repos/modelteam.ai
 ```
 
-- Run `gen_git_stats.py` to generate your skill stats. `git_id` should be the id you have in your git commits.
+- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats. `git_id` should be the id you have in your git commits.
     - You can get this by using `git log` command as shown below
     - Text between <> is the git_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
@@ -107,7 +106,7 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 
 ### 3. Upload
 
-- Verify the generated skill stats file and edit it using `sign_my_file.py` (Don't edit the JSON file directly)
+- Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
     - Sign the JSON file using the provided key
         - Key will be emailed to you when you sign up and add your experience in https://app.modelteam.ai/experience
@@ -122,7 +121,9 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 ```bash
 # If you are using linux server without GUI, use --cli_mode
 # key will be emailed when you create add your experience in https://app.modelteam.ai/experience
+
 python sign_my_file.py -k <key> -g <gitid> [--cli_mode]
+
 # e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai # For MacOS/Windows
 # e.g. python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode # For Linux
 ```
