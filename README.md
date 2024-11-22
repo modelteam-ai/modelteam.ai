@@ -108,19 +108,14 @@ python gen_git_stats.py -r <repo_list> -g <gitid> [-n <number_of_years_to_look_b
 
 - Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file directly)
     - Remove any unwanted/confidential skills
-    - Sign the JSON file using the provided key
-        - Key will be emailed to you when you sign up and add your experience in https://app.modelteam.ai/experience
-        - Email address is used just to send the key. It can be any email (your work email adds extra credibility to
-          your profile)
-        - **IMPORTANT! This email need not be same as the git id**
-            - If your git id is different from your email, it will be tagged for manual verification
-            - If your git id is same as your email, the key will help us to verify automatically
-- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in https://app.modelteam.ai/experience
+    - Sign the JSON file using the key
+        - If you don't have a key, create an experience with the git id in https://app.modelteam.ai/experience
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 
 ```bash
 # If you are using linux server without GUI, use --cli_mode
-# key will be emailed when you create add your experience in https://app.modelteam.ai/experience
+# key will be generated when you add your experience in https://app.modelteam.ai/experience for this git id
 
 python sign_my_file.py -k <key> -g <gitid> [--cli_mode]
 
