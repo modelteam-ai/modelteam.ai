@@ -130,6 +130,6 @@ python gen_team_git_stats.py -r <repo_list> [-g "<gitid1>,<gitid2>,..."] -t "tea
 
 ### 3. Upload
 
-- Just upload the generated JSON file to create your team in [modelteam.ai](https://app.modelteam.ai/org/teams)
+- Just upload the generated JSON file to create your team in https://app.modelteam.ai/org/teams
 - Our AI models will analyze the data and generate a profile for your team (<30 minutes)
 
