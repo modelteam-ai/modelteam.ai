@@ -383,7 +383,7 @@ def load_repo_user_list(file_name):
     return ignore_users
 
 
-def filter_skills(user_profile, min_scores, manual_edits=set()):
+def filter_skills(user_profile, min_scores, manual_edits=set(), skill_level_threshold=200):
     if not user_profile:
         return
     lang_stats = user_profile[LANGS]
@@ -405,7 +405,9 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                     max_monthly_score = model_stats[skill][0]
                     if max_monthly_score <= min_score_to_filter:
                         del model_stats[skill]
-                    elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS] or skill in manual_edits):
+                    elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS]
+                                                       or user_profile[SKILLS][skill] < skill_level_threshold
+                                                       or skill in manual_edits):
                         # Ignore skills that are not present in user profile (No C2S) or top secret skills
                         del model_stats[skill]
                     elif model_type == C2S:
