@@ -48,7 +48,7 @@ uploading to modelteam.ai.
 
 ![Getting Started](images/getting_started.png)
 
-- Run the following commands to generate your profile
+- Run the following commands to generate your profile. (Refer to [Team Profile Generation](README_org.md) for enterprise usecases)
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**
     - Our AI models run locally on your machine and does not send any data outside your machine.
