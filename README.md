@@ -46,8 +46,6 @@ uploading to modelteam.ai.
 
 ## Getting Started
 
-![Getting Started](images/getting_started.png)
-
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
 **For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
