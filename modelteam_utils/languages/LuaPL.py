@@ -2,8 +2,7 @@ import re
 
 from .ProgrammingLanguage import ProgrammingLanguage
 
-
-class RubyPL(ProgrammingLanguage):
+class LuaPL(ProgrammingLanguage):
     def extract_documentation(self, code_lines):
         comments = []
         inside_comment = False
@@ -12,17 +11,29 @@ class RubyPL(ProgrammingLanguage):
         for line in code_lines:
             line = line.strip()
 
-            if line.startswith('=begin') and not line.endswith('=end'):
+            # Check for the start of a multi-line comment
+            if line.startswith("--[["):
                 inside_comment = True
-                current_comment += line[6:]
+                current_comment += line[4:]
             elif inside_comment:
-                if line.startswith('=end'):
-                    current_comment += '\n' + line[4:]
+                if line.endswith("]]"):
+                    inside_comment = False
+                    current_comment += '\n' + line[:-2]  # Capture text before "]]"
                     comments.append(current_comment.strip())
                     current_comment = ""
-                    inside_comment = False
                 else:
                     current_comment += '\n' + line
+            # Capture single-line comments
+            elif line.startswith("--"):
+                current_comment += '\n' + line[2:]
+            else:
+                if current_comment and len(current_comment) > 300:
+                    comments.append(current_comment.strip())
+                    current_comment = ""
+
+        # Append any trailing multi-line comment that wasn't closed
+        if inside_comment and current_comment and len(current_comment) > 300:
+            comments.append(current_comment.strip())
 
         return comments
 
