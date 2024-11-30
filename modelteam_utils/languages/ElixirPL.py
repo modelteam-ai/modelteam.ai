@@ -20,24 +20,24 @@ class ElixirPL(ProgrammingLanguage):
                 libraries.extend(library_names)
         return libraries
 
+
     def extract_documentation(self, code_lines):
         comments = []
+        inside_comment = False
+        current_comment = ""
 
-        # Regular expressions for Elixir docstrings
-        moduledoc_pattern = r'@moduledoc\s+"(.*?)"'
-        doc_pattern = r'@doc\s+"(.*?)"\s*def\s+(\w+)\s*\('
+        for line in code_lines:
+            line = line.strip()
+            if line.startswith('@moduledoc') or line.startswith('@doc'):
+                inside_comment = True
+            elif inside_comment:
+                if line.count('"""') > 0:
+                    comments.append(current_comment.strip())
+                    current_comment = ""
+                    inside_comment = False
+                else:
+                    current_comment += line + "\n"
 
-        # Join all code lines into a single string for processing
-        code = "\n".join(code_lines)
-
-        # Extract module-level documentation
-        moduledoc_match = re.search(moduledoc_pattern, code, re.DOTALL)
-        if moduledoc_match:
-            comments.append(moduledoc_match.group(1).strip())
-
-        # Extract function-level documentation
-        doc_matches = re.findall(doc_pattern, code, re.DOTALL)
-        for doc, _ in doc_matches:
-            comments.append(doc.strip())
-
+        if inside_comment and current_comment and len(current_comment) > 300:
+            comments.append(current_comment.strip())
         return comments
