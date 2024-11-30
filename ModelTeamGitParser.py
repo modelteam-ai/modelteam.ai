@@ -33,6 +33,7 @@ ONE_MONTH = 30 * 24 * 60 * 60
 ONE_WEEK = 7 * 24 * 60 * 60
 THREE_MONTH = 3 * 30 * 24 * 60 * 60
 
+args = None
 debug = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
