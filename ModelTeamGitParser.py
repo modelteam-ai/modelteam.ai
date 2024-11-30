@@ -114,7 +114,9 @@ class ModelTeamGitParser:
         total_added = 0
         total_deleted = 0
         file_line_stats = {}  # Dictionary to store file line stats
-        add_pdf_stats = curr_user == args.user_emails
+        add_pdf_stats = False
+        if args and args.user_emails:
+            add_pdf_stats = curr_user == args.user_emails
         if result:
             if add_pdf_stats:
                 repo_name = os.path.basename(repo_path)
