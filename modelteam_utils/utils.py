@@ -109,7 +109,7 @@ def get_num_chars_changed(git_diff):
 
 def get_supported_extensions():
     return ["py", "js", "ts", "jsx", "tsx", "java", "cs", "go", "cpp", "c", "h", "php", "rb", "rs", "scala", "swift",
-            "kt", "lua", "dart", "ex"]
+            "kt", "kts", "lua", "dart", "ex", "exs"]
 
 
 def get_extension_to_language_map():
@@ -131,9 +131,11 @@ def get_extension_to_language_map():
         "scala": "Scala",
         "swift": "Swift",
         "kt": "Kotlin",
+        "kts": "Kotlin",
         "lua": "Lua",
         "dart": "Dart",
-        "ex": "Elixir"
+        "ex": "Elixir",
+        "exs": "Elixir"
     }
 
 
