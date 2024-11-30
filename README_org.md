@@ -126,7 +126,7 @@ Author: XYZ <userXYZ@org.ai>
 # Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
 # repo_list can be a file with list of repos or a directory containing all the repos
 python gen_team_git_stats.py -r <repo_list> [-g "<gitid1>,<gitid2>,..."] -t "team_name" [-n <number_of_years>]
-# e.g. python gen_team_git_stats.py -r ~/repo_list.txt -e "user1@org.ai,user2@org.ai" -t model_team -n 3
+# e.g. python gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t model_team -n 3
 # e.g. python gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3
 ```
 
