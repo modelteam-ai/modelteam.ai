@@ -2,21 +2,19 @@ import re
 
 from .ProgrammingLanguage import ProgrammingLanguage
 
-
-class JavaPL(ProgrammingLanguage):
+class RustPL(ProgrammingLanguage):
     def get_import_prefix(self):
-        return "import "
+        return "use "
 
     def get_snippet_seperator(self):
         return "}\n\n"
 
     def extract_imports(self, lines):
-        # Find all matches in the Java code
-        pattern = r"import\s+([\w.]+(?:\*|[\w*]+)?);"
+        pattern = r'use\s+([\w:]+);'
         libraries = []
         for line in lines:
-            if line.startswith("import"):
-                matches = re.findall(pattern, line)
+            matches = re.findall(pattern, line)
+            if matches:
                 library_names = [match for match in matches]
                 libraries.extend(library_names)
         return libraries

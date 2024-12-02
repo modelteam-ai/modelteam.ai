@@ -60,9 +60,16 @@ class ProgrammingLanguage(ABC):
 
         for line in code_lines:
             line = line.strip()
-            if line.startswith('/*') and line.count('*/') == 0:
+            if line.startswith('/**') and line.count('*/') == 0:
+                inside_comment = True
+                current_comment += line[3:]
+            elif line.startswith('/*') and line.count('*/') == 0:
                 inside_comment = True
                 current_comment += line[2:]
+            elif line.startswith('//'):
+                current_comment += '\n' + line[2:]
+            elif line.startswith('///'):
+                current_comment += '\n' + line[3:]
             elif inside_comment:
                 if line.count('*/') > 0:
                     current_comment += '\n' + line[:-2]
@@ -73,16 +80,14 @@ class ProgrammingLanguage(ABC):
                     if line.startswith('*'):
                         line = line[1:]
                     current_comment += '\n' + line
+            else:
+                if current_comment and len(current_comment) > 300:
+                    comments.append(current_comment.strip())
+                    current_comment = ""
 
+        if inside_comment and current_comment and len(current_comment) > 300:
+            comments.append(current_comment.strip())
         return comments
-
-    @abstractmethod
-    def get_code_quality(self):
-        pass
-
-    @abstractmethod
-    def get_code_lifetime(self):
-        pass
 
     @abstractmethod
     def get_snippet_seperator(self):

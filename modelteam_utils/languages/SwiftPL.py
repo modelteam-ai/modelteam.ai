@@ -3,7 +3,7 @@ import re
 from .ProgrammingLanguage import ProgrammingLanguage
 
 
-class JavaPL(ProgrammingLanguage):
+class SwiftPL(ProgrammingLanguage):
     def get_import_prefix(self):
         return "import "
 
@@ -11,8 +11,7 @@ class JavaPL(ProgrammingLanguage):
         return "}\n\n"
 
     def extract_imports(self, lines):
-        # Find all matches in the Java code
-        pattern = r"import\s+([\w.]+(?:\*|[\w*]+)?);"
+        pattern = r'import\s+([\w.]+)'
         libraries = []
         for line in lines:
             if line.startswith("import"):
