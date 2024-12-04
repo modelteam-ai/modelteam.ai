@@ -1,9 +1,11 @@
 import gzip
 import os
 import pickle
+from typing import Dict
 
 import numpy as np
 import torch
+import transformers
 from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -108,6 +110,38 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
     return skill_list, next_best_prob_list, soft_max_list
 
 
+def smart_tokenizer_and_embedding_resize(
+    special_tokens_dict: Dict,
+    new_tokens: [],
+    tokenizer: transformers.PreTrainedTokenizer,
+    model: transformers.PreTrainedModel,
+    modify_embedding: bool = True,
+):
+    """Resize tokenizer and embedding.
+
+    Note: This is the unoptimized version that may make your embedding size not be divisible by 64.
+    """
+    num_new_tokens = tokenizer.add_tokens(new_tokens)
+    model.resize_token_embeddings(len(tokenizer))
+    if special_tokens_dict:
+        num_new_tokens += tokenizer.add_special_tokens(special_tokens_dict)
+    if num_new_tokens > 0 and modify_embedding:
+        input_embeddings = model.get_input_embeddings().weight.data
+        output_embeddings = model.get_output_embeddings().weight.data
+
+        input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
+        output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
+
+        input_embeddings[-num_new_tokens:] = input_embeddings_avg
+        output_embeddings[-num_new_tokens:] = output_embeddings_avg
+    vocabulary = tokenizer.get_vocab()
+    new_token_ids = set()
+    for word in new_tokens:
+        if word in vocabulary:
+            new_token_ids.add(vocabulary.get(word))
+    return tokenizer, new_token_ids
+
+
 def next_best_prob(word_probabilities, top_words):
     processed_words = set()
     next_best_words_probabilities = {}
@@ -125,31 +159,13 @@ def next_best_prob(word_probabilities, top_words):
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
-    vocabulary = tokenizer.get_vocab().keys()
-    for word in new_words:
-        if word not in vocabulary:
-            tokenizer.add_tokens(word)
-    model.resize_token_embeddings(len(tokenizer))
-    vocabulary = tokenizer.get_vocab()
-    new_token_ids = set()
-    for word in new_words:
-        if word in vocabulary:
-            new_token_ids.add(vocabulary.get(word))
+    # modify embedding only for Qwen models
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(None, new_words, tokenizer, model, modify_embedding=checkpoint.startswith('Qwen'))
     return tokenizer, new_token_ids
-
 
 def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model):
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    vocabulary = tokenizer.get_vocab().keys()
-    for word in LIFE_OF_PY_BUCKETS:
-        if word not in vocabulary:
-            tokenizer.add_tokens(word)
-    model.resize_token_embeddings(len(tokenizer))
-    vocabulary = tokenizer.get_vocab()
-    new_token_ids = set()
-    for word in LIFE_OF_PY_BUCKETS:
-        if word in vocabulary:
-            new_token_ids.add(vocabulary.get(word))
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(None, LIFE_OF_PY_BUCKETS, tokenizer, model, modify_embedding=checkpoint.startswith('Qwen'))
     return tokenizer, new_token_ids
 
 
