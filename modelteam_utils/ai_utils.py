@@ -134,6 +134,7 @@ def smart_tokenizer_and_embedding_resize(
     new_token_ids = set()
     for word in new_tokens:
         if word in vocabulary:
+            print(f"{word}\t{vocabulary.get(word)}")
             new_token_ids.add(vocabulary.get(word))
     return tokenizer, new_token_ids
 
