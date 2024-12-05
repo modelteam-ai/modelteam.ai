@@ -80,3 +80,5 @@ MODEL_TYPES = [I2S, C2S, MLC, LIFE_OF_PY]
 RELEVANT = "Relevant"
 NOT_RELEVANT = "Not Relevant"
 TOP_SECRET = "Top Secret"
+MT_START = "<|modelteam|>"
+MT_END = "<|e_modelteam|>"

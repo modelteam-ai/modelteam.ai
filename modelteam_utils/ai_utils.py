@@ -1,7 +1,6 @@
 import gzip
 import os
 import pickle
-from typing import Dict
 
 import numpy as np
 import torch
@@ -10,7 +9,7 @@ from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC
+from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END
 from .utils import load_file_to_list, convert_list_to_index
 
 
@@ -111,11 +110,10 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
 
 
 def smart_tokenizer_and_embedding_resize(
-    special_tokens_dict: Dict,
-    new_tokens: [],
-    tokenizer: transformers.PreTrainedTokenizer,
-    model: transformers.PreTrainedModel,
-    modify_embedding: bool = True,
+        new_tokens: [],
+        tokenizer: transformers.PreTrainedTokenizer,
+        model: transformers.PreTrainedModel,
+        modify_embedding: bool = True,
 ):
     """Resize tokenizer and embedding.
 
@@ -123,8 +121,6 @@ def smart_tokenizer_and_embedding_resize(
     """
     num_new_tokens = tokenizer.add_tokens(new_tokens)
     model.resize_token_embeddings(len(tokenizer))
-    if special_tokens_dict:
-        num_new_tokens += tokenizer.add_special_tokens(special_tokens_dict)
     if num_new_tokens > 0 and modify_embedding:
         input_embeddings = model.get_input_embeddings().weight.data
         output_embeddings = model.get_output_embeddings().weight.data
@@ -157,15 +153,28 @@ def next_best_prob(word_probabilities, top_words):
 
 
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
+    is_qwen = checkpoint.startswith('Qwen')
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
+    if is_qwen:
+        new_words.append(MT_START)
+        new_words.append(MT_END)
     # modify embedding only for Qwen models
-    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(None, new_words, tokenizer, model, modify_embedding=checkpoint.startswith('Qwen'))
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_words, tokenizer, model,
+                                                                    modify_embedding=is_qwen)
     return tokenizer, new_token_ids
 
+
 def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model):
+    is_qwen = checkpoint.startswith('Qwen')
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(None, LIFE_OF_PY_BUCKETS, tokenizer, model, modify_embedding=checkpoint.startswith('Qwen'))
+    if is_qwen:
+        new_tokens = LIFE_OF_PY_BUCKETS.copy()
+        new_tokens.append(MT_START)
+        new_tokens.append(MT_END)
+    else:
+        new_tokens = LIFE_OF_PY_BUCKETS
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_tokens, tokenizer, model, modify_embedding=is_qwen)
     return tokenizer, new_token_ids
 
 
