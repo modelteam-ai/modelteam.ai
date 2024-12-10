@@ -1,0 +1,199 @@
+.net framework
+accessibility
+algorithm
+analytics
+android development
+angular
+apache hive
+apache spark
+api development
+architecture specific programming
+artificial intelligence
+asp.net core
+asset management
+ast
+authentication
+automated testing
+automation
+aws
+azure
+backend development
+benchmarking
+bigquery
+build systems
+cassandra
+checksum algorithm
+cloud computing
+cloud infrastructure
+cloud native technologies
+cloud services
+color theory
+computational geometry
+computer graphics
+computer vision
+concurrency
+consensus algorithm
+container orchestration
+containerization
+continuous integration/continuous deployment
+cpu architecture
+credential management
+cross platform compatibility
+cryptography
+cuda programming
+data analysis
+data caching
+data compression
+data modeling
+data privacy
+data retrieval
+data science
+data security
+data visualization
+data warehousing
+database management
+deep learning
+deployment strategies
+design patterns
+device driver development
+device management
+devops
+digital signal processing
+distributed systems
+django
+dns management
+docker
+elasticsearch
+embedded systems
+entity framework
+entity management
+ethereum
+etl
+event driven programming
+feature engineering
+financial modeling
+firmware development
+flutter
+frameworks
+frontend development
+gas optimization
+geometric algorithm
+golang routines
+google cloud platform
+gpu programming
+graphql
+grpc
+hadoop
+hardware abstraction layer
+hibernate
+http
+hugging face transformers
+hyperparameter tuning
+identity management
+image processing
+infrastructure as code
+instruction set architecture
+integration testing
+ios development
+jwt
+kafka
+key management
+kubernetes
+lambda expressions
+layout management
+linq
+linux system programming
+low level hardware interaction
+machine learning
+macos development
+mathematics
+mathematics for computer graphics
+maven
+message handling
+metrics and monitoring
+microservices architecture
+minification
+mobile development
+model deployment
+mongodb
+multithreading
+mutual tls
+mysql
+natural language processing
+network protocols
+network security
+networking
+neural networks
+node.js
+numpy
+oauth 2.0
+object oriented design
+object relational mapping
+observability
+opengl
+openid connect
+opentelemetry
+packet processing
+pandas
+parallel computing
+payment processing
+peer to peer networking
+performance testing
+pipeline management
+policy management
+postgresql
+powershell
+proguard
+prometheus
+protobufs
+public key infrastructure
+pytorch
+quantum computing
+randomization techniques
+react
+redis
+redux
+reinforcement learning
+restful services
+risk management
+robotics
+role based access control
+rpc
+sampling techniques
+sdk development
+search algorithm
+security best practices
+security protocols
+selenium
+service discovery
+signature verification
+solidity
+spring framework
+sql
+statistical analysis
+statistical modeling
+svg
+system monitoring
+system programming
+tcp/ip networking
+telemetry
+template metaprogramming
+tensorflow
+terraform
+testing frameworks
+texture management
+time series analysis
+transcoding
+ui design
+unit testing
+video processing
+virtual machine management
+visual studio
+vue.js
+vulkan api
+web development
+web security
+webpack
+widget development
+windows api
+workflow management
