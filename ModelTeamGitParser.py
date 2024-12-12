@@ -272,10 +272,10 @@ class ModelTeamGitParser:
             if not parser:
                 # Not a supported language, so ignoring
                 continue
-            if file_name not in labels[LIBS] and os.path.isfile(os.path.join(repo_path, file_name)):
-                library_names = parser.get_library_names(include_all_libraries=True)
-                if library_names:
-                    labels[LIBS][file_name] = library_names
+            # if file_name not in labels[LIBS] and os.path.isfile(os.path.join(repo_path, file_name)):
+            #     library_names = parser.get_library_names(include_all_libraries=True)
+            #     if library_names:
+            #         labels[LIBS][file_name] = library_names
             if len(file_diff) > TOO_BIG_TO_ANALYZE_LIMIT:
                 # Any single file diff with more than 10000 chars changed is too big to analyze
                 self.add_to_time_series_stats(user_commit_stats, file_extension, yyyy_mm, TOO_BIG_TO_ANALYZE, 1)
@@ -368,8 +368,8 @@ class ModelTeamGitParser:
             repo_name = os.path.basename(repo_path)
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
                                         num_months)
-            if repo_level_data[LIBS]:
-                self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
+            # if repo_level_data[LIBS]:
+            #     self.save_libraries(repo_level_data, repo_lib_output_file_name, repo_name, repo_path)
             # TODO: Email validation, A/B profiles
             if user_profiles:
                 # Store hash to file
@@ -381,20 +381,20 @@ class ModelTeamGitParser:
             lop_min_score = float(self.config['modelteam.ai']['lop_min_score'])
             min_scores = {C2S: skill_min_score, LIFE_OF_PY: lop_min_score, I2S: skill_min_score}
             if not os.path.exists(final_output):
-                if not repo_level_data[LIBS]:
-                    self.load_library_data(repo_lib_output_file_name, repo_level_data)
-                for file in repo_level_data[LIBS].keys():
-                    file_extension = get_file_extension(file)
-                    parser = get_language_parser(file_extension, "", file, self.keep_only_public_libraries)
-                    if not parser:
-                        repo_level_data[LIBS][file] = ""
-                        continue
-                    lib_list = repo_level_data[LIBS][file]
-                    libs_in_file = ""
-                    for imp in lib_list:
-                        imp = imp.strip()
-                        libs_in_file += parser.get_import_prefix() + imp + "\n"
-                    repo_level_data[LIBS][file] = libs_in_file
+                # if not repo_level_data[LIBS]:
+                #     self.load_library_data(repo_lib_output_file_name, repo_level_data)
+                # for file in repo_level_data[LIBS].keys():
+                #     file_extension = get_file_extension(file)
+                #     parser = get_language_parser(file_extension, "", file, self.keep_only_public_libraries)
+                #     if not parser:
+                #         repo_level_data[LIBS][file] = ""
+                #         continue
+                #     lib_list = repo_level_data[LIBS][file]
+                #     libs_in_file = ""
+                #     for imp in lib_list:
+                #         imp = imp.strip()
+                #         libs_in_file += parser.get_import_prefix() + imp + "\n"
+                #     repo_level_data[LIBS][file] = libs_in_file
                 # when starting from tmp, we need to get repo details from the jsonl file
                 if not user_profiles:
                     with open(user_stats_output_file_name, "r") as f:
@@ -499,8 +499,8 @@ class ModelTeamGitParser:
                                 line_count = len(lines)
                                 doc_string_line_count = self.get_docstring_line_count(lines, parser)
                                 libs_in_file = ""
-                                if file_name in repo_level_data[LIBS]:
-                                    libs_in_file = repo_level_data[LIBS][file_name]
+                                # if file_name in repo_level_data[LIBS]:
+                                #     libs_in_file = repo_level_data[LIBS][file_name]
                                 features.append({"user": user, "lang": lang, "file_name": file_name, "yyyy_mm": yyyy_mm,
                                                  "snippet": chunk, "libs": libs_in_file, "line_count": line_count,
                                                  "is_labeled_file": is_labeled_file,
@@ -754,7 +754,7 @@ if __name__ == "__main__":
         folder_list = os.listdir(os.path.join(output_path, "tmp-stats"))
     else:
         if args.repo_name:
-            folder_list = [args.repo_name]
+            folder_list = [os.path.join(input_path, args.repo_name)]
         else:
             tmp_folder_list = set()
             if input_path:
