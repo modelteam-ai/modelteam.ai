@@ -1,0 +1,8 @@
+cjson	1	10
+cmp	2	7
+core	3	7
+ffi	4	11
+json	5	7
+lfs	6	8
+lspconfig	7	10
+luassert	8	8

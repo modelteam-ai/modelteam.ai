@@ -10,3 +10,4 @@ react	9	171
 react-dom	10	12
 react-select	11	8
 styled-components	12	8
+query-string	13	8

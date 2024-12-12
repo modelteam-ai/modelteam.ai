@@ -125,3 +125,14 @@ yard	124	11
 zeitwerk	125	22
 zip	126	17
 zlib	127	46
+colorize	128	7
+combustion	129	9
+coveralls	130	7
+devise	131	7
+erubi	132	8
+fugit	133	7
+googleauth	134	7
+ruby-prof	135	9
+simplecov-console	136	8
+warning	137	7
+xcodeproj	138	8
