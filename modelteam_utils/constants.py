@@ -67,8 +67,8 @@ MAX_USERS = 1001
 MAX_DIFF_SIZE = 5000
 GIT_DIFF_BATCH_SIZE = 100
 T5_CHUNK_CHAR_LIMIT = 1500
-# Qwen model supports 32k tokens
-QWEN_CHUNK_CHAR_LIMIT = TOO_BIG_TO_ANALYZE_LIMIT
+# This can be changed in the future. Qwen supports 32K tokens, but it takes a lot of time to train
+QWEN_CHUNK_CHAR_LIMIT = 1500
 
 SKILL_PREDICTION_LIMIT = 10
 LIFE_OF_PY_PREDICTION_LIMIT = 3
