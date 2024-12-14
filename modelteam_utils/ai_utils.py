@@ -72,7 +72,21 @@ def eval_llm_batch_with_scores_old(tokenizer, device, model, codes, new_tokens, 
     return skill_list, next_best_prob_list, soft_max_list
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT, is_qwen=False):
+    if is_qwen:
+        new_codes = []
+        for prompt in codes:
+            messages = [
+                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+                {"role": "user", "content": f"{MT_START}{prompt}{MT_END}"}
+            ]
+            text = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            new_codes.append(text)
+        codes = new_codes
     skill_list = []
     next_best_prob_list = []
     soft_max_list = []
