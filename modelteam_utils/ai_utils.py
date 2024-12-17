@@ -72,7 +72,8 @@ def eval_llm_batch_with_scores_old(tokenizer, device, model, codes, new_tokens, 
     return skill_list, next_best_prob_list, soft_max_list
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT, is_qwen=False):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT,
+                               is_qwen=False):
     if is_qwen:
         new_codes = []
         for prompt in codes:
@@ -90,11 +91,18 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
     skill_list = []
     next_best_prob_list = []
     soft_max_list = []
+    max_new_tokens = 2
+    score_index = 1
     with torch.no_grad():
-        input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
-            device)
-        output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
-                                no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
+        if is_qwen:
+            input_tokens = tokenizer(codes, return_tensors="pt").to(device)
+            max_new_tokens = 1
+            score_index = 0
+        else:
+            input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
+                device)
+        output = model.generate(**input_tokens, max_new_tokens=max_new_tokens, return_dict_in_generate=True,
+                                output_scores=True, no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
     for i in range(len(codes)):
         score_map = {}
         soft_max_map = {}
@@ -103,16 +111,16 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
         for j in new_tokens:
             try:
                 word = tokenizer.decode(j)
-                score_map[word] = output.scores[1][i][j].item()
+                score_map[word] = output.scores[score_index][i][j].item()
                 new_token_scores.append(score_map[word])
                 words.append(word)
             except Exception as e:
                 print(word + " not found in tokenizer")
                 print("Shapes")
                 print(f"Score: {len(output.scores)}")
-                print(f"Score 1: {output.scores[0].shape}")
-                print(f"Score 1 i: {output.scores[0][i].shape}")
-                print(output.scores[1][i])
+                print(f"Score 1: {output.scores[score_index].shape}")
+                print(f"Score 1 i: {output.scores[score_index][i].shape}")
+                print(output.scores[score_index][i])
                 print(j)
                 raise e
         soft_max_scores = softmax(new_token_scores)
@@ -202,7 +210,8 @@ def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model)
         tokenizer.pad_token_id = tokenizer.eos_token_id
     else:
         new_tokens = LIFE_OF_PY_BUCKETS
-    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_tokens, tokenizer, model, modify_embedding=is_qwen)
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_tokens, tokenizer, model,
+                                                                    modify_embedding=is_qwen)
     return tokenizer, new_token_ids
 
 
