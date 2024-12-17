@@ -233,7 +233,7 @@ def init_model(model_path, model_type, config, device):
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         base_model_path = get_hf_cache_path_if_present(peft_config.base_model_name_or_path)
-        is_qwen = model_path.lower().contains('qwen') or base_model_path.lower().contains('qwen')
+        is_qwen = 'qwen' in model_path.lower() or 'qwen' in base_model_path.lower()
         if is_qwen:
             model = AutoModelForCausalLM.from_pretrained(base_model_path, torch_dtype=torch.bfloat16).to(device)
         else:
