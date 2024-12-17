@@ -108,7 +108,7 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
                 words.append(word)
             except Exception as e:
                 print(word + " not found in tokenizer")
-                print(output.scores[1][i].shape)
+                print(output.scores)
                 print(j)
                 raise e
         soft_max_scores = softmax(new_token_scores)
