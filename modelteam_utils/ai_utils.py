@@ -91,16 +91,18 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
     skill_list = []
     next_best_prob_list = []
     soft_max_list = []
+    max_new_tokens = 2
     score_index = 1
     with torch.no_grad():
         if is_qwen:
-            input_tokens = tokenizer(codes, return_tensors="pt").to(device)
+            input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True).to(device)
+            max_new_tokens = 1
             score_index = 0
         else:
             input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
                 device)
-        output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
-                                no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
+        output = model.generate(**input_tokens, max_new_tokens=max_new_tokens, return_dict_in_generate=True,
+                                output_scores=True, no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
     for i in range(len(codes)):
         score_map = {}
         soft_max_map = {}
