@@ -109,20 +109,10 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
         new_token_scores = []
         words = []
         for j in new_tokens:
-            try:
-                word = tokenizer.decode(j)
-                score_map[word] = output.scores[score_index][i][j].item()
-                new_token_scores.append(score_map[word])
-                words.append(word)
-            except Exception as e:
-                print(word + " not found in tokenizer")
-                print("Shapes")
-                print(f"Score: {len(output.scores)}")
-                print(f"Score 1: {output.scores[score_index].shape}")
-                print(f"Score 1 i: {output.scores[score_index][i].shape}")
-                print(output.scores[score_index][i])
-                print(j)
-                raise e
+            word = tokenizer.decode(j)
+            score_map[word] = output.scores[score_index][i][j].item()
+            new_token_scores.append(score_map[word])
+            words.append(word)
         soft_max_scores = softmax(new_token_scores)
         for w, s in zip(words, soft_max_scores):
             soft_max_map[w] = s
@@ -266,6 +256,8 @@ def init_model(model_path, model_type, config, device):
         else:
             tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
         model = PeftModel.from_pretrained(model, model_path).to(device)
+        if is_qwen:
+            model.generation_config.pad_token_id = tokenizer.pad_token_id
         model.eval()
         model_data["model"] = model
         model_data["tokenizer"] = tokenizer
