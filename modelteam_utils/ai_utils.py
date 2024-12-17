@@ -7,7 +7,7 @@ import torch
 import transformers
 from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 
 from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END
 from .utils import load_file_to_list, convert_list_to_index
@@ -230,10 +230,15 @@ def init_model(model_path, model_type, config, device):
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         model_path = get_hf_cache_path_if_present(model_path)
+        is_qwen = model_path.lower().contains('qwen')
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
-        model = AutoModelForSeq2SeqLM.from_pretrained(
-            get_hf_cache_path_if_present(peft_config.base_model_name_or_path)).to(device)
+        base_model_path = get_hf_cache_path_if_present(peft_config.base_model_name_or_path)
+        is_qwen = model_path.lower().contains('qwen') or base_model_path.lower().contains('qwen')
+        if is_qwen:
+            model = AutoModelForCausalLM.from_pretrained(base_model_path, torch_dtype=torch.bfloat16).to(device)
+        else:
+            model = AutoModelForSeq2SeqLM.from_pretrained(base_model_path).to(device)
         if model_type == LIFE_OF_PY:
             tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
         else:
