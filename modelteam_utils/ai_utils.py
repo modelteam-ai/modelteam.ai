@@ -173,6 +173,8 @@ def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, mode
     if is_qwen:
         new_words.append(MT_START)
         new_words.append(MT_END)
+        tokenizer.padding_side = 'left'
+        tokenizer.pad_token_id = tokenizer.eos_token_id
     # modify embedding only for Qwen models
     tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_words, tokenizer, model,
                                                                     modify_embedding=is_qwen)
@@ -186,6 +188,8 @@ def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model)
         new_tokens = LIFE_OF_PY_BUCKETS.copy()
         new_tokens.append(MT_START)
         new_tokens.append(MT_END)
+        tokenizer.padding_side = 'left'
+        tokenizer.pad_token_id = tokenizer.eos_token_id
     else:
         new_tokens = LIFE_OF_PY_BUCKETS
     tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_tokens, tokenizer, model, modify_embedding=is_qwen)
