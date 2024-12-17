@@ -110,8 +110,8 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
                 print(word + " not found in tokenizer")
                 print("Shapes")
                 print(f"Score: {len(output.scores)}")
-                print(f"Score 1: {output.scores[1].shape}")
-                print(f"Score 1 i: {output.scores[1][i].shape}")
+                print(f"Score 1: {output.scores[0].shape}")
+                print(f"Score 1 i: {output.scores[0][i].shape}")
                 print(output.scores[1][i])
                 print(j)
                 raise e
