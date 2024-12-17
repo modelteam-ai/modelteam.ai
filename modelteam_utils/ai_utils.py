@@ -230,7 +230,6 @@ def init_model(model_path, model_type, config, device):
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         model_path = get_hf_cache_path_if_present(model_path)
-        is_qwen = model_path.lower().contains('qwen')
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         base_model_path = get_hf_cache_path_if_present(peft_config.base_model_name_or_path)
