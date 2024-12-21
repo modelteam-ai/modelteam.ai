@@ -175,7 +175,7 @@ def next_best_prob(word_probabilities, top_words):
 
 
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
-    is_qwen = checkpoint.startswith('Qwen')
+    is_qwen = "qwen" in checkpoint.lower()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     new_words = load_file_to_list(skills_file)
     if is_qwen:
@@ -190,7 +190,7 @@ def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, mode
 
 
 def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model):
-    is_qwen = checkpoint.startswith('Qwen')
+    is_qwen = "qwen" in checkpoint.lower()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     if is_qwen:
         new_tokens = LIFE_OF_PY_BUCKETS.copy()
