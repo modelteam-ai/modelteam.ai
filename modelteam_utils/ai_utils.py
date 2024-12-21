@@ -239,13 +239,13 @@ def get_hf_cache_path_if_present(model_name):
 
 
 def init_model(model_path, model_type, config, device):
-    base_llm = get_hf_cache_path_if_present(config["base_llm_model"]["path"])
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         model_path = get_hf_cache_path_if_present(model_path)
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
         base_model_path = get_hf_cache_path_if_present(peft_config.base_model_name_or_path)
+        base_llm = get_hf_cache_path_if_present(base_model_path)
         is_qwen = 'qwen' in model_path.lower() or 'qwen' in base_model_path.lower()
         if is_qwen:
             model = AutoModelForCausalLM.from_pretrained(base_model_path, torch_dtype=torch.bfloat16).to(device)
