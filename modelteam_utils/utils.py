@@ -327,6 +327,21 @@ def load_file_to_set(file_name):
             return set(f.read().splitlines())
 
 
+def load_skill_config(file_name, only_keys=True):
+    skill_config = {}
+    skill_list = set()
+    with open(file_name, "r") as f:
+        for line in f:
+            parts = line.strip().split("\t")
+            if only_keys:
+                skill_list.add(parts[0])
+            else:
+                skill_config[parts[0]] = int(parts[1])
+    if only_keys:
+        return skill_list
+    return skill_config
+
+
 def load_file_to_list(file_name):
     """
     Load the file to a list. Can handle both compressed and uncompressed files

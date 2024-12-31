@@ -33,6 +33,8 @@ def main():
     parser.add_argument("-t", "--team_name", required=True, help="Name of the team")
     parser.add_argument("-g", "--git_ids", required=False, help="Git IDs of the users present in git log as csv")
     parser.add_argument("-n", "--num_years", type=int, default=3, help="Number of years (default is 3)")
+    parser.add_argument("--dev", required=False, default=False, action='store_true', help="Development Mode")
+
 
     args = parser.parse_args()
     repo_list = args.repos
@@ -42,7 +44,7 @@ def main():
 
     validate_input(num_years, repo_list)
 
-    output_path = run_model_team_git_parser(repo_list, git_ids, num_years, team_name)
+    output_path = run_model_team_git_parser(repo_list, git_ids, num_years, args.dev, team_name)
     print("Please upload the output file to \033[94mhttps://app.modelteam.ai/org/teams\033[0m")
 
 

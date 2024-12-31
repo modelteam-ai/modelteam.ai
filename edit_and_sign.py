@@ -1,4 +1,5 @@
 import argparse
+import configparser
 import datetime
 import json
 import os
@@ -12,8 +13,14 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLa
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import compress_file, generate_hc
-from modelteam_utils.utils import filter_skills, sha256_hash
+from modelteam_utils.utils import filter_skills, sha256_hash, load_skill_config
 from modelteam_utils.viz_utils import generate_pdf_report
+
+display_names = {}
+
+
+def get_skill_display_name(skill):
+    return display_names.get(skill, skill.title())
 
 
 class App(QWidget):
@@ -149,7 +156,7 @@ These skills will further be scored by another model on the server side. Please 
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
-        label = QLabel(skill.title())
+        label = QLabel(get_skill_display_name(skill))
         label.setFixedWidth(200)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
@@ -221,7 +228,7 @@ def cli_choices(choices_file, email, repos, skills):
     for idx, skill in enumerate(skills):
         column_index = idx % number_of_columns
         skill_number = idx + 1
-        columns[column_index].append(f"{BOLD}{skill_number}{RESET}. {skill.title()}")
+        columns[column_index].append(f"{BOLD}{skill_number}{RESET}. {get_skill_display_name(skill)}")
 
     # Pad columns to have equal length
     max_col_length = max(len(col) for col in columns)
@@ -246,14 +253,17 @@ def cli_choices(choices_file, email, repos, skills):
     print(f"{BOLD}Top Secret{RESET}: Remove from profile and {BOLD}DON'T{RESET} even send it to the server.\n")
     while True:
         # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
-        not_relevant_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip):\n")
+        not_relevant_input = input(
+            f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip):\n")
         if not_relevant_input.strip():
-            not_relevant_numbers = set(int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
+            not_relevant_numbers = set(
+                int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
         else:
             not_relevant_numbers = set()
 
         # Ask the user to enter the numbers of skills to mark as 'Top Secret'
-        top_secret_input = input(f"\nEnter the numbers of skills to mark as {BOLD}Top Secret{RESET} (separated by commas, or press Enter to skip):\n")
+        top_secret_input = input(
+            f"\nEnter the numbers of skills to mark as {BOLD}Top Secret{RESET} (separated by commas, or press Enter to skip):\n")
         if top_secret_input.strip():
             top_secret_numbers = set(int(num.strip()) for num in top_secret_input.split(',') if num.strip().isdigit())
         else:
@@ -267,7 +277,7 @@ def cli_choices(choices_file, email, repos, skills):
             if 1 <= num <= len(skills):
                 skill = skills[num - 1]
                 choices_dict[skill] = NOT_RELEVANT
-                not_relevant_skills.append(skill.title())
+                not_relevant_skills.append(get_skill_display_name(skill))
             else:
                 print(f"Invalid skill number: {num}")
 
@@ -275,7 +285,7 @@ def cli_choices(choices_file, email, repos, skills):
             if 1 <= num <= len(skills):
                 skill = skills[num - 1]
                 choices_dict[skill] = TOP_SECRET
-                top_secret_skills.append(skill.title())
+                top_secret_skills.append(get_skill_display_name(skill))
             else:
                 print(f"Invalid skill number: {num}")
 
@@ -310,7 +320,6 @@ def cli_choices(choices_file, email, repos, skills):
         json.dump(choices_dict, f)
 
 
-
 def apply_choices(merged_profile, choices_file, edited_file):
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
@@ -342,6 +351,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--profile_path", type=str, required=True)
     arg_parser.add_argument("--user_key", type=str, required=True)
     arg_parser.add_argument("--cli_mode", action="store_true", default=False)
+    arg_parser.add_argument("--config", type=str, required=False, default="config.ini")
 
     args = arg_parser.parse_args()
     profile_json = os.path.join(args.profile_path, MT_PROFILE_JSON)
@@ -349,6 +359,11 @@ if __name__ == "__main__":
     file_name_without_extension = profile_json.replace(".json", "")
     choices_file = f"{file_name_without_extension}_choices.json"
     pdf_path = os.path.join(args.profile_path, "pdf")
+    config_file = args.config
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    skill_list = config["modelteam.ai"]["skill_list"]
+    display_names = load_skill_config(args.skill_file, only_keys=False)
     with open(profile_json, "r") as f:
         merged_profile = json.load(f)
     if display_t_and_c(merged_profile[USER]) != "y":

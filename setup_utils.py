@@ -6,6 +6,8 @@ import sys
 import venv
 from datetime import datetime
 
+from llm_finetune.codet5.predict_topics_for_skills import config
+
 
 def run_command(command, shell=False):
     date = datetime.now().strftime("%Y-%m-%d")
@@ -58,8 +60,12 @@ def sanitize_email(email):
     return email.replace('@', '_').replace('.', '_')
 
 
-def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, config_file="config.ini"):
+def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_name=None):
     """Run the ModelTeamGitParser script with the appropriate arguments."""
+    if is_dev_mode:
+        config = "../config-dev.ini"
+    else:
+        config = "config.ini"
     curr_date = datetime.now().strftime("%Y-%m-%d")
     if team_name:
         team_path = get_output_path(team_name)
