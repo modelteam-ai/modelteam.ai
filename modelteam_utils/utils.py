@@ -327,17 +327,19 @@ def load_file_to_set(file_name):
             return set(f.read().splitlines())
 
 
-def load_skill_config(file_name, only_keys=True):
+def load_skill_config(file_name, only_keys=True, return_set=True):
     skill_config = {}
-    skill_list = set()
+    skill_list = []
     with open(file_name, "r") as f:
         for line in f:
             parts = line.strip().split("\t")
             if only_keys:
-                skill_list.add(parts[0])
+                skill_list.append(parts[0])
             else:
-                skill_config[parts[0]] = int(parts[1])
+                skill_config[parts[0]] = parts[1]
     if only_keys:
+        if return_set:
+            return set(skill_list)
         return skill_list
     return skill_config
 

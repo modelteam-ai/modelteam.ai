@@ -363,7 +363,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(config_file)
     skill_list = config["modelteam.ai"]["skill_list"]
-    display_names = load_skill_config(args.skill_file, only_keys=False)
+    display_names = load_skill_config(skill_list, only_keys=False)
     with open(profile_json, "r") as f:
         merged_profile = json.load(f)
     if display_t_and_c(merged_profile[USER]) != "y":

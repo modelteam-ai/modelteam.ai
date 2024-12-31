@@ -10,7 +10,7 @@ from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 
 from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END
-from .utils import load_file_to_list, convert_list_to_index
+from .utils import load_file_to_list, convert_list_to_index, load_skill_config
 
 
 def get_multi_label_classification_scores(arr, index, names):
@@ -177,7 +177,7 @@ def next_best_prob(word_probabilities, top_words):
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
     is_qwen = "qwen" in checkpoint.lower()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    new_words = load_file_to_list(skills_file)
+    new_words = load_skill_config(skills_file, only_keys=True, return_set=False)
     if is_qwen:
         new_words.append(MT_START)
         new_words.append(MT_END)
