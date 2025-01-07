@@ -23,6 +23,7 @@ uploading to modelteam.ai.
 
 - Python
 - Javascript
+- Typescript
 - Java
 - Go
 - C
@@ -30,6 +31,13 @@ uploading to modelteam.ai.
 - PHP
 - Ruby
 - C#
+- Rust
+- Scala
+- Swift
+- Kotlin
+- Lua
+- Dart
+- Elixir
 
 ## Prerequisites
 

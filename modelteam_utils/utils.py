@@ -11,12 +11,19 @@ from calendar import monthrange
 from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, C2S, LIFE_OF_PY, I2S, LANGS, TIME_SERIES, SKILLS
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
+from .languages.DartPL import DartPL
+from .languages.ElixirPL import ElixirPL
 from .languages.GoPL import GoPL
 from .languages.JavaPL import JavaPL
 from .languages.JavaScriptPL import JavaScriptPL
+from .languages.KotlinPL import KotlinPL
+from .languages.LuaPL import LuaPL
 from .languages.PhpPL import PhpPL
 from .languages.PythonPL import PythonPL
 from .languages.RubyPL import RubyPL
+from .languages.RustPL import RustPL
+from .languages.ScalaPL import ScalaPL
+from .languages.SwiftPL import SwiftPL
 
 
 def get_edit_distance(s1, s2):
@@ -101,7 +108,8 @@ def get_num_chars_changed(git_diff):
 
 
 def get_supported_extensions():
-    return ["py", "js", "ts", "jsx", "tsx", "java", "cs", "go", "cpp", "c", "h", "php", "rb"]
+    return ["py", "js", "ts", "jsx", "tsx", "java", "cs", "go", "cpp", "c", "h", "php", "rb", "rs", "scala", "swift",
+            "kt", "kts", "lua", "dart", "ex", "exs"]
 
 
 def get_extension_to_language_map():
@@ -118,16 +126,24 @@ def get_extension_to_language_map():
         "c": "C",
         "h": "C/C++",
         "php": "PHP",
-        "rb": "Ruby"
+        "rb": "Ruby",
+        "rs": "Rust",
+        "scala": "Scala",
+        "swift": "Swift",
+        "kt": "Kotlin",
+        "kts": "Kotlin",
+        "lua": "Lua",
+        "dart": "Dart",
+        "ex": "Elixir",
+        "exs": "Elixir"
     }
 
 
 def get_supported_languages():
     return ["python", "javascript", "typescript", "java", "csharp", "go", "golang", "c", "c++", "c/c++", "php", "ruby",
-            "c#"]
+            "c#", "rust", "scala", "swift", "kotlin", "lua", "dart", "elixir"]
 
 
-# TODO: Supported languages are as follows: c, c++, c-sharp, go, java, javascript, php, python, ruby.
 def get_language_parser(file_extension, file_diff_content, filename, keep_only_public_libraries):
     if "go" == file_extension:
         return GoPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
@@ -145,6 +161,20 @@ def get_language_parser(file_extension, file_diff_content, filename, keep_only_p
         return RubyPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     elif "cs" == file_extension:
         return CSharpPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "rs" == file_extension:
+        return RustPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "scala" == file_extension:
+        return ScalaPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "swift" == file_extension:
+        return SwiftPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "kt" == file_extension or "kts" == file_extension:
+        return KotlinPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "lua" == file_extension:
+        return LuaPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "dart" == file_extension:
+        return DartPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
+    elif "ex" == file_extension or "exs" == file_extension:
+        return ElixirPL(file_extension, file_diff_content, filename, keep_only_public_libraries)
     else:
         return None
 
@@ -295,6 +325,23 @@ def load_file_to_set(file_name):
     else:
         with open(file_name, "r") as f:
             return set(f.read().splitlines())
+
+
+def load_skill_config(file_name, only_keys=True, return_set=True):
+    skill_config = {}
+    skill_list = []
+    with open(file_name, "r") as f:
+        for line in f:
+            parts = line.strip().split("\t")
+            if only_keys:
+                skill_list.append(parts[0])
+            else:
+                skill_config[parts[0]] = parts[1]
+    if only_keys:
+        if return_set:
+            return set(skill_list)
+        return skill_list
+    return skill_config
 
 
 def load_file_to_list(file_name):

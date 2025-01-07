@@ -47,6 +47,7 @@ def get_output_path(email_or_team_name):
     profile_path_file = os.path.join(curr_dir, "model_team_profile", sanitized_path)
     return profile_path_file
 
+
 def get_profile_path_file_name(git_id):
     out_path = get_output_path(git_id)
     profile_path_file = os.path.join(out_path, "model_team_profile_path.txt")
@@ -58,8 +59,12 @@ def sanitize_email(email):
     return email.replace('@', '_').replace('.', '_')
 
 
-def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, config_file="config.ini"):
+def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_name=None):
     """Run the ModelTeamGitParser script with the appropriate arguments."""
+    if is_dev_mode:
+        config = "../config-dev.ini"
+    else:
+        config = "config.ini"
     curr_date = datetime.now().strftime("%Y-%m-%d")
     if team_name:
         team_path = get_output_path(team_name)
@@ -77,7 +82,7 @@ def run_model_team_git_parser(repo_list, email_id, num_years, team_name=None, co
     cmd = [
         python_bin, "-m", "ModelTeamGitParser",
         "--output_path", output_path,
-        "--config", config_file,
+        "--config", config,
         "--num_years", str(num_years),
     ]
     # if repo_list is a file, pass it as --repo_list else pass it as --input_path

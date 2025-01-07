@@ -36,6 +36,8 @@ def main():
     parser.add_argument("-g", "--git_id", required=True, help="Git ID of the user present in git log")
     parser.add_argument("-n", "--num_years", type=int, default=5,
                         help="Number of years to lookback in git history (default is 5)")
+    parser.add_argument("--dev", required=False, default=False, action='store_true', help="Development Mode")
+
 
     args = parser.parse_args()
     repo_list = args.repos
@@ -48,7 +50,7 @@ def main():
     if os.path.exists(profile_path_file):
         os.remove(profile_path_file)
 
-    output_path = run_model_team_git_parser(repo_list, git_id, num_years)
+    output_path = run_model_team_git_parser(repo_list, git_id, num_years, args.dev)
 
     with open(profile_path_file, "w") as f:
         f.write(output_path)

@@ -2,17 +2,12 @@ import re
 
 from .ProgrammingLanguage import ProgrammingLanguage
 
-
-class JavaPL(ProgrammingLanguage):
+class DartPL(ProgrammingLanguage):
     def get_import_prefix(self):
         return "import "
 
-    def get_snippet_seperator(self):
-        return "}\n\n"
-
     def extract_imports(self, lines):
-        # Find all matches in the Java code
-        pattern = r"import\s+([\w.]+(?:\*|[\w*]+)?);"
+        pattern = r"import\s+([\w.]+);"
         libraries = []
         for line in lines:
             if line.startswith("import"):
@@ -20,3 +15,6 @@ class JavaPL(ProgrammingLanguage):
                 library_names = [match for match in matches]
                 libraries.extend(library_names)
         return libraries
+
+    def get_snippet_seperator(self):
+        return "}\n\n"

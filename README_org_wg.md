@@ -27,6 +27,7 @@ models.
 
 - Python
 - Javascript
+- Typescript
 - Java
 - Go
 - C
@@ -34,6 +35,13 @@ models.
 - PHP
 - Ruby
 - C#
+- Rust
+- Scala
+- Swift
+- Kotlin
+- Lua
+- Dart
+- Elixir
 
 ## Prerequisites
 

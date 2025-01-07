@@ -1,0 +1,199 @@
+.net framework	.NET Framework
+accessibility	Accessibility
+algorithm	Algorithm
+analytics	Analytics
+android development	Android Development
+angular	Angular
+apache hive	Apache Hive
+apache spark	Apache Spark
+api development	API Development
+architecture specific programming	Architecture Specific Programming
+artificial intelligence	AI
+asp.net core	ASP.NET Core
+asset management	Asset Management
+ast	AST
+authentication	Authentication
+automated testing	Automated Testing
+automation	Automation
+aws	AWS
+azure	Azure
+backend development	Backend Development
+benchmarking	Benchmarking
+bigquery	BigQuery
+build systems	Build Systems
+cassandra	Cassandra
+checksum algorithm	Checksum Algorithm
+cloud computing	Cloud Computing
+cloud infrastructure	Cloud Infrastructure
+cloud native technologies	Cloud Native Technologies
+cloud services	Cloud Services
+color theory	Color Theory
+computational geometry	Computational Geometry
+computer graphics	Computer Graphics
+computer vision	Computer Vision
+concurrency	Concurrency
+consensus algorithm	Consensus Algorithm
+container orchestration	Container Orchestration
+containerization	Containerization
+continuous integration/continuous deployment	CI/CD
+cpu architecture	CPU Architecture
+credential management	Credential Management
+cross platform compatibility	Cross Platform Compatibility
+cryptography	Cryptography
+cuda programming	CUDA Programming
+data analysis	Data Analysis
+data caching	Data Caching
+data compression	Data Compression
+data modeling	Data Modeling
+data privacy	Data Privacy
+data retrieval	Data Retrieval
+data science	Data Science
+data security	Data Security
+data visualization	Data Visualization
+data warehousing	Data Warehousing
+database management	Database Management
+deep learning	Deep Learning
+deployment strategies	Deployment Strategies
+design patterns	Design Patterns
+device driver development	Device Driver Development
+device management	Device Management
+devops	DevOps
+digital signal processing	Digital Signal Processing
+distributed systems	Distributed Systems
+django	Django
+dns management	DNS Management
+docker	Docker
+elasticsearch	Elasticsearch
+embedded systems	Embedded Systems
+entity framework	Entity Framework
+entity management	Entity Management
+ethereum	Ethereum
+etl	ETL
+event driven programming	Event-Driven Programming
+feature engineering	Feature Engineering
+financial modeling	Financial Modeling
+firmware development	Firmware Development
+flutter	Flutter
+frameworks	Frameworks
+frontend development	Frontend Development
+gas optimization	Gas Optimization
+geometric algorithm	Geometric Algorithm
+golang routines	Golang Routines
+google cloud platform	Google Cloud Platform
+gpu programming	GPU Programming
+graphql	GraphQL
+grpc	gRPC
+hadoop	Hadoop
+hardware abstraction layer	Hardware Abstraction Layer
+hibernate	Hibernate
+http	HTTP
+hugging face transformers	Hugging Face Transformers
+hyperparameter tuning	Hyperparameter Tuning
+identity management	Identity Management
+image processing	Image Processing
+infrastructure as code	Infrastructure As Code
+instruction set architecture	Instruction Set Architecture
+integration testing	Integration Testing
+ios development	iOS Development
+jwt	JWT
+kafka	Kafka
+key management	Key Management
+kubernetes	Kubernetes
+lambda expressions	Lambda Expressions
+layout management	Layout Management
+linq	LINQ
+linux system programming	Linux System Programming
+low level hardware interaction	Low-Level Hardware Interaction
+machine learning	ML
+macos development	macOS Development
+mathematics	Mathematics
+mathematics for computer graphics	Mathematics For Computer Graphics
+maven	Maven
+message handling	Message Handling
+metrics and monitoring	Metrics And Monitoring
+microservices architecture	Microservices Architecture
+minification	Minification
+mobile development	Mobile Development
+model deployment	Model Deployment
+mongodb	MongoDB
+multithreading	Multithreading
+mutual tls	Mutual TLS
+mysql	MySQL
+natural language processing	NLP
+network protocols	Network Protocols
+network security	Network Security
+networking	Networking
+neural networks	Neural Networks
+node.js	Node.js
+numpy	NumPy
+oauth 2.0	OAuth 2.0
+object oriented design	Object Oriented Design
+object relational mapping	ORM
+observability	Observability
+opengl	OpenGL
+openid connect	OpenID Connect
+opentelemetry	OpenTelemetry
+packet processing	Packet Processing
+pandas	Pandas
+parallel computing	Parallel Computing
+payment processing	Payment Processing
+peer to peer networking	Peer-to-Peer Networking
+performance testing	Performance Testing
+pipeline management	Pipeline Management
+policy management	Policy Management
+postgresql	PostgreSQL
+powershell	PowerShell
+proguard	Proguard
+prometheus	Prometheus
+protobufs	Protobufs
+public key infrastructure	Public Key Infrastructure
+pytorch	PyTorch
+quantum computing	Quantum Computing
+randomization techniques	Randomization Techniques
+react	React
+redis	Redis
+redux	Redux
+reinforcement learning	Reinforcement Learning
+restful services	RESTful Services
+risk management	Risk Management
+robotics	Robotics
+role based access control	Role-Based Access Control
+rpc	RPC
+sampling techniques	Sampling Techniques
+sdk development	SDK Development
+search algorithm	Search Algorithm
+security best practices	Security Best Practices
+security protocols	Security Protocols
+selenium	Selenium
+service discovery	Service Discovery
+signature verification	Signature Verification
+solidity	Solidity
+spring framework	Spring Framework
+sql	SQL
+statistical analysis	Statistical Analysis
+statistical modeling	Statistical Modeling
+svg	SVG
+system monitoring	System Monitoring
+system programming	System Programming
+tcp/ip networking	TCP/IP Networking
+telemetry	Telemetry
+template metaprogramming	Template Metaprogramming
+tensorflow	TensorFlow
+terraform	Terraform
+testing frameworks	Testing Frameworks
+texture management	Texture Management
+time series analysis	Time Series Analysis
+transcoding	Transcoding
+ui design	UI Design
+unit testing	Unit Testing
+video processing	Video Processing
+virtual machine management	VM Management
+visual studio	Visual Studio
+vue.js	Vue.js
+vulkan api	Vulkan API
+web development	Web Development
+web security	Web Security
+webpack	Webpack
+widget development	Widget Development
+windows api	Windows API
+workflow management	Workflow Management

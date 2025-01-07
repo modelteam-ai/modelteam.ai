@@ -4,12 +4,13 @@ import pickle
 
 import numpy as np
 import torch
+import transformers
 from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 
-from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC
-from .utils import load_file_to_list, convert_list_to_index
+from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END
+from .utils import load_file_to_list, convert_list_to_index, load_skill_config
 
 
 def get_multi_label_classification_scores(arr, index, names):
@@ -71,15 +72,37 @@ def eval_llm_batch_with_scores_old(tokenizer, device, model, codes, new_tokens, 
     return skill_list, next_best_prob_list, soft_max_list
 
 
-def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT):
+def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limit=SKILL_PREDICTION_LIMIT,
+                               is_qwen=False):
+    if is_qwen:
+        new_codes = []
+        for prompt in codes:
+            messages = [
+                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+                {"role": "user", "content": f"{MT_START}{prompt}{MT_END}"}
+            ]
+            text = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            new_codes.append(text)
+        codes = new_codes
     skill_list = []
     next_best_prob_list = []
     soft_max_list = []
+    max_new_tokens = 2
+    score_index = 1
     with torch.no_grad():
-        input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
-            device)
-        output = model.generate(**input_tokens, max_new_tokens=2, return_dict_in_generate=True, output_scores=True,
-                                no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
+        if is_qwen:
+            input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True).to(device)
+            max_new_tokens = 1
+            score_index = 0
+        else:
+            input_tokens = tokenizer(codes, return_tensors="pt", padding=True, truncation=True, max_length=400).to(
+                device)
+        output = model.generate(**input_tokens, max_new_tokens=max_new_tokens, return_dict_in_generate=True,
+                                output_scores=True, no_repeat_ngram_size=3, do_sample=False, renormalize_logits=True)
     for i in range(len(codes)):
         score_map = {}
         soft_max_map = {}
@@ -87,7 +110,7 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
         words = []
         for j in new_tokens:
             word = tokenizer.decode(j)
-            score_map[word] = output.scores[1][i][j].item()
+            score_map[word] = output.scores[score_index][i][j].item()
             new_token_scores.append(score_map[word])
             words.append(word)
         soft_max_scores = softmax(new_token_scores)
@@ -108,6 +131,35 @@ def eval_llm_batch_with_scores(tokenizer, device, model, codes, new_tokens, limi
     return skill_list, next_best_prob_list, soft_max_list
 
 
+def smart_tokenizer_and_embedding_resize(
+        new_tokens: [],
+        tokenizer: transformers.PreTrainedTokenizer,
+        model: transformers.PreTrainedModel,
+        modify_embedding: bool = True,
+):
+    """Resize tokenizer and embedding.
+
+    Note: This is the unoptimized version that may make your embedding size not be divisible by 64.
+    """
+    num_new_tokens = tokenizer.add_tokens(new_tokens)
+    model.resize_token_embeddings(len(tokenizer))
+    if num_new_tokens > 0 and modify_embedding:
+        input_embeddings = model.get_input_embeddings().weight.data
+        output_embeddings = model.get_output_embeddings().weight.data
+
+        input_embeddings_avg = input_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
+        output_embeddings_avg = output_embeddings[:-num_new_tokens].mean(dim=0, keepdim=True)
+
+        input_embeddings[-num_new_tokens:] = input_embeddings_avg
+        output_embeddings[-num_new_tokens:] = output_embeddings_avg
+    vocabulary = tokenizer.get_vocab()
+    new_token_ids = set()
+    for word in new_tokens:
+        if word in vocabulary:
+            new_token_ids.add(vocabulary.get(word))
+    return tokenizer, new_token_ids
+
+
 def next_best_prob(word_probabilities, top_words):
     processed_words = set()
     next_best_words_probabilities = {}
@@ -123,33 +175,33 @@ def next_best_prob(word_probabilities, top_words):
 
 
 def get_tokenizer_with_new_tokens_and_update_model(checkpoint, skills_file, model):
+    is_qwen = "qwen" in checkpoint.lower()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    new_words = load_file_to_list(skills_file)
-    vocabulary = tokenizer.get_vocab().keys()
-    for word in new_words:
-        if word not in vocabulary:
-            tokenizer.add_tokens(word)
-    model.resize_token_embeddings(len(tokenizer))
-    vocabulary = tokenizer.get_vocab()
-    new_token_ids = set()
-    for word in new_words:
-        if word in vocabulary:
-            new_token_ids.add(vocabulary.get(word))
+    new_words = load_skill_config(skills_file, only_keys=True, return_set=False)
+    if is_qwen:
+        new_words.append(MT_START)
+        new_words.append(MT_END)
+        tokenizer.padding_side = 'left'
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+    # modify embedding only for Qwen models
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_words, tokenizer, model,
+                                                                    modify_embedding=is_qwen)
     return tokenizer, new_token_ids
 
 
 def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model):
+    is_qwen = "qwen" in checkpoint.lower()
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    vocabulary = tokenizer.get_vocab().keys()
-    for word in LIFE_OF_PY_BUCKETS:
-        if word not in vocabulary:
-            tokenizer.add_tokens(word)
-    model.resize_token_embeddings(len(tokenizer))
-    vocabulary = tokenizer.get_vocab()
-    new_token_ids = set()
-    for word in LIFE_OF_PY_BUCKETS:
-        if word in vocabulary:
-            new_token_ids.add(vocabulary.get(word))
+    if is_qwen:
+        new_tokens = LIFE_OF_PY_BUCKETS.copy()
+        new_tokens.append(MT_START)
+        new_tokens.append(MT_END)
+        tokenizer.padding_side = 'left'
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+    else:
+        new_tokens = LIFE_OF_PY_BUCKETS
+    tokenizer, new_token_ids = smart_tokenizer_and_embedding_resize(new_tokens, tokenizer, model,
+                                                                    modify_embedding=is_qwen)
     return tokenizer, new_token_ids
 
 
@@ -187,19 +239,25 @@ def get_hf_cache_path_if_present(model_name):
 
 
 def init_model(model_path, model_type, config, device):
-    base_llm = get_hf_cache_path_if_present(config["base_llm_model"]["path"])
     model_data = {"model_type": model_type, "model_tag": f"{model_type}::{model_path}"}
     if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
         model_path = get_hf_cache_path_if_present(model_path)
         skill_list = config["modelteam.ai"]["skill_list"]
         peft_config = PeftConfig.from_pretrained(model_path)
-        model = AutoModelForSeq2SeqLM.from_pretrained(
-            get_hf_cache_path_if_present(peft_config.base_model_name_or_path)).to(device)
+        base_model_path = get_hf_cache_path_if_present(peft_config.base_model_name_or_path)
+        base_llm = get_hf_cache_path_if_present(base_model_path)
+        is_qwen = 'qwen' in model_path.lower() or 'qwen' in base_model_path.lower()
+        if is_qwen:
+            model = AutoModelForCausalLM.from_pretrained(base_model_path, torch_dtype=torch.bfloat16).to(device)
+        else:
+            model = AutoModelForSeq2SeqLM.from_pretrained(base_model_path).to(device)
         if model_type == LIFE_OF_PY:
             tokenizer, new_tokens = get_life_of_py_tokenizer_with_new_tokens_and_update_model(base_llm, model)
         else:
             tokenizer, new_tokens = get_tokenizer_with_new_tokens_and_update_model(base_llm, skill_list, model)
         model = PeftModel.from_pretrained(model, model_path).to(device)
+        if is_qwen:
+            model.generation_config.pad_token_id = tokenizer.pad_token_id
         model.eval()
         model_data["model"] = model
         model_data["tokenizer"] = tokenizer
