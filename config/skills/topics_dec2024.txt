@@ -91,7 +91,7 @@ hugging face transformers	Hugging Face Transformers
 hyperparameter tuning	Hyperparameter Tuning
 identity management	Identity Management
 image processing	Image Processing
-infrastructure as code	Infrastructure as Code
+infrastructure as code	Infrastructure As Code
 instruction set architecture	Instruction Set Architecture
 integration testing	Integration Testing
 ios development	iOS Development
@@ -107,10 +107,10 @@ low level hardware interaction	Low-Level Hardware Interaction
 machine learning	ML
 macos development	macOS Development
 mathematics	Mathematics
-mathematics for computer graphics	Mathematics for Computer Graphics
+mathematics for computer graphics	Mathematics For Computer Graphics
 maven	Maven
 message handling	Message Handling
-metrics and monitoring	Metrics and Monitoring
+metrics and monitoring	Metrics And Monitoring
 microservices architecture	Microservices Architecture
 minification	Minification
 mobile development	Mobile Development
