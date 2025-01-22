@@ -9,7 +9,8 @@ from huggingface_hub import try_to_load_from_cache
 from peft import PeftConfig, PeftModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForCausalLM
 
-from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END
+from .constants import SKILL_PREDICTION_LIMIT, LIFE_OF_PY_BUCKETS, C2S, LIFE_OF_PY, I2S, MLC, MT_START, MT_END, \
+    LIFE_OF_PY_BUCKET_SIZE
 from .utils import load_file_to_list, convert_list_to_index, load_skill_config
 
 
@@ -206,12 +207,8 @@ def get_life_of_py_tokenizer_with_new_tokens_and_update_model(checkpoint, model)
 
 
 def get_life_of_py_bucket(change):
-    if change < 30:
-        return LIFE_OF_PY_BUCKETS[0]
-    else:
-        return LIFE_OF_PY_BUCKETS[1]
-    # bucket = LIFE_OF_PY_BUCKETS[change // 20]
-    # return bucket
+    bkt_id = min(change // LIFE_OF_PY_BUCKET_SIZE, len(LIFE_OF_PY_BUCKETS) - 1)
+    return LIFE_OF_PY_BUCKETS[bkt_id]
 
 
 def get_model_list(config, config_key):
