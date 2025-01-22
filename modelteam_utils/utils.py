@@ -3,7 +3,6 @@ import gzip
 import hashlib
 import math
 import os
-import random
 import re
 import subprocess
 from calendar import monthrange
@@ -201,6 +200,7 @@ def get_team_mates_key(u1, u2):
         return f"{u2}:{u1}"
 
 
+# this is same as in API. TODO: Create a common package shared by API and modelteam
 def anonymize(input_string, max_show_percent=0.5):
     if not input_string:
         return input_string
@@ -214,13 +214,27 @@ def anonymize(input_string, max_show_percent=0.5):
     first_chars = input_string[:2]
     last_chars = input_string[-2:]
     num_chars_to_show = max(0, math.ceil(num_chars * max_show_percent) - 4)
-    chance = num_chars_to_show / (num_chars - 4) if num_chars > 4 else 0
+    indices_to_show = set()
 
+    # Use a deterministic hash to decide which indices to reveal
+    hash_object = hashlib.sha256(input_string.encode())
+    hash_digest = hash_object.hexdigest()
+    hash_values = [int(hash_digest[i:i + 2], 16)
+                   for i in range(0, len(hash_digest), 2)]
+
+    # Select indices to show based on hash values
+    available_indices = list(range(2, num_chars - 2))
+    for hv in hash_values:
+        if len(indices_to_show) >= num_chars_to_show:
+            break
+        index = hv % len(available_indices)
+        indices_to_show.add(available_indices.pop(index))
+
+    # Construct the anonymized output
     output = first_chars
     for i in range(2, num_chars - 2):
-        if random.random() < chance and num_chars_to_show > 0:
+        if i in indices_to_show:
             output += input_string[i]
-            num_chars_to_show -= 1
         else:
             output += "*"
     output += last_chars
