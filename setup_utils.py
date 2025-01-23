@@ -32,7 +32,7 @@ def run_command(command, shell=False, show_spinner=False):
             if 'MallocStackLogging' in line:
                 continue
             if show_spinner:
-                sys.stdout.write("\033[K")
+                sys.stdout.write("\r   \r")  # Clear spinner before printing the output
             print(line, end='')
             logfile.write(line)
 
