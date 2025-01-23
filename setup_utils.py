@@ -1,25 +1,46 @@
+import itertools
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import threading
+import time
 import venv
 from datetime import datetime
 
+def spinner():
+    for char in itertools.cycle("|/-\\"):  # Spinner animation characters
+        if not spinning:  # Stop spinner when the flag is set to False
+            break
+        sys.stdout.write(f"\r{char} ")  # Write spinner character
+        sys.stdout.flush()
+        time.sleep(0.3)  # Control the speed of the spinner
+    sys.stdout.write("\r   \r")  # Clear spinner when done
 
-def run_command(command, shell=False):
+
+def run_command(command, shell=False, show_spinner=False):
+    global spinning
     date = datetime.now().strftime("%Y-%m-%d")
     with open(f"log_{date}.txt", "a") as logfile:
         process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if show_spinner:
+            spinning = True
+            spinner_thread = threading.Thread(target=spinner, daemon=True)
+            spinner_thread.start()
         for line in iter(process.stdout.readline, ''):
             if 'MallocStackLogging' in line:
                 continue
+            if show_spinner:
+                sys.stdout.write("\r   \r")  # Clear spinner before printing the output
             print(line, end='')
             logfile.write(line)
 
         process.stdout.close()
         return_code = process.wait()
-
+        if show_spinner:
+            spinning = False
+            spinner_thread.join()
         if return_code != 0:
             raise subprocess.CalledProcessError(return_code, command)
 
