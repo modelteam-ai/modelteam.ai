@@ -23,7 +23,6 @@ def run_command(command, shell=False, show_spinner=False):
     global spinning
     date = datetime.now().strftime("%Y-%m-%d")
     with open(f"log_{date}.txt", "a") as logfile:
-
         process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         if show_spinner:
             spinning = True
@@ -32,6 +31,8 @@ def run_command(command, shell=False, show_spinner=False):
         for line in iter(process.stdout.readline, ''):
             if 'MallocStackLogging' in line:
                 continue
+            if show_spinner:
+                sys.stdout.write("\033[K")
             print(line, end='')
             logfile.write(line)
 
