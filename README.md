@@ -115,9 +115,9 @@ python gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to
 ```
 e.g.
 
-`python gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5`
+```python gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5```
 
-`python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5`
+```python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5```
 
 - If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id separately
 
@@ -137,8 +137,8 @@ python sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 e.g.
 
 Mac/Windows
-`python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai`
+```python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai```
 
 Linux
-`python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode`
+```python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode```
 
