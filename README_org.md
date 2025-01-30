@@ -115,7 +115,7 @@ python setup.py
 
 Or
 
-> ls /Users/xyz/repos/<br>
+> $ ls /Users/xyz/repos/<br>
 > shastraw.ai<br>
 > shastraw.server<br>
 > modelteam.ai
