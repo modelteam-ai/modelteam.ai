@@ -107,36 +107,37 @@ python setup.py
 - For this step, no internet access is required. Everything stays on your local machine
 - Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g. `/Users/xyz/repo_list.txt`. This file will be used later as input.
   - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-```bash
-$ cat /Users/xyz/repo_list.txt
-/Users/xyz/shastraw.ai
-/Users/xyz/shastraw.server
-/Users/xyz/modelteam.ai
-```
+
+> $ cat /Users/xyz/repo_list.txt<br>
+> /Users/xyz/shastraw.ai<br>
+> /Users/xyz/shastraw.server<br>
+> /Users/xyz/modelteam.ai
+
 Or
-```bash
-ls /Users/xyz/repos/
-shastraw.ai
-shastraw.server
-modelteam.ai
-```
+
+> ls /Users/xyz/repos/<br>
+> shastraw.ai<br>
+> shastraw.server<br>
+> modelteam.ai
 
 - Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating profiles only for the team members who are
   actively contributing to the repositories and are relevant to the team's skills.
 - `git_email_id` should be the id you have in your git commits.
   - You can get this by using `git log` command as shown below
   - Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
-```bash
+``` 
 git log | grep XYZ | head -3
-Author: XYZ <userXYZ@org.ai>
-Author: XYZ <1234567+XYZ@users.noreply.github.com>
-Author: XYZ <userXYZ@org.ai>
 ```
+
+> Author: XYZ <userXYZ@org.ai><br>
+> Author: XYZ <1234567+XYZ@users.noreply.github.com><br>
+> Author: XYZ <userXYZ@org.ai><br>
+
 - Generates your team profile. Takes a list of git email ids or team name and optionally number of years to consider
 - Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
 - repo_list can be a file with list of repos or a directory containing all the repos
 
-```bash
+```
 python gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "team_name" [-n <number_of_years>]
 ```
 - e.g. `python gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t model_team -n 3`

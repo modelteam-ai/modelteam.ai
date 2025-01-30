@@ -84,19 +84,17 @@ python setup.py
   e.g. `/Users/xyz/repo_list.txt`. This file will be used later as input.
     - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
 
-```
-$ cat /Users/xyz/repo_list.txt
-/Users/xyz/shastraw.ai
-/Users/xyz/shastraw.server
-/Users/xyz/modelteam.ai
-```
+> $ cat /Users/xyz/repo_list.txt<br>
+> /Users/xyz/shastraw.ai<br>
+> /Users/xyz/shastraw.server<br>
+> /Users/xyz/modelteam.ai
+
 Or
-```
-ls /Users/xyz/repos/
-shastraw.ai
-shastraw.server
-modelteam.ai
-```
+
+> ls /Users/xyz/repos/<br>
+> shastraw.ai<br>
+> shastraw.server<br>
+> modelteam.ai
 
 - Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats. `git_email_id` should be the id you have in your git commits.
     - You can get this by using `git log` command as shown below
@@ -104,10 +102,11 @@ modelteam.ai
 
 ``` 
 git log | grep XYZ | head -3
-Author: XYZ <userXYZ@org.ai>
-Author: XYZ <1234567+XYZ@users.noreply.github.com>
-Author: XYZ <userXYZ@org.ai>
 ```
+> Author: XYZ <userXYZ@org.ai><br>
+> Author: XYZ <1234567+XYZ@users.noreply.github.com><br>
+> Author: XYZ <userXYZ@org.ai><br>
+
 - Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
 - repo_list can be a file with list of repos or a directory containing all the repos
 
