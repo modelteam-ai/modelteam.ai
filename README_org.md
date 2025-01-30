@@ -140,8 +140,9 @@ git log | grep XYZ | head -3
 ```
 python gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "team_name" [-n <number_of_years>]
 ```
-- e.g. `python gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t model_team -n 3`
-- e.g. `python gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3`
+e.g.
+> `python gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t model_team -n 3`
+> `python gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3`
 
 
 ### 3. Upload
