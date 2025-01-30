@@ -103,9 +103,9 @@ Or
 ``` 
 git log | grep XYZ | head -3
 ```
-> Author: XYZ <userXYZ@org.ai><br>
-> Author: XYZ <1234567+XYZ@users.noreply.github.com><br>
-> Author: XYZ <userXYZ@org.ai><br>
+> `Author: XYZ <userXYZ@org.ai>`<br>
+> `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
+> `Author: XYZ <userXYZ@org.ai>`<br>
 
 - Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
 - repo_list can be a file with list of repos or a directory containing all the repos

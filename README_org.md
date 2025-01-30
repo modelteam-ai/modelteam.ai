@@ -129,9 +129,9 @@ Or
 git log | grep XYZ | head -3
 ```
 
-> Author: XYZ <userXYZ@org.ai><br>
-> Author: XYZ <1234567+XYZ@users.noreply.github.com><br>
-> Author: XYZ <userXYZ@org.ai><br>
+> `Author: XYZ <userXYZ@org.ai>`<br>
+> `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
+> `Author: XYZ <userXYZ@org.ai>`<br>
 
 - Generates your team profile. Takes a list of git email ids or team name and optionally number of years to consider
 - Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
