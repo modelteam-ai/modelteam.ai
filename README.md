@@ -133,6 +133,10 @@ e.g.
 python sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 ```
 e.g.
-> `python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai` # For MacOS/Windows
-> `python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode` # For Linux
+
+Mac/Windows
+> `python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai`
+
+Linux
+> `python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode`
 
