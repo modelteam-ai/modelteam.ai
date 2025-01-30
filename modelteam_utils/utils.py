@@ -449,7 +449,7 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
         return
     lang_stats = user_profile[LANGS]
     all_skills = set()
-    all_good_skills = set()
+    all_good_skills = {}
     for lang in lang_stats.keys():
         monthly_stats = lang_stats[lang][TIME_SERIES]
         for month in monthly_stats.keys():
@@ -472,11 +472,16 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                         del model_stats[skill]
                     elif model_type == C2S:
                         # Ignore skills that are not present in C2S model results
-                        all_good_skills.add(skill)
+                        if skill not in all_good_skills:
+                            all_good_skills[skill] = 0
+                        max_score, min_score, sum_score, new_max_score, new_min_score, new_sum_score, \
+                            snippet_count, code_line_count, doc_line_count, is_skill_from_labeled_file = model_stats[
+                            skill]
+                        all_good_skills[skill] += code_line_count
     # Remove skills that are not present in any month
     for skill in all_skills:
         if skill in user_profile[SKILLS]:
-            if skill in manual_edits or skill not in all_good_skills:
+            if skill in manual_edits or skill not in all_good_skills or all_good_skills[skill] <= 50:
                 del user_profile[SKILLS][skill]
 
 
