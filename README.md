@@ -47,7 +47,8 @@ uploading to modelteam.ai.
 - Git (command line)
 - Turn off sleep mode so the script can run without interruptions
     - Optional: caffeine (for linux)
-- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (for Windows)
+- [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
+  for Windows)
 - Minimum 8GB RAM
 - ~15GB free disk space
 - You should have made contributions for a **minimum period of 3 months**.
@@ -81,7 +82,7 @@ python setup.py
 
 - For this step, no internet access is required. Everything stays on your local machine
 - Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g.
-  e.g. `/Users/xyz/repo_list.txt`. This file will be used later as input.
+  `/Users/xyz/repo_list.txt`. This file will be used later as input.
     - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
 
 > $ cat /Users/xyz/repo_list.txt<br>
@@ -96,23 +97,27 @@ Or
 > shastraw.server<br>
 > modelteam.ai
 
-- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats. `git_email_id` should be the id you have in your git commits.
+- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats. `git_email_id` should be the id you have in
+  your git commits.
     - You can get this by using `git log` command as shown below
     - Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
 ``` 
 git log | grep XYZ | head -3
 ```
+
 > `Author: XYZ <userXYZ@org.ai>`<br>
 > `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
 > `Author: XYZ <userXYZ@org.ai>`<br>
 
-- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look back in git history
+- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
+  back in git history
 - repo_list can be a file with list of repos or a directory containing all the repos
 
 ```
 python gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
 ```
+
 **Examples**
 
 ```
@@ -123,14 +128,17 @@ python gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5
 python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
-- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id separately
+- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
+  separately
 
 ### 3. Upload
 
-- Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file directly)
+- Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file
+  directly)
     - Remove any unwanted/confidential skills
     - Sign the JSON file using the key
-        - If you don't have a key, create an experience with the git email id in https://app.modelteam.ai/experience. The key will be generated for you
+        - If you don't have a key, create an experience with the git email id in https://app.modelteam.ai/experience.
+          The key will be generated for you
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 - If you are using linux server without GUI, use --cli_mode
@@ -138,14 +146,17 @@ python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github
 ```
 python sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 ```
+
 **Examples**
 
 Mac/Windows
+
 ```
 python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai
 ```
 
 Linux
+
 ```
 python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode
 ```
