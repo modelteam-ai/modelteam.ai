@@ -462,9 +462,11 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                 skills = list(model_stats.keys())
                 for skill in skills:
                     all_skills.add(skill)
+                    max_score, min_score, sum_score, new_max_score, new_min_score, new_sum_score, \
+                        snippet_count, code_line_count, doc_line_count, is_skill_from_labeled_file = model_stats[
+                        skill]
                     # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
-                    max_monthly_score = model_stats[skill][0]
-                    if max_monthly_score <= min_score_to_filter:
+                    if new_max_score <= min_score_to_filter:
                         del model_stats[skill]
                     elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS]
                                                        or skill in manual_edits):
@@ -474,14 +476,11 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                         # Ignore skills that are not present in C2S model results
                         if skill not in all_good_skills:
                             all_good_skills[skill] = 0
-                        max_score, min_score, sum_score, new_max_score, new_min_score, new_sum_score, \
-                            snippet_count, code_line_count, doc_line_count, is_skill_from_labeled_file = model_stats[
-                            skill]
                         all_good_skills[skill] += code_line_count
     # Remove skills that are not present in any month
     for skill in all_skills:
         if skill in user_profile[SKILLS]:
-            if skill in manual_edits or skill not in all_good_skills or all_good_skills[skill] <= 50:
+            if skill in manual_edits or skill not in all_good_skills or all_good_skills[skill] <= 100:
                 del user_profile[SKILLS][skill]
 
 
