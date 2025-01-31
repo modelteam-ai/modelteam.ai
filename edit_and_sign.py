@@ -194,6 +194,12 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         for skill in profile[STATS][SKILLS].keys():
             skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
     skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
+    if not os.path.exists(choices_file):
+        # mark bottom 30% as not relevant and others as relevant
+        default_choices = {skill: RELEVANT if idx < 0.7 * len(skills) else NOT_RELEVANT for idx, skill in
+                           enumerate(skills)}
+        with open(choices_file, 'w') as f:
+            json.dump(default_choices, f)
     if cli_mode:
         cli_choices(choices_file, email, repos, skills)
         return 0
@@ -388,4 +394,4 @@ if __name__ == "__main__":
             "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
-        sys.exit(1)
+        sys.exit(0)
