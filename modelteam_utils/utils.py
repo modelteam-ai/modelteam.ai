@@ -492,3 +492,8 @@ def yyyy_mm_to_half(yyyymm):
     yyyy = yyyymm // 100
     mm = yyyymm % 100
     return str(yyyy) + "H" + str((mm - 1) // 6 + 1)
+
+
+def trunc_string(s, max_len):
+    max_len = max_len - 3
+    return s if len(s) <= max_len else s[:max_len] + "..."

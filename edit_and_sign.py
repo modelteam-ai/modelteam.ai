@@ -10,6 +10,7 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
+from modelteam_utils.utils import trunc_string
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import compress_file, generate_hc
@@ -24,23 +25,16 @@ def get_skill_display_name(skill):
 
 
 class App(QWidget):
-    def __init__(self, email, repocsv, skills, choice_file):
+    def __init__(self, email, repocsv, skills, choice_file, default_choices):
         super().__init__()
 
         self.email = email
         self.repocsv = repocsv
         self.skills = skills
         self.choice_file = choice_file
+        self.default_choices = default_choices
         self.choices = {}
         self.init_ui()
-
-    def load_choices(self):
-        try:
-            with open(self.choice_file, 'r') as f:
-                choices_dict = json.load(f)
-                return choices_dict
-        except FileNotFoundError:
-            return {}
 
     def init_ui(self):
         self.setWindowTitle("Edit Profile")
@@ -65,11 +59,10 @@ class App(QWidget):
 <b>Repos:</b> {self.repocsv}<br>
 <b>Total Skills:</b> {len(self.skills)}</h4>
 <p style="font-size:12px; ">These are the skills that our models predicted after analyzing your code contributions.
-These skills will further be scored by another model on the server side. Please select the appropriate choice for each skill to help us improve our model.</p>
+<br/><b>These skills will further be scored by another model on the server side.</b></p>
 <p style="font-size:14px; ">
-1. <b>Relevant</b>: Keep in profile.
-<br>2. <b>Not Relevant</b>: Mark as not relevant and Remove from profile in the server.
-<br>3. <b>Top Secret</b>: Remove from profile and DON'T even send it to the server.
+<br><b>Not Relevant</b>: Our model will use this as feedback in future. Skill will be removed from your profile on the server.
+<br><b>Top Secret</b>: DON'T even send this skill it to the server.
 </p>
 </html>
 """)
@@ -91,10 +84,9 @@ These skills will further be scored by another model on the server side. Please 
         scroll_area.setWidget(scroll_content)
         self.add_choice_header(layout)
         layout.setSpacing(1)
-        prev_choices = self.load_choices()
         toggle = False
         for skill in self.skills:
-            self.add_choice_widget(scroll_layout, skill, prev_choices.get(skill, RELEVANT), toggle)
+            self.add_choice_widget(scroll_layout, skill, self.default_choices.get(skill, RELEVANT), toggle)
             toggle = not toggle
 
         layout.addWidget(scroll_area)
@@ -198,18 +190,19 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         # mark bottom 30% as not relevant and others as relevant
         default_choices = {skill: RELEVANT if idx < 0.7 * len(skills) else NOT_RELEVANT for idx, skill in
                            enumerate(skills)}
-        with open(choices_file, 'w') as f:
-            json.dump(default_choices, f)
+    else:
+        with open(choices_file, 'r') as f:
+            default_choices = json.load(f)
     if cli_mode:
-        cli_choices(choices_file, email, repos, skills)
+        cli_choices(choices_file, email, repos, skills, default_choices)
         return 0
     else:
         app = QApplication(sys.argv)
-        ex = App(email, ",".join(repos), skills, choices_file)
+        ex = App(email, ",".join(repos), skills, choices_file, default_choices)
         return app.exec_()
 
 
-def cli_choices(choices_file, email, repos, skills):
+def cli_choices(choices_file, email, repos, skills, choices_dict):
     # ANSI escape codes for text formatting
     RESET = '\033[0m'
     BOLD = '\033[1m'
@@ -224,43 +217,28 @@ def cli_choices(choices_file, email, repos, skills):
     print('\n')
 
     # Display the list of skills in 3 columns
-    print("Skills:")
-    number_of_columns = 3
-    total_skills = len(skills)
-    number_of_rows = (total_skills + number_of_columns - 1) // number_of_columns  # Ceiling division
-
-    # Arrange skills into columns
-    columns = [[] for _ in range(number_of_columns)]
-    for idx, skill in enumerate(skills):
-        column_index = idx % number_of_columns
-        skill_number = idx + 1
-        columns[column_index].append(f"{BOLD}{skill_number}{RESET}. {get_skill_display_name(skill)}")
-
-    # Pad columns to have equal length
-    max_col_length = max(len(col) for col in columns)
-    for col in columns:
-        while len(col) < max_col_length:
-            col.append('')
-
-    # Print the columns side by side
-    for row in range(max_col_length):
-        for col in columns:
-            print(f"{col[row]:<45}", end='')
-        print()
+    display_skills(BOLD, RESET, skills, choices_dict)
 
     # Initialize choices_dict with all skills marked as RELEVANT
-    choices_dict = {skill: RELEVANT for skill in skills}
+    # choices_dict = {skill: RELEVANT for skill in skills}
 
     # Loop to get user confirmation
-    print(f"\nBy default, all skills are marked as {UNDERLINE}Relevant{RESET} and will be kept in your profile.")
     print("Please select the skills you wish to remove or mark differently.\n")
     print("Options:")
+    print(f"{BOLD}Relevant{RESET}: Keep the skill in your profile.")
     print(f"{BOLD}Not Relevant{RESET}: Mark as not relevant and {BOLD}remove{RESET} from profile on the server.")
     print(f"{BOLD}Top Secret{RESET}: Remove from profile and {BOLD}DON'T{RESET} even send it to the server.\n")
     while True:
+        # Ask the user to enter the numbers of skills to mark as 'Relevant'
+        relevant_input = input(
+            f"\nEnter the numbers of skills to change to {BOLD}Relevant{RESET} (separated by commas):\n")
+        if relevant_input.strip():
+            relevant_numbers = set(int(num.strip()) for num in relevant_input.split(',') if num.strip().isdigit())
+        else:
+            relevant_numbers = set()
         # Ask the user to enter the numbers of skills to mark as 'Not Relevant'
         not_relevant_input = input(
-            f"\nEnter the numbers of skills to mark as {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip):\n")
+            f"\nEnter the numbers of skills to change to {BOLD}Not Relevant{RESET} (separated by commas, or press Enter to skip):\n")
         if not_relevant_input.strip():
             not_relevant_numbers = set(
                 int(num.strip()) for num in not_relevant_input.split(',') if num.strip().isdigit())
@@ -275,15 +253,17 @@ def cli_choices(choices_file, email, repos, skills):
         else:
             top_secret_numbers = set()
 
-        # Update choices_dict based on user input
-        not_relevant_skills = []
-        top_secret_skills = []
+        for num in relevant_numbers:
+            if 1 <= num <= len(skills):
+                skill = skills[num - 1]
+                choices_dict[skill] = RELEVANT
+            else:
+                print(f"Invalid skill number: {num}")
 
         for num in not_relevant_numbers:
             if 1 <= num <= len(skills):
                 skill = skills[num - 1]
                 choices_dict[skill] = NOT_RELEVANT
-                not_relevant_skills.append(get_skill_display_name(skill))
             else:
                 print(f"Invalid skill number: {num}")
 
@@ -291,29 +271,12 @@ def cli_choices(choices_file, email, repos, skills):
             if 1 <= num <= len(skills):
                 skill = skills[num - 1]
                 choices_dict[skill] = TOP_SECRET
-                top_secret_skills.append(get_skill_display_name(skill))
             else:
                 print(f"Invalid skill number: {num}")
 
-        # Remove duplicates in case a skill is marked both 'Not Relevant' and 'Top Secret'
-        not_relevant_skills = [skill for skill in not_relevant_skills if skill not in top_secret_skills]
-
         # Confirmation of skills marked for removal
-        print("\nConfirmation:")
-        if not_relevant_skills:
-            print("Skills marked as 'Not Relevant' and will be removed from your profile on the server:")
-            for skill in not_relevant_skills:
-                print(f"- {skill}")
-        else:
-            print("No skills marked as 'Not Relevant'.")
-
-        if top_secret_skills:
-            print("\nSkills marked as 'Top Secret' and will not be sent to the server:")
-            for skill in top_secret_skills:
-                print(f"- {skill}")
-        else:
-            print("\nNo skills marked as 'Top Secret'.")
-
+        print("\nUpdated Status:")
+        display_skills(BOLD, RESET, skills, choices_dict)
         # Ask user to confirm or re-enter selections
         confirmation = input("\nAre you satisfied with these selections? (yes/no):\n").strip().lower()
         if confirmation in ['yes', 'y']:
@@ -324,6 +287,37 @@ def cli_choices(choices_file, email, repos, skills):
     # Save the choices to the file
     with open(choices_file, 'w') as f:
         json.dump(choices_dict, f)
+
+
+def display_skills(BOLD, RESET, skills, choices):
+    print("Skills:")
+    number_of_columns = 3
+    total_skills = len(skills)
+    number_of_rows = (total_skills + number_of_columns - 1) // number_of_columns  # Ceiling division
+    # Arrange skills into columns
+    columns = [[] for _ in range(number_of_columns)]
+    for idx, skill in enumerate(skills):
+        column_index = idx % number_of_columns
+        skill_number = idx + 1
+        ch = choices.get(skill, RELEVANT)
+        if ch == NOT_RELEVANT:
+            ch = "NR"
+        elif ch == TOP_SECRET:
+            ch = "TS"
+        else:
+            ch = "R"
+        display_name = f"{BOLD}{skill_number}{RESET}. {trunc_string(get_skill_display_name(skill), 40)} ({ch})"
+        columns[column_index].append(display_name)
+    # Pad columns to have equal length
+    max_col_length = max(len(col) for col in columns)
+    for col in columns:
+        while len(col) < max_col_length:
+            col.append('')
+    # Print the columns side by side
+    for row in range(max_col_length):
+        for col in columns:
+            print(f"{col[row]:<45}", end='')
+        print()
 
 
 def apply_choices(merged_profile, choices_file, edited_file):
@@ -386,12 +380,13 @@ if __name__ == "__main__":
         final_output_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.json.gz")
         compress_file(edited_file, final_output_file)
         generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
+        print()
+        print(
+            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
         print('*' * 50)
         print("Please upload the following file to \033[94mhttps://app.modelteam.ai/experience\033[0m")
         print(final_output_file)
         print('*' * 50)
-        print(
-            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
-        sys.exit(0)
+        sys.exit(1)
