@@ -466,7 +466,8 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                         snippet_count, code_line_count, doc_line_count, is_skill_from_labeled_file = model_stats[
                         skill]
                     # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
-                    if new_max_score <= min_score_to_filter or max_score <= min_score_to_filter * 1.5:
+                    if (max_score <= min_score_to_filter or
+                            (code_line_count < 100 and max_score <= 2 * min_score_to_filter)):
                         del model_stats[skill]
                     elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS]
                                                        or skill in manual_edits):
