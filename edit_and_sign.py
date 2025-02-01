@@ -185,8 +185,10 @@ def edit_profile(merged_profile, choices_file, cli_mode):
     for profile in merged_profile[PROFILES]:
         repos.append(profile[REPO])
         for skill in profile[STATS][SKILLS].keys():
-            skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
+            skills[skill] = skills.get(skill, 0) + profile[STATS][SKILLS][skill]
     skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
+    avg_count = sum(skills.values()) / len(skills)
+    print("Average count: ", avg_count)
     if not os.path.exists(choices_file):
         # mark bottom 30% as not relevant and others as relevant
         default_choices = {skill: RELEVANT if idx < 0.7 * len(skills) else NOT_RELEVANT for idx, skill in
