@@ -25,7 +25,7 @@ def get_skill_display_name(skill):
 
 
 class App(QWidget):
-    def __init__(self, email, repocsv, skills, choice_file, default_choices):
+    def __init__(self, email, repocsv, skills, choice_file, default_choices, skills_dict):
         super().__init__()
 
         self.email = email
@@ -34,6 +34,7 @@ class App(QWidget):
         self.choice_file = choice_file
         self.default_choices = default_choices
         self.choices = {}
+        self.skills_dict = skills_dict
         self.init_ui()
 
     def init_ui(self):
@@ -148,7 +149,7 @@ class App(QWidget):
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
-        label = QLabel(get_skill_display_name(skill))
+        label = QLabel(get_skill_display_name(skill) + "-" + str(self.skills_dict[skill]))
         label.setFixedWidth(200)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
@@ -185,7 +186,7 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         repos.append(profile[REPO])
         for skill in profile[STATS][SKILLS].keys():
             skills[skill] = max(skills.get(skill, 0), profile[STATS][SKILLS][skill])
-    skills = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
+    skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
     if not os.path.exists(choices_file):
         # mark bottom 30% as not relevant and others as relevant
         default_choices = {skill: RELEVANT if idx < 0.7 * len(skills) else NOT_RELEVANT for idx, skill in
@@ -194,11 +195,11 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         with open(choices_file, 'r') as f:
             default_choices = json.load(f)
     if cli_mode:
-        cli_choices(choices_file, email, repos, skills, default_choices)
+        cli_choices(choices_file, email, repos, skill_list, default_choices)
         return 0
     else:
         app = QApplication(sys.argv)
-        ex = App(email, ",".join(repos), skills, choices_file, default_choices)
+        ex = App(email, ",".join(repos), skill_list, choices_file, default_choices, skills)
         return app.exec_()
 
 
