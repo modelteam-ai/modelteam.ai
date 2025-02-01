@@ -188,11 +188,11 @@ def edit_profile(merged_profile, choices_file, cli_mode):
             skills[skill] = skills.get(skill, 0) + profile[STATS][SKILLS][skill]
     skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
     avg_count = sum(skills.values()) / len(skills)
-    print("Average count: ", avg_count)
+    print("Average count: ", avg_count, flush=True)
     if not os.path.exists(choices_file):
         # mark bottom 30% as not relevant and others as relevant
-        default_choices = {skill: RELEVANT if idx < 0.7 * len(skills) else NOT_RELEVANT for idx, skill in
-                           enumerate(skills)}
+        default_choices = {skill: RELEVANT if idx < 0.7 * len(skill_list) else NOT_RELEVANT for idx, skill in
+                           enumerate(skill_list)}
     else:
         with open(choices_file, 'r') as f:
             default_choices = json.load(f)
