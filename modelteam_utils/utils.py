@@ -466,9 +466,12 @@ def filter_skills(user_profile, min_scores, manual_edits=set()):
                         snippet_count, code_line_count, doc_line_count, is_skill_from_labeled_file = model_stats[
                         skill]
                     # All skills should be in changes, so setting default to TOP_SECRET, so it will be removed
-                    if (max_score <= min_score_to_filter or
-                            (code_line_count < 100 and max_score <= 2 * min_score_to_filter)):
+                    if max_score <= min_score_to_filter:
                         del model_stats[skill]
+                        if skill in user_profile[SKILLS]:
+                            user_profile[SKILLS][skill] -= code_line_count
+                            if user_profile[SKILLS][skill] < 0:
+                                user_profile[SKILLS][skill] = 0
                     elif model_type != LIFE_OF_PY and (skill not in user_profile[SKILLS]
                                                        or skill in manual_edits):
                         # Ignore skills that are not present in user profile (No C2S) or top secret skills
@@ -493,3 +496,8 @@ def yyyy_mm_to_half(yyyymm):
     yyyy = yyyymm // 100
     mm = yyyymm % 100
     return str(yyyy) + "H" + str((mm - 1) // 6 + 1)
+
+
+def trunc_string(s, max_len):
+    max_len = max_len - 3
+    return s if len(s) <= max_len else s[:max_len] + "..."

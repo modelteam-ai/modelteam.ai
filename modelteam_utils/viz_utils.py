@@ -9,7 +9,7 @@ from reportlab.pdfgen import canvas
 from wordcloud import WordCloud
 
 from .constants import USER, REPO, STATS, SKILLS, LANGS, TIME_SERIES, ADDED, DELETED, PROFILES, NR_SKILLS
-from .utils import get_extension_to_language_map, yyyy_mm_to_quarter
+from .utils import get_extension_to_language_map, yyyy_mm_to_quarter, trunc_string
 
 
 def generate_tag_cloud(skill_map, file_name):
@@ -47,11 +47,6 @@ def generate_ts_plot(ts_stats, file_name, language, quarters):
     plt.grid(True, axis='y', linestyle='-')
     plt.tight_layout()
     plt.savefig(file_name)
-
-
-def trunc_string(s, max_len):
-    max_len = max_len - 3
-    return s if len(s) <= max_len else s[:max_len] + "..."
 
 
 def generate_repo_plot(repo_qtr_stats, quarters, repo_stats_file_name):
