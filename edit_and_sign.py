@@ -188,8 +188,8 @@ def edit_profile(merged_profile, choices_file, cli_mode):
     avg_count = sum(skills.values()) / len(skills)
     threshold = 0.2 * avg_count
     bad_skills = [skill for skill in skills if skills[skill] < threshold]
-    print("Average count: ", avg_count, flush=True)
-    print("Bad skills: ", bad_skills, flush=True)
+    # print("Average count: ", avg_count, flush=True)
+    # print("Bad skills: ", bad_skills, flush=True)
     for s in bad_skills:
         del skills[s]
     skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
