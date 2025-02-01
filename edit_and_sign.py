@@ -25,7 +25,7 @@ def get_skill_display_name(skill):
 
 
 class App(QWidget):
-    def __init__(self, email, repocsv, skills, choice_file, default_choices, skills_dict):
+    def __init__(self, email, repocsv, skills, choice_file, default_choices):
         super().__init__()
 
         self.email = email
@@ -34,7 +34,6 @@ class App(QWidget):
         self.choice_file = choice_file
         self.default_choices = default_choices
         self.choices = {}
-        self.skills_dict = skills_dict
         self.init_ui()
 
     def init_ui(self):
@@ -149,7 +148,7 @@ class App(QWidget):
         frame_layout = QHBoxLayout(frame)
         frame_layout.setContentsMargins(10, 0, 10, 0)
 
-        label = QLabel(get_skill_display_name(skill) + "-" + str(self.skills_dict[skill]))
+        label = QLabel(get_skill_display_name(skill))
         label.setFixedWidth(200)
         label.setWordWrap(True)
         frame_layout.addWidget(label)
@@ -186,23 +185,27 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         repos.append(profile[REPO])
         for skill in profile[STATS][SKILLS].keys():
             skills[skill] = skills.get(skill, 0) + profile[STATS][SKILLS][skill]
-    skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
     avg_count = sum(skills.values()) / len(skills)
+    threshold = 0.2 * avg_count
+    bad_skills = [skill for skill in skills if skills[skill] < threshold]
     print("Average count: ", avg_count, flush=True)
+    print("Bad skills: ", bad_skills, flush=True)
+    for s in bad_skills:
+        del skills[s]
+    skill_list = sorted(skills.keys(), key=lambda x: skills[x], reverse=True)
     if not os.path.exists(choices_file):
         # mark bottom 30% as not relevant and others as relevant
-        default_choices = {skill: RELEVANT if idx < 0.7 * len(skill_list) else NOT_RELEVANT for idx, skill in
-                           enumerate(skill_list)}
+        default_choices = {skill: RELEVANT if skills[skill] > 0.4 * avg_count else NOT_RELEVANT for skill in skill_list}
     else:
         with open(choices_file, 'r') as f:
             default_choices = json.load(f)
     if cli_mode:
         cli_choices(choices_file, email, repos, skill_list, default_choices)
-        return 0
+        return 0, bad_skills
     else:
         app = QApplication(sys.argv)
-        ex = App(email, ",".join(repos), skill_list, choices_file, default_choices, skills)
-        return app.exec_()
+        ex = App(email, ",".join(repos), skill_list, choices_file, default_choices)
+        return app.exec_(), bad_skills
 
 
 def cli_choices(choices_file, email, repos, skills, choices_dict):
@@ -323,16 +326,17 @@ def display_skills(BOLD, RESET, skills, choices):
         print()
 
 
-def apply_choices(merged_profile, choices_file, edited_file):
+def apply_choices(merged_profile, choices_file, edited_file, bad_skills):
     utc_now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     with open(edited_file, "w") as f2:
         with open(choices_file, 'r') as f3:
             choices_dict = json.load(f3)
         non_relevant_skills = [skill for skill in choices_dict if choices_dict[skill] == NOT_RELEVANT]
         top_secret_set = {skill for skill in choices_dict if choices_dict[skill] == TOP_SECRET}
+        skills_to_remove = top_secret_set.union(bad_skills)
         for profile in merged_profile[PROFILES]:
             stats = profile[STATS]
-            filter_skills(stats, {}, top_secret_set)
+            filter_skills(stats, {}, skills_to_remove)
             profile[NR_SKILLS] = non_relevant_skills
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
@@ -372,13 +376,13 @@ if __name__ == "__main__":
     if display_t_and_c(merged_profile[USER]) != "y":
         print("Please accept the terms and conditions to proceed.")
         sys.exit(0)
-    result = edit_profile(merged_profile, choices_file, args.cli_mode)
+    result, bad_skills = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         edited_file = os.path.join(args.profile_path, f"mt_stats_{today}.json")
         print(f"Edited file: {edited_file}")
-        apply_choices(merged_profile, choices_file, edited_file)
+        apply_choices(merged_profile, choices_file, edited_file, bad_skills)
         hc = sha256_hash(generate_hc(edited_file) + args.user_key)
         final_output_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.json.gz")
         compress_file(edited_file, final_output_file)
