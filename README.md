@@ -41,7 +41,7 @@ uploading to modelteam.ai.
 
 ## Prerequisites
 
-- Python 3.7 or higher
+- Python 3.9 or higher
 - Pip
 - Python-venv (if not included in Python installation)
 - Git (command line)
