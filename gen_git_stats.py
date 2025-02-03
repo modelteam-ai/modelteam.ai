@@ -56,7 +56,7 @@ def main():
         f.write(output_path)
 
     print(f"Please run the following command to edit and sign your stats file:")
-    print(f"\033[92mpython sign_my_file.py -g {git_email_id} -k <key> [--cli_mode]\033[0m")
+    print(f"\033[92mpython3 sign_my_file.py -g {git_email_id} -k <key> [--cli_mode]\033[0m")
 
 
 if __name__ == "__main__":

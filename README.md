@@ -75,12 +75,15 @@ mkdir ~/modelteam
 cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
-python setup.py
+python3 setup.py
 ```
 
 ### 2 Generate your skill stats
 
 - For this step, no internet access is required. Everything stays on your local machine
+
+#### 2.1 Repo List
+
 - Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g.
   `/Users/xyz/repo_list.txt`. This file will be used later as input.
     - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
@@ -97,10 +100,12 @@ Or
 > shastraw.server<br>
 > modelteam.ai
 
-- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats. `git_email_id` should be the id you have in
-  your git commits.
-    - You can get this by using `git log` command as shown below
-    - Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
+#### 2.2 Git Email ID
+
+`git_email_id` should be the id you have in
+your git commits.
+- You can get this by using `git log` command as shown below
+- Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
 ``` 
 git log | grep XYZ | head -3
@@ -110,22 +115,25 @@ git log | grep XYZ | head -3
 > `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
 > `Author: XYZ <userXYZ@org.ai>`<br>
 
+#### 2.3 Generate Stats
+
+- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats.
 - Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
   back in git history
 - repo_list can be a file with list of repos or a directory containing all the repos
 
 ```
-python gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
+python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
 ```
 
 **Examples**
 
 ```
-python gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5
+python3 gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5
 ```
 
 ```
-python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
+python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
 - If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
@@ -144,7 +152,7 @@ python gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github
 - If you are using linux server without GUI, use --cli_mode
 
 ```
-python sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
+python3 sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 ```
 
 **Examples**
@@ -152,12 +160,12 @@ python sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 Mac/Windows
 
 ```
-python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai
+python3 sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai
 ```
 
 Linux
 
 ```
-python sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode
+python3 sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode
 ```
 
