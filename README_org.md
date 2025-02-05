@@ -124,7 +124,7 @@ Or
 > shastraw.server<br>
 > modelteam.ai
 
-#### 2.2 Git Email ID (Optional)
+#### 2.2 Git Email ID (Optional, if you want to generate profile only for specific individuals)
 
 - `git_email_id` should be the id you have in your git commits.
     - You can get this by using `git log` command as shown below
