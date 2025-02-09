@@ -841,3 +841,6 @@ if __name__ == "__main__":
             with open(pdf_stats_file, "w") as f:
                 json.dump(git_parser.pdf_stats, f)
     print(f"Processed {cnt} out of {len(folder_list)}")
+    if cnt == 0:
+        print("No valid repos found")
+        exit(1)
