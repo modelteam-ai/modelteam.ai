@@ -348,7 +348,7 @@ def display_t_and_c(email_id):
     t_and_c = ["\nI certify that,",
                f"\t1. I am the owner of the id {email_id} associated with this profile",
                "\t2. I own the code contributions associated with this id",
-               "\t3. I will remove any confidential skills from the profile before submitting"]
+               "\t3. I will remove any confidential skills from the profile in this step before uploading"]
     res = input("\n".join(t_and_c) + "\nEnter \"Y\" to proceed: \n")
     return res.lower()
 
