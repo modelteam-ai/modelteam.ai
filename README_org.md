@@ -147,7 +147,7 @@ git log | grep XYZ | head -3
 - repo_list can be a file with list of repos or a directory containing all the repos
 
 ```
-python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "team_name" [-n <number_of_years>]
+python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]
 ```
 
 **Examples**
@@ -159,6 +159,8 @@ python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" 
 ```
 python3 gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3
 ```
+
+- **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
 
 ### 3. Upload
 

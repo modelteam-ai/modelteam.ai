@@ -138,6 +138,7 @@ python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.githu
 
 - If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
   separately
+- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
 ### 3. Upload
 
