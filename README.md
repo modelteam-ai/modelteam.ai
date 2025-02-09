@@ -108,9 +108,9 @@ your git commits.
 - Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
 ``` 
-git log | grep XYZ | head -3
+git log | grep username | head
 ```
-
+> `git log | grep XYZ | head -3`
 > `Author: XYZ <userXYZ@org.ai>`<br>
 > `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
 > `Author: XYZ <userXYZ@org.ai>`<br>
