@@ -111,18 +111,20 @@ python3 setup.py
 - Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g.
   `/Users/xyz/repo_list.txt`. This file will be used later as input.
     - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
+      - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2 etc.)
+      - In this case, you need to create a file with the list of repo paths
 
 > $ cat /Users/xyz/repo_list.txt<br>
-> /Users/xyz/shastraw.ai<br>
-> /Users/xyz/shastraw.server<br>
-> /Users/xyz/modelteam.ai
+> /Users/xyz/backend<br>
+> /Users/xyz/frontend<br>
+> /Users/xyz/api
 
 Or
 
 > $ ls /Users/xyz/repos/<br>
-> shastraw.ai<br>
-> shastraw.server<br>
-> modelteam.ai
+> backend<br>
+> frontend<br>
+> api
 
 #### 2.2 Git Email ID (Optional, if you want to generate profile only for specific individuals)
 
@@ -131,9 +133,9 @@ Or
     - Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
 
 ``` 
-git log | grep XYZ | head -3
+git log | grep username | head
 ```
-
+> `git log | grep XYZ | head -3`
 > `Author: XYZ <userXYZ@org.ai>`<br>
 > `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
 > `Author: XYZ <userXYZ@org.ai>`<br>
