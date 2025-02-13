@@ -59,6 +59,7 @@ uploading to modelteam.ai.
 
 **For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
 
+- Create an account in [ModelTeam](https://app.modelteam.ai/)
 - Run the following commands to generate your profile.
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**

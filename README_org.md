@@ -82,7 +82,7 @@ uploading to modelteam.ai.
 [![Build your Team profile](images/orgVideo.png)](https://www.youtube.com/watch?v=JDGxgT9rwo0)
 
 **For Individuals to Generate their profiles, refer to [Profile Generation](README.md)**
-
+- Create an account in [ModelTeam](https://app.modelteam.ai/org/)
 - Run the following commands to generate your profile
     - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
       a lot of resources**
