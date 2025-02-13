@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+  <img src="images/sampleProfile.png" alt="modelteam">
 </div>
 
 At **[ModelTeam](https://modelteam.ai)**, we develop proprietary Large Language Models (LLMs) to evaluate engineers’

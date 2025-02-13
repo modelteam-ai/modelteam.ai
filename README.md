@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/modelteam_logo_blk.png" alt="modelteam">
+  <img src="images/sampleProfile.png" alt="modelteam">
 </div>
 
 **[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate &
