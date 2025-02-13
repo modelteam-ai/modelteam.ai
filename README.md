@@ -61,8 +61,6 @@ uploading to modelteam.ai.
 
 - Create an account in [ModelTeam](https://app.modelteam.ai/)
 - Run the following commands to generate your profile.
-    - **IMPORTANT: Run this in a night-time or when you are not using the computer as it will take some time and consume
-      a lot of resources**
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
