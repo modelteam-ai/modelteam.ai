@@ -3,7 +3,7 @@
 </div>
 
 **[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate &
-showcase their skills.
+showcase their skills. ([Sample Profile](https://app.modelteam.ai/profile?id=1da842a06520c30722ff3efb96d67a482cd689e6d43b87c882d4b690975a7c31))
 Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
 Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
 
