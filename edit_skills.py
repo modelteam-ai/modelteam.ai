@@ -1,8 +1,7 @@
 import argparse
-import os
 import sys
 
-from modelteam.modelteam_utils.utils import sha256_hash
+from modelteam_utils.utils import sha256_hash
 from setup_utils import get_python_bin, run_command, get_profile_path_file_name
 
 
