@@ -143,18 +143,15 @@ python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.githu
 
 ### 3. Upload
 
-- Verify the generated skill stats file and edit it using [sign_my_file.py](sign_my_file.py) (Don't edit the JSON file
+- Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
   directly)
-    - Remove any unwanted/confidential skills
-    - Sign the JSON file using the key
-        - If you don't have a key, create an experience with the git email id in https://app.modelteam.ai/experience.
-          The key will be generated for you
+    - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 - If you are using linux server without GUI, use --cli_mode
 
 ```
-python3 sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
+python3 edit_skills.py -g <git_email_id> [--cli_mode]
 ```
 
 **Examples**
@@ -162,12 +159,12 @@ python3 sign_my_file.py -k <key> -g <git_email_id> [--cli_mode]
 Mac/Windows
 
 ```
-python3 sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g userXYZ@org.ai
+python3 edit_skills.py -g userXYZ@org.ai
 ```
 
 Linux
 
 ```
-python3 sign_my_file.py -k 2b7e151628aed2a6abf7158809cf4f3c -g 1234567+XYZ@users.noreply.github.com --cli_mode
+python3 edit_skills.py -g 1234567+XYZ@users.noreply.github.com --cli_mode
 ```
 
