@@ -39,13 +39,13 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 - You should have made contributions for a **minimum period of 3 months**.
 
 ## Getting Started
-### Extract Skills & Stats from your Code to build your profile
 
 ### Extract Skills & Stats from your Code to build your profile
 
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
 **For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
+
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
