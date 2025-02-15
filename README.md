@@ -1,43 +1,28 @@
 <div align="center">
-  <img src="images/sampleProfile.png" alt="modelteam">
+  <img src="images/sampleProfile.png" alt="ModelTeam">
 </div>
 
-**[ModelTeam](https://modelteam.ai)** is a cutting-edge AI-powered platform revolutionizing how engineers can validate &
-showcase their skills. ([Sample Profile](https://app.modelteam.ai/profile?id=1da842a06520c30722ff3efb96d67a482cd689e6d43b87c882d4b690975a7c31))
-Our AI platform extracts insights from engineers' day-to-day work products, including code and technical documentation.
-Thereby, ModelTeam provides a comprehensive and accurate assessment of engineers' skills, expertise, and coding quality.
+# ModelTeam: AI-Powered Skill Validation for Engineers
 
-ModelTeam is built on a robust foundation of training data from over a million engineers' contributions to open-source
-projects, spanning 9 programming languages.
+**[ModelTeam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
+By analyzing real-world coding contributions, ModelTeam provides insights into expertise and code quality.
 
-## Confidentiality & Security
+[View Sample Profile](https://app.modelteam.ai/profile?id=1da842a06520c30722ff3efb96d67a482cd689e6d43b87c882d4b690975a7c31)
 
-We understand the importance of confidentiality and security of your code and data. ModelTeam.ai does not transfer any
-of the code or data out of your local machine. Models and AI algorithms are downloaded to your local machine and the
-code is executed locally.
+ModelTeam is trained on contributions from over a million engineers across multiple open-source projects, supporting
+analysis in **15+ programming languages**.
 
-The generated profile contains only the metadata and predicted skills. Even some of those skills can be removed before
-uploading to modelteam.ai.
+## Security & Privacy
+
+Your code and data remain **on your local machine**. The AI models run locally, ensuring no data is transferred
+externally. The generated profile contains only metadata and predicted skills, with an option to remove specific skills
+before uploading.
 
 ## Supported Languages
 
-- Python
-- Javascript
-- Typescript
-- Java
-- Go
-- C
-- C++
-- PHP
-- Ruby
-- C#
-- Rust
-- Scala
-- Swift
-- Kotlin
-- Lua
-- Dart
-- Elixir
+Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Swift, Kotlin, Lua, Dart, Elixir
+
+---
 
 ## Prerequisites
 
@@ -55,78 +40,79 @@ uploading to modelteam.ai.
 
 ## Getting Started
 
+### Extract Skills & Stats from your Code to build your profile
+
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
 **For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
 
-- Create an account in [ModelTeam](https://app.modelteam.ai/)
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
-### 1. Setup
-
-- Run [setup.py](setup.py) script to download the dependencies and models to your local machine
-- This will create a virtual environment and install all the dependencies. It will not affect your system python.
+### 1. Install ModelTeam Locally
 
 ```
-mkdir ~/modelteam
-cd ~/modelteam
+mkdir ~/modelteam && cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 python3 setup.py
 ```
 
-### 2 Generate your skill stats
+This script:
 
-- For this step, no internet access is required. Everything stays on your local machine
+- Sets up a **virtual environment**
+- Installs **dependencies**
+- Downloads **AI models**
+
+### 2 Extract Skills from Your Code
+
+- For this step, no internet access is required. The script will analyze your git history to extract skills and stats
 - `python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]`
 
-#### 2.1 Repo List
+#### Defining Your Repositories
 
-- Clone the repo to your local machine and add the full paths to a text file, one line for each repo. e.g.
-  `/Users/xyz/repo_list.txt`. This file will be used later as input.
-    - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-      - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2 etc.)
-      - In this case, you need to create a file with the list of repo paths
+- Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
 
 > $ cat /Users/xyz/repo_list.txt<br>
 > /Users/xyz/backend<br>
 > /Users/xyz/frontend<br>
 > /Users/xyz/api
 
-Or
+- Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
+    - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2
+      etc.)
+    - In this case, you need to create a file with the list of repo paths as shown above
 
 > $ ls /Users/xyz/repos/<br>
 > backend<br>
 > frontend<br>
 > api
 
-#### 2.2 Git Email ID
+#### Finding Your Git Email ID
 
-`git_email_id` should be the id you have in
-your git commits.
-- You can get this by using `git log` command as shown below
-- Text between <> is the git_email_id e.g. Author: XYZ <**userXYZ@org.ai**>
+- `git_email_id` should be the id you have in your git commits.
+  - You can get this by using `git log` command as shown below
 
 ``` 
 git log | grep username | head
 ```
+
 > `git log | grep XYZ | head -3`
 > `Author: XYZ <userXYZ@org.ai>`<br>
 > `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
 > `Author: XYZ <userXYZ@org.ai>`<br>
 
-#### 2.3 Generate Stats
+- Use the git email id inside `<...>` in the above output
 
-- Run [gen_git_stats.py](gen_git_stats.py) to generate your skill stats.
-- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
-  back in git history
-- repo_list can be a file with list of repos or a directory containing all the repos
+#### Running the Skill Extraction Script
 
 ```
 python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
 ```
+
+- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
+  back in git history
 
 **Examples**
 
@@ -142,18 +128,18 @@ python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.githu
   separately
 - **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
-### 3. Upload
-
-- Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
-  directly)
-    - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
-- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
-- Our AI models will analyze the data and generate a profile for you (<30 minutes)
-- If you are using linux server without GUI, use --cli_mode
+### 3. Edit & Upload
 
 ```
 python3 edit_skills.py -g <git_email_id> [--cli_mode]
 ```
+- Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
+  directly)
+    - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
+- Create an account in [ModelTeam](https://app.modelteam.ai/) if you don't have one
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your [experience](https://app.modelteam.ai/experience)
+- Our AI models will analyze the data and generate a profile for you (<30 minutes)
+- If you are using linux server without GUI, use --cli_mode
 
 **Examples**
 
