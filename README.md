@@ -54,12 +54,11 @@ uploading to modelteam.ai.
 - You should have made contributions for a **minimum period of 3 months**.
 
 ## Getting Started
+### Extract Skills & Stats from your Code to build your profile
 
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
 **For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
-
-- Create an account in [ModelTeam](https://app.modelteam.ai/)
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
@@ -143,11 +142,11 @@ python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.githu
 - **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
 ### 3. Upload
-
 - Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
   directly)
     - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
-- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your experience in the UI
+- Create an account in [ModelTeam](https://app.modelteam.ai/) if you don't have one
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your [experience](https://app.modelteam.ai/experience)
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 - If you are using linux server without GUI, use --cli_mode
 
