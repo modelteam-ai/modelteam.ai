@@ -80,6 +80,7 @@ python3 setup.py
 ### 2 Generate your skill stats
 
 - For this step, no internet access is required. Everything stays on your local machine
+- `python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]`
 
 #### 2.1 Repo List
 
