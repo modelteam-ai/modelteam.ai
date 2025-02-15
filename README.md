@@ -26,22 +26,33 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Prerequisites
 
-- Python **3.9+**
-- Pip & Python virtual environment (`python-venv`)
-- Git (CLI)
-- **Disable sleep mode** (Optional: Use `caffeine` on Linux)
+- Python 3.9 or higher
+- Pip
+- Python-venv (if not included in Python installation)
+- Git (command line)
+- Turn off sleep mode so the script can run without interruptions
+    - Optional: caffeine (for linux)
 - [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) (
-  Windows)
-- Minimum **8GB RAM** & **15GB free disk space**
-- At least **3 months** of coding contributions
-
----
+  for Windows)
+- Minimum 8GB RAM
+- ~15GB free disk space
+- You should have made contributions for a **minimum period of 3 months**.
 
 ## Getting Started
 
+### Extract Skills & Stats from your Code to build your profile
+
+[![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
+
+**For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
+
+- Run the following commands to generate your profile.
+    - Our AI models run locally on your machine and does not send any data outside your machine.
+    - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
+
 ### 1. Install ModelTeam Locally
 
-```sh
+```
 mkdir ~/modelteam && cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
@@ -54,82 +65,94 @@ This script:
 - Installs **dependencies**
 - Downloads **AI models**
 
-### 2. Extract Skills from Your Code
+### 2 Extract Skills from Your Code
 
-```sh
-python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <years_to_analyze>]
-```
+- For this step, no internet access is required. The script will analyze your git history to extract skills and stats
+- `python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]`
 
 #### Defining Your Repositories
 
-1. **Create a file with repository paths:**
+- Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
 
-   ```sh
-   cat ~/repo_list.txt
-   /Users/xyz/backend
-   /Users/xyz/frontend
-   /Users/xyz/api
-   ```
+> $ cat /Users/xyz/repo_list.txt<br>
+> /Users/xyz/backend<br>
+> /Users/xyz/frontend<br>
+> /Users/xyz/api
 
-2. **Or pass a directory containing repositories:**
+- Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
+    - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2
+      etc.)
+    - In this case, you need to create a file with the list of repo paths as shown above
 
-   ```sh
-   python3 gen_git_stats.py -r /Users/xyz/repos/ -g userXYZ@org.ai -n 5
-   ```
-
-    - *Note:* Subdirectories are not automatically included.
+> $ ls /Users/xyz/repos/<br>
+> backend<br>
+> frontend<br>
+> api
 
 #### Finding Your Git Email ID
 
-```sh
-git log | grep Author | head
+`git_email_id` should be the id you have in your git commits.
+
+- You can get this by using `git log` command as shown below
+
+``` 
+git log | grep username | head
 ```
 
-Example output:
+> `git log | grep XYZ | head -3`
+> `Author: XYZ <userXYZ@org.ai>`<br>
+> `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
+> `Author: XYZ <userXYZ@org.ai>`<br>
 
-```sh
-Author: XYZ <userXYZ@org.ai>
-Author: XYZ <1234567+XYZ@users.noreply.github.com>
-```
-
-Use the email inside `< >`.
+- Use the git email id inside `<...>` in the above output
 
 #### Running the Skill Extraction Script
 
-```sh
+```
+python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
+```
+
+- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
+  back in git history
+
+**Examples**
+
+```
 python3 gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5
 ```
 
-- Run separately for **each git email ID** if you have multiple.
-- To **rerun**, delete `model_team_profile/<git_email_id>/`.
-
----
-
-### 3. Upload Your Profile
-
-#### Review & Edit Skills
-
-```sh
-python3 edit_skills.py -g <git_email_id> [--cli_mode]
+```
+python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
 ```
 
-Example:
+- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
+  separately
+- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
-```sh
+### 3. Edit & Upload
+
+```
+python3 edit_skills.py -g <git_email_id> [--cli_mode]
+```
+- Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
+  directly)
+    - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
+- Create an account in [ModelTeam](https://app.modelteam.ai/) if you don't have one
+- Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your [experience](https://app.modelteam.ai/experience)
+- Our AI models will analyze the data and generate a profile for you (<30 minutes)
+- If you are using linux server without GUI, use --cli_mode
+
+**Examples**
+
+Mac/Windows
+
+```
 python3 edit_skills.py -g userXYZ@org.ai
 ```
 
-- Remove confidential skills.
-- Mark skills as irrelevant to refine ModelTeam’s AI.
+Linux
 
-#### Upload to ModelTeam
-
-1. **Sign up** at [ModelTeam](https://app.modelteam.ai/).
-2. Navigate to [Experience](https://app.modelteam.ai/experience).
-3. Upload `mt_metrics_yyyy-mm-dd_*****.json.gz`.
-4. AI-generated profile will be ready in **<30 minutes**.
-
----
-
-For **team-wide profile generation**, see [Team Profile Generation](README_org.md).
+```
+python3 edit_skills.py -g 1234567+XYZ@users.noreply.github.com --cli_mode
+```
 
