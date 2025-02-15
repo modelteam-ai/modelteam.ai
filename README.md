@@ -91,9 +91,8 @@ This script:
 
 #### Finding Your Git Email ID
 
-`git_email_id` should be the id you have in your git commits.
-
-- You can get this by using `git log` command as shown below
+- `git_email_id` should be the id you have in your git commits.
+  - You can get this by using `git log` command as shown below
 
 ``` 
 git log | grep username | head
