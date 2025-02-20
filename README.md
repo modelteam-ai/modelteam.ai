@@ -74,17 +74,17 @@ This script:
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
 
-> $ cat /Users/xyz/repo_list.txt<br>
-> /Users/xyz/backend<br>
-> /Users/xyz/frontend<br>
-> /Users/xyz/api
+> $ cat /Users/john/repo_list.txt<br>
+> /Users/john/backend<br>
+> /Users/john/frontend<br>
+> /Users/john/api
 
 - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-    - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2
+    - It won't work if repos are in subdirectories (e.g. /Users/john/repos/work/repo1, /Users/john/repos/personal/repo2
       etc.)
     - In this case, you need to create a file with the list of repo paths as shown above
 
-> $ ls /Users/xyz/repos/<br>
+> $ ls /Users/john/repos/<br>
 > backend<br>
 > frontend<br>
 > api
@@ -98,10 +98,10 @@ This script:
 git log | grep $USER | head
 ```
 
-> `git log | grep XYZ | head -3`
-> `Author: XYZ <userXYZ@org.ai>`<br>
-> `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
-> `Author: XYZ <userXYZ@org.ai>`<br>
+> `git log | grep $USER | head -3`
+> `Author: john <john@org.ai>`<br>
+> `Author: john <1234567+john@users.noreply.github.com>`<br>
+> `Author: john <john@org.ai>`<br>
 
 - Use the git email id inside `<...>` in the above output
 
@@ -117,11 +117,11 @@ python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_t
 **Examples**
 
 ```
-python3 gen_git_stats.py -r /Users/xyz/repo_list.txt -g userXYZ@org.ai -n 5
+python3 gen_git_stats.py -r /Users/john/repo_list.txt -g john@org.ai -n 5
 ```
 
 ```
-python3 gen_git_stats.py -r /Users/xyz/repos/ -g 1234567+XYZ@users.noreply.github.com -n 5
+python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
 ```
 
 - If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
@@ -146,12 +146,12 @@ python3 edit_skills.py -g <git_email_id> [--cli_mode]
 Mac/Windows
 
 ```
-python3 edit_skills.py -g userXYZ@org.ai
+python3 edit_skills.py -g john@org.ai
 ```
 
 Linux
 
 ```
-python3 edit_skills.py -g 1234567+XYZ@users.noreply.github.com --cli_mode
+python3 edit_skills.py -g 1234567+john@users.noreply.github.com --cli_mode
 ```
 

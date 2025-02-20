@@ -91,17 +91,17 @@ This script:
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
 
-> $ cat /Users/xyz/repo_list.txt<br>
-> /Users/xyz/backend<br>
-> /Users/xyz/frontend<br>
-> /Users/xyz/api
+> $ cat /Users/john/repo_list.txt<br>
+> /Users/john/backend<br>
+> /Users/john/frontend<br>
+> /Users/john/api
 
 - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-    - It won't work if repos are in subdirectories (e.g. /Users/xyz/repos/work/repo1, /Users/xyz/repos/personal/repo2
+    - It won't work if repos are in subdirectories (e.g. /Users/john/repos/work/repo1, /Users/john/repos/personal/repo2
       etc.)
     - In this case, you need to create a file with the list of repo paths as shown above
 
-> $ ls /Users/xyz/repos/<br>
+> $ ls /Users/john/repos/<br>
 > backend<br>
 > frontend<br>
 > api
@@ -115,10 +115,10 @@ This script:
 ``` 
 git log | grep $USER | head
 ```
-> `git log | grep XYZ | head -3`
-> `Author: XYZ <userXYZ@org.ai>`<br>
-> `Author: XYZ <1234567+XYZ@users.noreply.github.com>`<br>
-> `Author: XYZ <userXYZ@org.ai>`<br>
+> `git log | grep $USER | head -3`
+> `Author: john <john@org.ai>`<br>
+> `Author: john <1234567+john@users.noreply.github.com>`<br>
+> `Author: john <john@org.ai>`<br>
 
 - Use the git email id inside `<...>` in the above output
 
@@ -139,7 +139,7 @@ python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" 
 ```
 
 ```
-python3 gen_team_git_stats.py -r /Users/xyz/repos/ -t model_team -n 3
+python3 gen_team_git_stats.py -r /Users/john/repos/ -t model_team -n 3
 ```
 
 - **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
