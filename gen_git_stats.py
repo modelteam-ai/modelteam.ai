@@ -54,9 +54,11 @@ def main():
 
     with open(profile_path_file, "w") as f:
         f.write(output_path)
-
+    star_line = "*" * 80
+    print(star_line)
     print(f"Please run the following command to edit your stats file: (add --cli_mode for CLI mode)")
-    print(f"\033[92mpython3 edit_skills.py -g {git_email_id}\033[0m")
+    print(f"\033[1mpython3 edit_skills.py -g {git_email_id}\033[0m")
+    print(star_line)
 
 
 if __name__ == "__main__":

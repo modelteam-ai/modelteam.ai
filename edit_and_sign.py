@@ -362,7 +362,6 @@ def print_file_tree(currentDir, fullPath):
 
 
 def print_message(pdf_file, final_output_file):
-    alert = "!" * 80
     star_line = "*" * 80
     blue_text = "\033[94m"
     reset_text = "\033[0m"
@@ -374,7 +373,7 @@ def print_message(pdf_file, final_output_file):
     print(star_line)
     print(f"📂 Final Output:")
     print_file_tree(os.getcwd(), final_output_file)
-    print(f"🚀 Please upload the file:")
+    print(f"🚀 \033[1mPlease upload the file:\033[0m")
     print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
     print("🔹 Please note:")
     print(
