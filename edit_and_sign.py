@@ -369,7 +369,7 @@ def print_message(pdf_file, final_output_file):
     print(f"📂 Saved at: {pdf_file}")
     print()
     print(star_line)
-    print(f"📂 \033[1mFinal Output:\033[0m")
+    print(f"📂 \033[1mFinal Output:\033[0m{final_output_file}")
     print_file_tree(os.getcwd(), final_output_file)
     print(f"🚀 {blue_text}\033[1mPlease upload the file:\033[0m")
     print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
