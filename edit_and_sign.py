@@ -371,7 +371,7 @@ def print_message(pdf_file, final_output_file):
     print("⚠️ This is for your personal use only and is NOT needed by modelteam.ai.")
     print(f"📂 Saved at: {pdf_file}")
     print()
-
+    print(star_line)
     print(f"📂 Final Output:")
     print_file_tree(os.getcwd(), final_output_file)
     print(f"🚀 Please upload the file:")
@@ -379,9 +379,6 @@ def print_message(pdf_file, final_output_file):
     print("🔹 Please note:")
     print(
         "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
-    print(star_line)
-
-
     print(star_line)
 
 
