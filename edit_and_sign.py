@@ -10,11 +10,11 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.utils import trunc_string
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import compress_file, generate_hc
 from modelteam_utils.utils import filter_skills, sha256_hash, load_skill_config
+from modelteam_utils.utils import trunc_string
 from modelteam_utils.viz_utils import generate_pdf_report
 
 display_names = {}
@@ -172,8 +172,6 @@ class App(QWidget):
         choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
         with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
-        QMessageBox.information(self, "Save Choices",
-                                "Choices saved successfully! Please check the CLI for full path of the output file.")
         self.close()
 
 
@@ -341,7 +339,6 @@ def apply_choices(merged_profile, choices_file, edited_file, bad_skills):
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
         f2.write(json.dumps(merged_profile, indent=2))
-    print(f"Edited file saved as {edited_file}\n")
 
 
 def display_t_and_c(email_id):
@@ -351,6 +348,35 @@ def display_t_and_c(email_id):
                "\t3. I will remove any confidential skills from the profile in this step before uploading"]
     res = input("\n".join(t_and_c) + "\nEnter \"Y\" to proceed: \n")
     return res.lower()
+
+
+def print_file_tree(currentDir, fullPath):
+    relative_path = os.path.relpath(fullPath, currentDir)
+    parts = relative_path.split(os.sep)
+    print(currentDir)
+    for i, part in enumerate(parts):
+        prefix = "   ├── " if i < len(parts) - 1 else "   └── "
+        print("   " * i + prefix + part)
+
+
+def print_message(pdf_file, final_output_file):
+    star_line = "*" * 80
+    blue_text = "\033[94m"
+    reset_text = "\033[0m"
+
+    print("📄 PDF Report Generated!")
+    print("⚠️ This is for your personal use only and is NOT needed by modelteam.ai.")
+    print(f"📂 Saved at: {pdf_file}")
+    print()
+    print(star_line)
+    print(f"📂 \033[1mFinal Output:\033[0m{final_output_file}")
+    print_file_tree(os.getcwd(), final_output_file)
+    print(f"🚀 \033[1;91m\033[1mDon't forget to upload the file:\033[0m")
+    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
+    print("🔹 Please note:")
+    print(
+        "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
+    print(star_line)
 
 
 if __name__ == "__main__":
@@ -386,14 +412,8 @@ if __name__ == "__main__":
         hc = sha256_hash(generate_hc(edited_file) + args.user_key)
         final_output_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.json.gz")
         compress_file(edited_file, final_output_file)
-        generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
-        print()
-        print(
-            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
-        print('*' * 50)
-        print("Please upload the following file to \033[94mhttps://app.modelteam.ai/experience\033[0m")
-        print(final_output_file)
-        print('*' * 50)
+        pdf_file = generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
+        print_message(pdf_file, final_output_file)
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
         sys.exit(1)

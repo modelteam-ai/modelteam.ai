@@ -198,10 +198,7 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     for repo in pdf_stats.keys():
         add_commit_info_to_canvas(c, user, repo, pdf_stats[repo])
     c.save()
-    print('!' * 50)
-    print("PDF report generated. This is for your personal use only and is not needed by modelteam.ai.")
-    print(pdf_file)
-    print('!' * 50)
+    return pdf_file
 
 
 def generate_multi_page_pdf(output_path, user, image_files):
