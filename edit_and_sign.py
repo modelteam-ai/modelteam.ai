@@ -172,8 +172,6 @@ class App(QWidget):
         choices_dict = {item: group.checkedButton().accessibleName() for item, group in self.choices.items()}
         with open(self.choice_file, 'w') as f:
             json.dump(choices_dict, f)
-        QMessageBox.information(self, "Save Choices",
-                                "Choices saved successfully! Please check the CLI for full path of the output file.")
         self.close()
 
 
@@ -371,7 +369,7 @@ def print_message(pdf_file, final_output_file):
     print(f"📂 Saved at: {pdf_file}")
     print()
     print(star_line)
-    print(f"📂 Final Output:")
+    print(f"📂 \033[1mFinal Output:\033[0m")
     print_file_tree(os.getcwd(), final_output_file)
     print(f"🚀 {blue_text}\033[1mPlease upload the file:\033[0m")
     print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
