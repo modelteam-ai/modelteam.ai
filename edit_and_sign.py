@@ -341,7 +341,6 @@ def apply_choices(merged_profile, choices_file, edited_file, bad_skills):
             profile[TIMESTAMP] = utc_now
         merged_profile[TIMESTAMP] = utc_now
         f2.write(json.dumps(merged_profile, indent=2))
-    print(f"Edited file saved as {edited_file}\n")
 
 
 def display_t_and_c(email_id):
@@ -368,23 +367,20 @@ def print_message(pdf_file, final_output_file):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
 
-    print(alert)
     print("📄 PDF Report Generated!")
     print("⚠️ This is for your personal use only and is NOT needed by modelteam.ai.")
-    print(f"📂 Saved at:")
-    print_file_tree(os.getcwd(), pdf_file)
-    print(alert)
+    print(f"📂 Saved at: {pdf_file}")
     print()
-
-    print("🔹 Please note:")
-    print(
-        "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
-    print(star_line)
 
     print(f"📂 Final Output:")
     print_file_tree(os.getcwd(), final_output_file)
     print(f"🚀 Please upload the file:")
     print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
+    print("🔹 Please note:")
+    print(
+        "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
+    print(star_line)
+
 
     print(star_line)
 
