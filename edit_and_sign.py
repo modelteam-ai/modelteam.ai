@@ -10,11 +10,11 @@ from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
                              QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
 
-from modelteam_utils.utils import trunc_string
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import compress_file, generate_hc
 from modelteam_utils.utils import filter_skills, sha256_hash, load_skill_config
+from modelteam_utils.utils import trunc_string
 from modelteam_utils.viz_utils import generate_pdf_report
 
 display_names = {}
@@ -353,6 +353,42 @@ def display_t_and_c(email_id):
     return res.lower()
 
 
+def print_file_tree(currentDir, fullPath):
+    relative_path = os.path.relpath(fullPath, currentDir)
+    parts = relative_path.split(os.sep)
+    print(currentDir)
+    for i, part in enumerate(parts):
+        prefix = "   ├── " if i < len(parts) - 1 else "   └── "
+        print("   " * i + prefix + part)
+
+
+def print_message(pdf_file, final_output_file):
+    alert = "!" * 80
+    star_line = "*" * 80
+    blue_text = "\033[94m"
+    reset_text = "\033[0m"
+
+    print(alert)
+    print("📄 PDF Report Generated!")
+    print("⚠️ This is for your personal use only and is NOT needed by modelteam.ai.")
+    print(f"📂 Saved at:")
+    print_file_tree(os.getcwd(), pdf_file)
+    print(alert)
+    print()
+
+    print("🔹 Please note:")
+    print(
+        "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
+    print(star_line)
+
+    print(f"🚀 Please upload the following file:")
+    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
+    print(f"📂 Final Output:")
+    print_file_tree(os.getcwd(), final_output_file)
+
+    print(star_line)
+
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--profile_path", type=str, required=True)
@@ -386,14 +422,8 @@ if __name__ == "__main__":
         hc = sha256_hash(generate_hc(edited_file) + args.user_key)
         final_output_file = os.path.join(args.profile_path, f"mt_stats_{today}_{hc}.json.gz")
         compress_file(edited_file, final_output_file)
-        generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
-        print()
-        print(
-            "Please note that the final profile will be generated on the server side with another ML model consuming the numbers from the JSON file that you upload.")
-        print('*' * 50)
-        print("Please upload the following file to \033[94mhttps://app.modelteam.ai/experience\033[0m")
-        print(final_output_file)
-        print('*' * 50)
+        pdf_file = generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
+        print_message(pdf_file, final_output_file)
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
         sys.exit(1)
