@@ -381,10 +381,10 @@ def print_message(pdf_file, final_output_file):
         "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
     print(star_line)
 
-    print(f"🚀 Please upload the following file:")
-    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
     print(f"📂 Final Output:")
     print_file_tree(os.getcwd(), final_output_file)
+    print(f"🚀 Please upload the file:")
+    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
 
     print(star_line)
 
