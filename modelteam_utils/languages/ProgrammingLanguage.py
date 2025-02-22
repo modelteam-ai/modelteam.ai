@@ -90,7 +90,7 @@ class ProgrammingLanguage(ABC):
         return comments
 
     @abstractmethod
-    def get_snippet_seperator(self):
+    def get_snippet_separator(self):
         pass
 
     @staticmethod

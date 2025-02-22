@@ -16,5 +16,5 @@ class DartPL(ProgrammingLanguage):
                 libraries.extend(library_names)
         return libraries
 
-    def get_snippet_seperator(self):
+    def get_snippet_separator(self):
         return "}\n\n"

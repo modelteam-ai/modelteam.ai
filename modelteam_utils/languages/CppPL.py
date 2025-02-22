@@ -7,7 +7,7 @@ class CppPL(ProgrammingLanguage):
     def get_import_prefix(self):
         return "#include "
 
-    def get_snippet_seperator(self):
+    def get_snippet_separator(self):
         return "}\n\n"
 
     def extract_imports(self, lines):

@@ -7,7 +7,7 @@ import re
 import subprocess
 from calendar import monthrange
 
-from .constants import UNKOWN, MIN_CHUNK_CHAR_LIMIT, C2S, LIFE_OF_PY, I2S, LANGS, TIME_SERIES, SKILLS
+from .constants import UNKNOWN, MIN_CHUNK_CHAR_LIMIT, C2S, LIFE_OF_PY, I2S, LANGS, TIME_SERIES, SKILLS
 from .languages.CSharpPL import CSharpPL
 from .languages.CppPL import CppPL
 from .languages.DartPL import DartPL
@@ -53,7 +53,7 @@ def get_file_extension(file_path):
     # remove all non alphanumeric characters
     ext = re.sub('[^0-9a-zA-Z]+', '', ext)
     if not ext:
-        ext = UNKOWN
+        ext = UNKNOWN
     return ext
 
 
@@ -275,7 +275,7 @@ def break_code_snippets_to_chunks(file_name, code, chunk_char_limit, sep=None):
         return []
     output = []
     if not sep:
-        sep = parser.get_snippet_seperator()
+        sep = parser.get_snippet_separator()
     if len(code) > chunk_char_limit:
         snippet_parts = code.split(sep)
         str_so_far = ""

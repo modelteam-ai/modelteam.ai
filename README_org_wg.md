@@ -45,13 +45,13 @@ models.
 
 ## Prerequisites
 
-- Repo in Github, Gitlab or Bitbucket
+- Repo in GitHub, Gitlab or Bitbucket
 
 ## modelteam.ai Bots
 
 Invite these bots as a collaborator to your repository and create an account with modelteam.ai. And add the list of
 repositories to your profile.
 
-- Github: https://github.com/modelteam-bot
+- GitHub: https://github.com/modelteam-bot
 - GitLab: https://gitlab.com/modelteam-bot
 - Bitbucket: modelteam-bot@modelteam.ai

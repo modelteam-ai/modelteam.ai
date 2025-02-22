@@ -34,7 +34,7 @@ class PythonPL(ProgrammingLanguage):
                 continue
         return docstrings
 
-    def get_snippet_seperator(self):
+    def get_snippet_separator(self):
         return "\n\n"
 
 
