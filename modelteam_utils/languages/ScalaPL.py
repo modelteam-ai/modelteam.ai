@@ -32,5 +32,5 @@ class ScalaPL(ProgrammingLanguage):
                         imports.append(lib)
         return imports
 
-    def get_snippet_seperator(self):
+    def get_snippet_separator(self):
         return "}\n\n"
