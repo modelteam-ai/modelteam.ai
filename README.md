@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/sampleProfile.png" alt="ModelTeam">
+  <img src="images/sampleProfile2.png" alt="ModelTeam">
 </div>
 
 # ModelTeam: AI-Powered Skill Validation for Engineers
