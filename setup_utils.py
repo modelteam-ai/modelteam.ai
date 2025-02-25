@@ -19,6 +19,21 @@ def spinner():
     sys.stdout.write("\r   \r")  # Clear spinner when done
 
 
+def run_command_stream(command, shell=False):
+    date = datetime.now().strftime("%Y-%m-%d")
+    with open(f"log_{date}.txt", "a") as logfile:
+        process = subprocess.Popen(
+            command,
+            shell=shell,
+            stdout=None,
+            stderr=None,
+            text=True
+        )
+        return_code = process.wait()
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, command)
+
+
 def run_command(command, shell=False, show_spinner=False):
     global spinning
     date = datetime.now().strftime("%Y-%m-%d")

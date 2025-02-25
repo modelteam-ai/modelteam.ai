@@ -1,7 +1,7 @@
 import os
 import platform
 
-from setup_utils import run_command, get_python_bin
+from setup_utils import run_command, get_python_bin, run_command_stream
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     if platform.system() == "Windows":
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
     print("Downloading models.. Please be patient, this may take a while")
-    run_command([python_bin, "download_models.py", "--config", "config.ini"], show_spinner=True)
+    run_command_stream([python_bin, "download_models.py", "--config", "config.ini"])
 
     print("ModelTeam setup complete")
 
