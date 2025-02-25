@@ -20,7 +20,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS, SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION,
                                        PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
-                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
+                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S, SS_LC)
 from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills, yyyy_mm_to_quarter
@@ -40,8 +40,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
-
-total_lines_to_analyze = 0
 
 
 def is_huge_commit(total_added, total_deleted):
@@ -233,14 +231,13 @@ class ModelTeamGitParser:
         commits[LANGS][file_extension][LIBS][import_type][yyyy_mm].append(libraries)
 
     @staticmethod
-    def get_newly_added_snippets(git_diff):
+    def get_newly_added_snippets(git_diff, repo_stats):
         """
         Given a git diff, return the newly added snippets. These snippets should be continuous chunks of code that got added
         It can be a new function. It should be a minimum of 10 lines of code
         :param git_diff:
         :return:
         """
-        global total_lines_to_analyze
         lines = git_diff.split('\n')
         snippets = []
         snippet = []
@@ -254,7 +251,7 @@ class ModelTeamGitParser:
         # check for the last snippet
         snippet_len = len(snippet)
         if snippet_len >= 10:
-            total_lines_to_analyze += snippet_len
+            repo_stats[SS_LC] += snippet_len
             snippets.append('\n'.join(snippet))
         return snippets
 
@@ -302,7 +299,7 @@ class ModelTeamGitParser:
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
                             repo_path, commits, yyyy_mm):
-        snippets = self.get_newly_added_snippets(file_diff_content)
+        snippets = self.get_newly_added_snippets(file_diff_content, labels)
         if snippets:
             self.add_to_time_series_stats(commits, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, len(snippets))
             if file_extension not in commits[LANGS]:
@@ -368,10 +365,8 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, usernames, num_months):
-        global total_lines_to_analyze
         user_profiles = {}
-        total_lines_to_analyze = 0
-        repo_level_data = {LIBS: {}, SKILLS: {}}
+        repo_level_data = {LIBS: {}, SKILLS: {}, SS_LC: 0}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = os.path.basename(repo_path)
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
@@ -466,13 +461,13 @@ class ModelTeamGitParser:
         f.write("}\n")
 
     def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name):
-        global label_file_list, total_lines_to_analyze
+        global label_file_list
         has_features = 0
         features = []
         pbar = None
         if args.show_progress:
-            pbar = tqdm(total=total_lines_to_analyze, desc=f"Analyzing your code in {repo_name}...", unit="lines",
-                        leave=False)
+            print("Total lines to analyze", repo_level_data.get(SS_LC, 1234), flush=True)
+            pbar = tqdm(total=repo_level_data.get(SS_LC, 1000), desc=f"Analyzing code in {repo_name}...", unit="lines")
         for user in user_profiles:
             user_profile = user_profiles[user]
             if SKILLS not in user_profile:
