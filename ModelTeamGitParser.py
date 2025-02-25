@@ -682,7 +682,7 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
 
     time_taken_in_minutes = round((end_ts - utc_now) / 60)
     data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
-            ["Number of repositories analyzed", len(output_file_list)],["Number of users analyzed", len(users)],
+            ["Number of repositories analyzed", len(output_file_list)], ["Number of users analyzed", len(users)],
             ["Number of months analyzed", len(months)],
             ["Number of lines analyzed", lines_added],
             ["Number of skills extracted", len(skills)]]
@@ -695,6 +695,19 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
             json.dump(merged_profile, merged_json_writer)
     print(f"Final Output: {merged_json_file_name}")
     return merged_profile
+
+
+def onerror(err):
+    print(f"Skipping {err.filename} - {err.strerror}")
+
+
+def extract_git_repos(input_folder):
+    git_repos = []
+    for root, dirs, files in os.walk(input_folder, onerror=onerror):
+        if '.git' in dirs:
+            git_repos.append(root)
+            dirs[:] = []
+    return git_repos
 
 
 if __name__ == "__main__":
@@ -716,7 +729,8 @@ if __name__ == "__main__":
     parser.add_argument('--parallel_mode', type=str,
                         help='Check for touch files. Can be -1, 0, 1. -1 -> Run for all 0, 1 -> Run only if hashcode(folder) == value',
                         default=None)
-    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed. e.g. label data users only', default=None)
+    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed. e.g. label data users only',
+                        default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
     # Only needed for team profile
@@ -758,17 +772,20 @@ if __name__ == "__main__":
         else:
             tmp_folder_list = set()
             if input_path:
-                for folder in os.listdir(input_path):
-                    tmp_folder_list.add(os.path.join(input_path, folder))
+                git_repos = extract_git_repos(input_path)
+                tmp_folder_list.update(git_repos)
             if repo_list and os.path.exists(repo_list):
                 with open(repo_list, "r") as f:
                     repo_list = f.read().splitlines()
                     for repo in repo_list:
-                        if os.path.isdir(repo):
+                        if os.path.isdir(repo) and os.path.isdir(os.path.join(repo, ".git")):
                             tmp_folder_list.add(repo)
                         else:
                             print(f"Skipping {repo} as it is not a directory")
             folder_list = list(tmp_folder_list)
+    if len(folder_list) == 0:
+        print("No valid git repos found")
+        exit(1)
     randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)
