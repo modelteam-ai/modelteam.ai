@@ -113,9 +113,6 @@ python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" 
 > /Users/john/api
 
 - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-    - It won't work if repos are in subdirectories (e.g. /Users/john/repos/work/repo1, /Users/john/repos/personal/repo2
-      etc.)
-    - In this case, you need to create a file with the list of repo paths as shown above
 
 > $ ls /Users/john/repos/<br>
 > backend<br>
