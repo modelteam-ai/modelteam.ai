@@ -68,7 +68,27 @@ This script:
 ### 2 Extract Skills from Your Code
 
 - For this step, no internet access is required. The script will analyze your git history to extract skills and stats
-- `python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]`
+```
+python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
+```
+
+- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
+  back in git history
+
+**Examples**
+
+```
+python3 gen_git_stats.py -r /Users/john/repo_list.txt -g john@org.ai -n 5
+```
+
+```
+python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
+```
+
+- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
+  separately
+- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
+
 
 #### Defining Your Repositories
 
@@ -104,29 +124,6 @@ git log | grep $USER | head
 > `Author: john <john@org.ai>`<br>
 
 - Use the git email id inside `<...>` in the above output
-
-#### Running the Skill Extraction Script
-
-```
-python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
-```
-
-- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
-  back in git history
-
-**Examples**
-
-```
-python3 gen_git_stats.py -r /Users/john/repo_list.txt -g john@org.ai -n 5
-```
-
-```
-python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
-```
-
-- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
-  separately
-- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
 ### 3. Edit & Upload
 

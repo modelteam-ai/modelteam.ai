@@ -141,5 +141,5 @@ def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_
         print("WARNING!!! Caffeinate is not available on this system. Please turn off sleep mode manually.")
 
     # Run the process
-    run_command(cmd)
+    run_command_stream(cmd)
     return output_path
