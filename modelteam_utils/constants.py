@@ -48,6 +48,7 @@ LIFE_OF_PY_BUCKET_SIZE = 20
 LIFE_OF_PY_BUCKETS = [f"{LIFE_OF_PY}_{i}" for i in range(0, 100, LIFE_OF_PY_BUCKET_SIZE)]
 MT_PROFILE_JSON = "mt_stats.json"
 PDF_STATS_JSON = "tmp_stats.txt"
+SS_LC = "ss_lc"
 
 MAX_SCORE = 'max_score'
 MIN_SCORE = 'min_score'

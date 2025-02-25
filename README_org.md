@@ -85,7 +85,23 @@ This script:
 ### 2 Extract Skills from Your Code
 
 - For this step, no internet access is required. Everything stays on your local machine
-- `python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]`
+```
+python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]
+```
+- Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating
+  profiles only for the team members who are actively contributing to the repositories and are relevant to the team's skills.
+- Generates your team profile. Takes a list of git email ids or team name and optionally number of years to consider
+- Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
+
+**Examples**
+```
+python3 gen_team_git_stats.py -r /Users/john/repos/ -t all_team -n 3
+```
+```
+python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t part_team -n 3
+```
+
+- **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
 
 #### Defining Your Repositories
 
@@ -97,9 +113,6 @@ This script:
 > /Users/john/api
 
 - Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-    - It won't work if repos are in subdirectories (e.g. /Users/john/repos/work/repo1, /Users/john/repos/personal/repo2
-      etc.)
-    - In this case, you need to create a file with the list of repo paths as shown above
 
 > $ ls /Users/john/repos/<br>
 > backend<br>
@@ -121,28 +134,6 @@ git log | grep $USER | head
 > `Author: john <john@org.ai>`<br>
 
 - Use the git email id inside `<...>` in the above output
-
-#### Running the Skill Extraction Script
-
-```
-python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]
-```
-- Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating
-  profiles only for the team members who are actively contributing to the repositories and are relevant to the team's skills.
-- Generates your team profile. Takes a list of git email ids or team name and optionally number of years to consider
-- Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
-
-**Examples**
-
-```
-python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t model_team -n 3
-```
-
-```
-python3 gen_team_git_stats.py -r /Users/john/repos/ -t model_team -n 3
-```
-
-- **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
 
 ### 3. Upload
 

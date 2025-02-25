@@ -11,6 +11,7 @@ import sys
 
 import torch
 from tabulate import tabulate
+from tqdm import tqdm
 
 from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
@@ -19,7 +20,7 @@ from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS,
                                        SIGNIFICANT_CONTRIBUTION_LINE_LIMIT, MAX_DIFF_SIZE, STATS, USER, REPO, REPO_PATH,
                                        SCORES, SIG_CODE_SNIPPETS, SKILLS, FILE, IMPORTS, T5_CHUNK_CHAR_LIMIT, VERSION,
                                        PROFILES, PHC, TIMESTAMP, TEAM, SKILL_PREDICTION_LIMIT,
-                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S)
+                                       LIFE_OF_PY_PREDICTION_LIMIT, C2S, LIFE_OF_PY, MODEL_TYPES, I2S, SS_LC)
 from modelteam_utils.constants import MT_PROFILE_JSON, PDF_STATS_JSON
 from modelteam_utils.crypto_utils import generate_hc
 from modelteam_utils.utils import break_code_snippets_to_chunks, filter_skills, yyyy_mm_to_quarter
@@ -230,7 +231,7 @@ class ModelTeamGitParser:
         commits[LANGS][file_extension][LIBS][import_type][yyyy_mm].append(libraries)
 
     @staticmethod
-    def get_newly_added_snippets(git_diff):
+    def get_newly_added_snippets(git_diff, repo_stats):
         """
         Given a git diff, return the newly added snippets. These snippets should be continuous chunks of code that got added
         It can be a new function. It should be a minimum of 10 lines of code
@@ -244,11 +245,15 @@ class ModelTeamGitParser:
             if line.startswith('+'):
                 snippet.append(line[1:])  # remove '+' sign
             else:
-                if len(snippet) >= 10:  # minimum lines of code
+                snippet_len = len(snippet)
+                if snippet_len >= 10:  # minimum lines of code
+                    repo_stats[SS_LC] += snippet_len
                     snippets.append('\n'.join(snippet))
                 snippet = []  # reset snippet
         # check for the last snippet
-        if len(snippet) >= 10:
+        snippet_len = len(snippet)
+        if snippet_len >= 10:
+            repo_stats[SS_LC] += snippet_len
             snippets.append('\n'.join(snippet))
         return snippets
 
@@ -296,7 +301,7 @@ class ModelTeamGitParser:
 
     def process_sig_contrib(self, commit_hash, curr_user, file_diff_content, file_extension, file_name, labels,
                             repo_path, commits, yyyy_mm):
-        snippets = self.get_newly_added_snippets(file_diff_content)
+        snippets = self.get_newly_added_snippets(file_diff_content, labels)
         if snippets:
             self.add_to_time_series_stats(commits, file_extension, yyyy_mm, SIGNIFICANT_CONTRIBUTION, len(snippets))
             if file_extension not in commits[LANGS]:
@@ -363,7 +368,7 @@ class ModelTeamGitParser:
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, usernames, num_months):
         user_profiles = {}
-        repo_level_data = {LIBS: {}, SKILLS: {}}
+        repo_level_data = {LIBS: {}, SKILLS: {}, SS_LC: 0}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = os.path.basename(repo_path)
             self.generate_user_profiles(repo_path, user_profiles, repo_level_data, usernames, repo_name, min_months,
@@ -411,9 +416,14 @@ class ModelTeamGitParser:
                     for model_path in models:
                         # Evaluate 1 model at a time to avoid memory issues
                         model_data = init_model(model_path, model_type, self.config, device)
-                        if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
-                            has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
-                                                                model_data, repo_name)
+                        if model_type == C2S:
+                            model_label = f"Skill Prediction@{repo_name}"
+                        elif model_type == LIFE_OF_PY:
+                            model_label = f"Code Quality@{repo_name}"
+                        else:
+                            continue
+                        has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
+                                                            model_data, repo_name, model_label)
                         del model_data
                         gc.collect()
                 if has_new_data == 0:
@@ -452,10 +462,17 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name):
+    def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name, model_label):
         global label_file_list
         has_features = 0
         features = []
+        pbar = None
+        if args.show_progress:
+            total = repo_level_data[SS_LC]
+            if total == 0:
+                pbar = tqdm(desc=model_label, unit="lines")
+            else:
+                pbar = tqdm(total=total, desc=model_label, unit="lines")
         for user in user_profiles:
             user_profile = user_profiles[user]
             if SKILLS not in user_profile:
@@ -506,12 +523,17 @@ class ModelTeamGitParser:
                                                  "is_labeled_file": is_labeled_file,
                                                  "doc_string_line_count": doc_string_line_count})
                                 if len(features) == args.batch_size:
-                                    self.eval_llm_model(model_data, features, user_profiles)
+                                    self.eval_llm_model(model_data, features, user_profiles, pbar)
                                     has_features += len(features)
                                     features = []
         if len(features) > 0:
-            self.eval_llm_model(model_data, features, user_profiles)
+            self.eval_llm_model(model_data, features, user_profiles, pbar)
             has_features += len(features)
+        if pbar:
+            # some lines get reduced while breaking into chunks
+            if pbar.total > pbar.n:
+                pbar.update(pbar.total - pbar.n)
+            pbar.close()
         return has_features
 
     @staticmethod
@@ -525,8 +547,8 @@ class ModelTeamGitParser:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
 
-    def eval_llm_model(self, model_data, features, user_profiles):
-        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}", flush=True)
+    def eval_llm_model(self, model_data, features, user_profiles, pbar):
+        # print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}", flush=True)
         snippet_key = "snippet"
         if model_data['model_type'] == I2S:
             snippet_key = "libs"
@@ -544,6 +566,8 @@ class ModelTeamGitParser:
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
             is_labeled_file = features[i]["is_labeled_file"]
+            if pbar:
+                pbar.update(line_count)
             ModelTeamGitParser.accumulate_score(user_profiles[features[i]["user"]], lang, yyyy_mm, score_list[i],
                                                 sm_score_list[i], skill_list[i], line_count, doc_string_line_count,
                                                 model_data['model_tag'], model_data['model_type'] == C2S,
@@ -682,7 +706,7 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
 
     time_taken_in_minutes = round((end_ts - utc_now) / 60)
     data = [["Time taken", f"{time_taken_in_minutes} minutes"], ["Kinds of files analyzed", ", ".join(languages)],
-            ["Number of repositories analyzed", len(output_file_list)],["Number of users analyzed", len(users)],
+            ["Number of repositories analyzed", len(output_file_list)], ["Number of users analyzed", len(users)],
             ["Number of months analyzed", len(months)],
             ["Number of lines analyzed", lines_added],
             ["Number of skills extracted", len(skills)]]
@@ -697,6 +721,19 @@ def merge_json(users, output_file_list, merged_json_file_name, team_name, end_ts
     return merged_profile
 
 
+def onerror(err):
+    print(f"Skipping {err.filename} - {err.strerror}")
+
+
+def extract_git_repos(input_folder):
+    git_repos = []
+    for root, dirs, files in os.walk(input_folder, onerror=onerror):
+        if '.git' in dirs:
+            git_repos.append(root)
+            dirs[:] = []
+    return git_repos
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse Git Repositories')
     parser.add_argument('--input_path', type=str, help='Path to the input folder containing git repos')
@@ -709,6 +746,7 @@ if __name__ == "__main__":
     # Used only for giving a team name when using multiple emails or for generating profiles for all users
     parser.add_argument('--team_name', type=str, help='Team Name', default=None)
     parser.add_argument('--num_years', type=int, help='Number of years to consider', default=2)
+    parser.add_argument('--show_progress', default=False, help='Show progress bar', action='store_true')
 
     # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
@@ -716,7 +754,8 @@ if __name__ == "__main__":
     parser.add_argument('--parallel_mode', type=str,
                         help='Check for touch files. Can be -1, 0, 1. -1 -> Run for all 0, 1 -> Run only if hashcode(folder) == value',
                         default=None)
-    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed. e.g. label data users only', default=None)
+    parser.add_argument('--allow_list', type=str, help='List of repos,users to be allowed. e.g. label data users only',
+                        default=None)
     parser.add_argument('--start_from_tmp', default=False, help='Start from tmp', action='store_true')
     parser.add_argument('--label_file_list', type=str, help='Path to the Repo Topics JSONL', default=None)
     # Only needed for team profile
@@ -758,17 +797,20 @@ if __name__ == "__main__":
         else:
             tmp_folder_list = set()
             if input_path:
-                for folder in os.listdir(input_path):
-                    tmp_folder_list.add(os.path.join(input_path, folder))
+                git_repos = extract_git_repos(input_path)
+                tmp_folder_list.update(git_repos)
             if repo_list and os.path.exists(repo_list):
                 with open(repo_list, "r") as f:
                     repo_list = f.read().splitlines()
                     for repo in repo_list:
-                        if os.path.isdir(repo):
+                        if os.path.isdir(repo) and os.path.isdir(os.path.join(repo, ".git")):
                             tmp_folder_list.add(repo)
                         else:
                             print(f"Skipping {repo} as it is not a directory")
             folder_list = list(tmp_folder_list)
+    if len(folder_list) == 0:
+        print("No valid git repos found")
+        exit(1)
     randomized_folder_list = random.sample(folder_list, len(folder_list))
     git_parser = ModelTeamGitParser(config)
     os.makedirs(output_path, exist_ok=True)

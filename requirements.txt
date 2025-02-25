@@ -2,6 +2,7 @@ matplotlib==3.9.2
 numpy==1.26.4
 torch==2.2.2
 transformers==4.48.0
+tqdm==4.66.3
 accelerate==0.29.3
 scikit-learn==1.5.2
 pandas==2.2.3
