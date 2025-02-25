@@ -417,13 +417,15 @@ class ModelTeamGitParser:
                         # Evaluate 1 model at a time to avoid memory issues
                         model_data = init_model(model_path, model_type, self.config, device)
                         if model_type == C2S:
+                            model_label = f"Skill Prediction@{repo_name}"
                             print("Evaluating Skill Prediction model...", flush=True)
                         elif model_type == LIFE_OF_PY:
+                            model_label = f"Code Quality@{repo_name}"
                             print("Evaluating Code Quality model...", flush=True)
                         else:
                             continue
                         has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
-                                                            model_data, repo_name)
+                                                            model_data, repo_name, model_label)
                         del model_data
                         gc.collect()
                 if has_new_data == 0:
@@ -462,14 +464,17 @@ class ModelTeamGitParser:
         f.write(f"\"{STATS}\": {json.dumps(user_profile)}")
         f.write("}\n")
 
-    def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name):
+    def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name, model_label):
         global label_file_list
         has_features = 0
         features = []
         pbar = None
         if args.show_progress:
-            print("Total lines to analyze", repo_level_data.get(SS_LC, 1234), flush=True)
-            pbar = tqdm(total=repo_level_data.get(SS_LC, 1000), desc=f"Analyzing code in {repo_name}...", unit="lines")
+            total = repo_level_data[SS_LC]
+            if total == 0:
+                pbar = tqdm(desc=model_label, unit="lines")
+            else:
+                pbar = tqdm(total=total, desc=model_label, unit="lines")
         for user in user_profiles:
             user_profile = user_profiles[user]
             if SKILLS not in user_profile:
@@ -527,6 +532,9 @@ class ModelTeamGitParser:
             self.eval_llm_model(model_data, features, user_profiles, pbar)
             has_features += len(features)
         if pbar:
+            # some lines get reduced while breaking into chunks
+            if pbar.total > pbar.n:
+                pbar.update(pbar.total - pbar.n)
             pbar.close()
         return has_features
 
