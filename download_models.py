@@ -17,6 +17,7 @@ def hello_world():
 """
 for model_type in MODEL_TYPES:
     models = get_model_list(model_team_config, model_type)
+    print("Downloading Base Model CodeT5+...", flush=True)
     for model_path in models:
         print(f"Downloading {model_path} with {model_type} model type...", flush=True)
         model_data = init_model(model_path, model_type, model_team_config, device)

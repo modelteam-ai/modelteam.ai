@@ -13,7 +13,7 @@ def main():
 
     # Use virtual environment's Python to install dependencies and run scripts
     run_command([python_bin, "-m", "pip", "install", "--upgrade", "pip"])
-    run_command([python_bin, "-m", "pip", "install", "-r", "requirements.txt"])
+    run_command_stream([python_bin, "-m", "pip", "install", "-r", "requirements.txt"])
     # in windows set "HF_HUB_DISABLE_SYMLINKS_WARNING=1" to avoid warning
     if platform.system() == "Windows":
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
