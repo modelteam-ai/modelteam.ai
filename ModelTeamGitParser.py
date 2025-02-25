@@ -245,7 +245,9 @@ class ModelTeamGitParser:
             if line.startswith('+'):
                 snippet.append(line[1:])  # remove '+' sign
             else:
-                if len(snippet) >= 10:  # minimum lines of code
+                snippet_len = len(snippet)
+                if snippet_len >= 10:  # minimum lines of code
+                    repo_stats[SS_LC] += snippet_len
                     snippets.append('\n'.join(snippet))
                 snippet = []  # reset snippet
         # check for the last snippet
