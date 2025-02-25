@@ -7,7 +7,7 @@ from setup_utils import get_profile_path_file_name, run_model_team_git_parser
 
 
 def usage():
-    print("Usage: gen_git_stats.py -g <git_email_id> [-r <repo_list.txt>] [-n <num_years_lookback>]")
+    print("Usage: gen_git_stats.py -g <git_email_id> -r <repo_list.txt> [-n <num_years_lookback>]")
     print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -g user@org.ai -n 5")
     print("e.g. gen_git_stats.py -r /home/user/repo_list.txt -g user@users.noreply.github.com -n 5")
     print("Default num_years_lookback is 5")
@@ -17,16 +17,13 @@ def usage():
 def validate_input(git_email_id, num_years, repo_list):
     """Validate the command line inputs."""
     if repo_list and not os.path.isfile(repo_list) and not os.path.isdir(repo_list):
-        print("Repo list does not exist")
-        usage()
+        print("Repo list does not exist.. Create a file with list of git folders or provide a directory path that contains git folders")
 
     if not re.match(r"^[0-9]+$", str(num_years)):
         print("num_years should be a number")
-        usage()
 
     if "," in git_email_id:
         print("Please provide only one git id")
-        usage()
 
 
 def main():

@@ -1,7 +1,7 @@
 import os
 import platform
 
-from setup_utils import run_command, get_python_bin
+from setup_utils import run_command, get_python_bin, run_command_stream
 
 
 def main():
@@ -13,12 +13,12 @@ def main():
 
     # Use virtual environment's Python to install dependencies and run scripts
     run_command([python_bin, "-m", "pip", "install", "--upgrade", "pip"])
-    run_command([python_bin, "-m", "pip", "install", "-r", "requirements.txt"])
+    run_command_stream([python_bin, "-m", "pip", "install", "-r", "requirements.txt"])
     # in windows set "HF_HUB_DISABLE_SYMLINKS_WARNING=1" to avoid warning
     if platform.system() == "Windows":
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-    print("Downloading models.. Please be patient, this may take a while")
-    run_command([python_bin, "download_models.py", "--config", "config.ini"], show_spinner=True)
+    print("Downloading models..")
+    run_command_stream([python_bin, "download_models.py", "--config", "config.ini"])
 
     print("ModelTeam setup complete")
 
