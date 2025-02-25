@@ -418,10 +418,8 @@ class ModelTeamGitParser:
                         model_data = init_model(model_path, model_type, self.config, device)
                         if model_type == C2S:
                             model_label = f"Skill Prediction@{repo_name}"
-                            print("Evaluating Skill Prediction model...", flush=True)
                         elif model_type == LIFE_OF_PY:
                             model_label = f"Code Quality@{repo_name}"
-                            print("Evaluating Code Quality model...", flush=True)
                         else:
                             continue
                         has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
