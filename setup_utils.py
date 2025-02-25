@@ -120,6 +120,7 @@ def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_
         "--output_path", output_path,
         "--config", config,
         "--num_years", str(num_years),
+        "--show_progress"
     ]
     # if repo_list is a file, pass it as --repo_list else pass it as --input_path
     if os.path.isfile(repo_list):

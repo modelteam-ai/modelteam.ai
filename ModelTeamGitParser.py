@@ -11,6 +11,7 @@ import sys
 
 import torch
 from tabulate import tabulate
+from tqdm import tqdm
 
 from modelteam_utils.ai_utils import eval_llm_batch_with_scores, get_model_list, init_model
 from modelteam_utils.constants import (ADDED, DELETED, TIME_SERIES, LANGS, LIBS, COMMITS, START_TIME, END_TIME,
@@ -39,6 +40,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 TMP_MAX_YYYY_MM = "tmp_max_yyyy_mm"
+
+total_lines_to_analyze = 0
 
 
 def is_huge_commit(total_added, total_deleted):
@@ -237,6 +240,7 @@ class ModelTeamGitParser:
         :param git_diff:
         :return:
         """
+        global total_lines_to_analyze
         lines = git_diff.split('\n')
         snippets = []
         snippet = []
@@ -248,7 +252,9 @@ class ModelTeamGitParser:
                     snippets.append('\n'.join(snippet))
                 snippet = []  # reset snippet
         # check for the last snippet
-        if len(snippet) >= 10:
+        snippet_len = len(snippet)
+        if snippet_len >= 10:
+            total_lines_to_analyze += snippet_len
             snippets.append('\n'.join(snippet))
         return snippets
 
@@ -362,7 +368,9 @@ class ModelTeamGitParser:
 
     def process_single_repo(self, repo_path, user_stats_output_file_name, repo_lib_output_file_name,
                             final_output, min_months, usernames, num_months):
+        global total_lines_to_analyze
         user_profiles = {}
+        total_lines_to_analyze = 0
         repo_level_data = {LIBS: {}, SKILLS: {}}
         if not os.path.exists(user_stats_output_file_name):
             repo_name = os.path.basename(repo_path)
@@ -411,9 +419,14 @@ class ModelTeamGitParser:
                     for model_path in models:
                         # Evaluate 1 model at a time to avoid memory issues
                         model_data = init_model(model_path, model_type, self.config, device)
-                        if model_type == C2S or model_type == LIFE_OF_PY or model_type == I2S:
-                            has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
-                                                                model_data, repo_name)
+                        if model_type == C2S:
+                            print("Evaluating Skill Prediction model...", flush=True)
+                        elif model_type == LIFE_OF_PY:
+                            print("Evaluating Code Quality model...", flush=True)
+                        else:
+                            continue
+                        has_new_data += self.extract_skills(user_profiles, repo_level_data, min_months,
+                                                            model_data, repo_name)
                         del model_data
                         gc.collect()
                 if has_new_data == 0:
@@ -453,9 +466,13 @@ class ModelTeamGitParser:
         f.write("}\n")
 
     def extract_skills(self, user_profiles, repo_level_data, min_months, model_data, repo_name):
-        global label_file_list
+        global label_file_list, total_lines_to_analyze
         has_features = 0
         features = []
+        pbar = None
+        if args.show_progress:
+            pbar = tqdm(total=total_lines_to_analyze, desc=f"Analyzing your code in {repo_name}...", unit="lines",
+                        leave=False)
         for user in user_profiles:
             user_profile = user_profiles[user]
             if SKILLS not in user_profile:
@@ -506,12 +523,14 @@ class ModelTeamGitParser:
                                                  "is_labeled_file": is_labeled_file,
                                                  "doc_string_line_count": doc_string_line_count})
                                 if len(features) == args.batch_size:
-                                    self.eval_llm_model(model_data, features, user_profiles)
+                                    self.eval_llm_model(model_data, features, user_profiles, pbar)
                                     has_features += len(features)
                                     features = []
         if len(features) > 0:
-            self.eval_llm_model(model_data, features, user_profiles)
+            self.eval_llm_model(model_data, features, user_profiles, pbar)
             has_features += len(features)
+        if pbar:
+            pbar.close()
         return has_features
 
     @staticmethod
@@ -525,8 +544,8 @@ class ModelTeamGitParser:
                     docstring_line_count += len(norm_docstrings)
         return docstring_line_count
 
-    def eval_llm_model(self, model_data, features, user_profiles):
-        print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}", flush=True)
+    def eval_llm_model(self, model_data, features, user_profiles, pbar):
+        # print(f"Evaluating {len(features)} snippets for {model_data['model_tag']}", flush=True)
         snippet_key = "snippet"
         if model_data['model_type'] == I2S:
             snippet_key = "libs"
@@ -544,6 +563,8 @@ class ModelTeamGitParser:
             line_count = features[i]["line_count"]
             doc_string_line_count = features[i]["doc_string_line_count"]
             is_labeled_file = features[i]["is_labeled_file"]
+            if pbar:
+                pbar.update(line_count)
             ModelTeamGitParser.accumulate_score(user_profiles[features[i]["user"]], lang, yyyy_mm, score_list[i],
                                                 sm_score_list[i], skill_list[i], line_count, doc_string_line_count,
                                                 model_data['model_tag'], model_data['model_type'] == C2S,
@@ -722,6 +743,7 @@ if __name__ == "__main__":
     # Used only for giving a team name when using multiple emails or for generating profiles for all users
     parser.add_argument('--team_name', type=str, help='Team Name', default=None)
     parser.add_argument('--num_years', type=int, help='Number of years to consider', default=2)
+    parser.add_argument('--show_progress', default=False, help='Show progress bar', action='store_true')
 
     # These are advanced options that's usually used for internal use
     parser.add_argument('--skip_model_eval', default=False, help='Skip model evaluation', action='store_true')
