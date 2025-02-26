@@ -67,6 +67,12 @@ This script:
 #### Repo List
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
+- If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
+
+> $ ls /Users/john/repos/<br>
+> backend<br>
+> frontend<br>
+> api
 
 ```
 find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list.txt
@@ -76,13 +82,6 @@ find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list
 > /Users/john/backend<br>
 > /Users/john/frontend<br>
 > /Users/john/api
-
-- Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-
-> $ ls /Users/john/repos/<br>
-> backend<br>
-> frontend<br>
-> api
 
 #### Finding Your Git Email ID
 
