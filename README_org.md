@@ -86,21 +86,21 @@ This script:
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
 - If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
-> ```
+
 > $ ls /Users/john/repos/<br>
 > backend<br>
 > frontend<br>
 > api
-> ```
+
 ```
 find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list.txt
 ```
-> ```
+
 > $ cat /Users/john/modelteam/repo_list.txt<br>
 > /Users/john/backend<br>
 > /Users/john/frontend<br>
 > /Users/john/api
-> ```
+
 #### Finding Your Git Email ID (Skip this if you are building for the entire team)
 
 - `git_email_id` should be the id you have in your git commits.
@@ -110,11 +110,11 @@ find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list
 ``` 
 git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
 ```
-> ```
-> $ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq
-> 1234567+john@users.noreply.github.com
-> john@org.ai
-> ```
+
+> `$ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq`<br>
+> `1234567+john@users.noreply.github.com`<br>
+> `john@org.ai`<br>
+
 ### 3. Extract Skills from Your Code
 - **This is to build team profile, for individuals to fenerate their profiles, refer to [Profile Generation](README.md)**
 - For this step, no internet access is required. Everything stays on your local machine
