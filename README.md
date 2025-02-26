@@ -40,11 +40,9 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Getting Started
 
-### Extract Skills & Stats from your Code to build your profile
-
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
-**For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
+### Extract Skills & Stats from your Code to build your profile
 
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
@@ -101,7 +99,7 @@ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq
 > `john@org.ai`<br>
 
 ### 3. Extract Skills from Your Code
-
+- **This is to build profile for single user, to build team profile refer to [Team Profile Generation](README_org.md)**
 - For this step, no internet access is required. The script will analyze your git history to extract skills and stats
 ```
 python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
