@@ -65,36 +65,16 @@ This script:
 - Installs **dependencies**
 - Downloads **AI models**
 
-### 2 Extract Skills from Your Code
+### 2. Gather your Git Repositories & Git Email ID to Analyze
+#### Repo List
 
-- For this step, no internet access is required. The script will analyze your git history to extract skills and stats
-```
-python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
-```
-
-- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
-  back in git history
-
-**Examples**
+- Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
 
 ```
-python3 gen_git_stats.py -r /Users/john/repo_list.txt -g john@org.ai -n 5
+find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list.txt
 ```
 
-```
-python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
-```
-
-- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
-  separately
-- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
-
-
-#### Defining Your Repositories
-
-- Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
-
-> $ cat /Users/john/repo_list.txt<br>
+> $ cat /Users/john/modelteam/repo_list.txt<br>
 > /Users/john/backend<br>
 > /Users/john/frontend<br>
 > /Users/john/api
@@ -109,20 +89,43 @@ python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.git
 #### Finding Your Git Email ID
 
 - `git_email_id` should be the id you have in your git commits.
-  - You can get this by using `git log` command as shown below
+- You can get this by using `git log` command as shown below
+  - Assuming your $USER (username) is there in your Author field
 
 ``` 
-git log | grep $USER | head
+git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
 ```
 
-> `git log | grep $USER | head -3`
-> `Author: john <john@org.ai>`<br>
-> `Author: john <1234567+john@users.noreply.github.com>`<br>
-> `Author: john <john@org.ai>`<br>
+> `$ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq`<br>
+> `1234567+john@users.noreply.github.com`<br>
+> `john@org.ai`<br>
 
-- Use the git email id inside `<...>` in the above output
+### 3. Extract Skills from Your Code
 
-### 3. Edit & Upload
+- For this step, no internet access is required. The script will analyze your git history to extract skills and stats
+```
+python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
+```
+
+- Number of years is optional and defaults to 5 years. It's recommended to change it to number of years you want to look
+  back in git history
+
+**Examples**
+
+```
+python3 gen_git_stats.py -r ~/modelteam/repo_list.txt -g john@org.ai -n 5
+```
+
+```
+python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
+```
+
+- If you have multiple git email ids, you need to run the entire flow (except for setup.py) for each git email id
+  separately
+- **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
+
+
+### 4. Edit & Upload
 
 ```
 python3 edit_skills.py -g <git_email_id> [--cli_mode]
