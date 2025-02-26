@@ -61,7 +61,6 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 [![Build your Team profile](images/orgVideo.png)](https://www.youtube.com/watch?v=JDGxgT9rwo0)
 
-**For Individuals to Generate their profiles, refer to [Profile Generation](README.md)**
 - Create an account in [ModelTeam](https://app.modelteam.ai/org/)
 - Run the following commands to generate your profile
     - Our AI models run locally on your machine and does not send any data outside your machine.
@@ -82,8 +81,42 @@ This script:
 - Installs **dependencies**
 - Downloads **AI models**
 
-### 2 Extract Skills from Your Code
+### 2. Gather your Git Repositories
+#### Repo List
 
+- Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
+- If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
+
+> $ ls /Users/john/repos/<br>
+> backend<br>
+> frontend<br>
+> api
+
+```
+find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list.txt
+```
+
+> $ cat /Users/john/modelteam/repo_list.txt<br>
+> /Users/john/backend<br>
+> /Users/john/frontend<br>
+> /Users/john/api
+
+#### Finding Your Git Email ID (Skip this if you are building for the entire team)
+
+- `git_email_id` should be the id you have in your git commits.
+- You can get this by using `git log` command as shown below
+  - Assuming your $USER (username) is there in your Author field
+
+``` 
+git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
+```
+
+> `$ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq`<br>
+> `1234567+john@users.noreply.github.com`<br>
+> `john@org.ai`<br>
+
+### 3. Extract Skills from Your Code
+- **This is to build team profile, for individuals to fenerate their profiles, refer to [Profile Generation](README.md)**
 - For this step, no internet access is required. Everything stays on your local machine
 ```
 python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]
@@ -103,39 +136,7 @@ python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" 
 
 - **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
 
-#### Defining Your Repositories
-
-- Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
-
-> $ cat /Users/john/repo_list.txt<br>
-> /Users/john/backend<br>
-> /Users/john/frontend<br>
-> /Users/john/api
-
-- Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-
-> $ ls /Users/john/repos/<br>
-> backend<br>
-> frontend<br>
-> api
-
-
-#### Finding Your Git Email ID (Optional, if you want to generate profile only for specific individuals)
-
-- `git_email_id` should be the id you have in your git commits.
-    - You can get this by using `git log` command as shown below
-
-``` 
-git log | grep $USER | head
-```
-> `git log | grep $USER | head -3`
-> `Author: john <john@org.ai>`<br>
-> `Author: john <1234567+john@users.noreply.github.com>`<br>
-> `Author: john <john@org.ai>`<br>
-
-- Use the git email id inside `<...>` in the above output
-
-### 3. Upload
+### 4. Upload
 
 - Just upload the generated JSON file to create your team in https://app.modelteam.ai/org/teams
 - Our AI models will analyze the data and generate a profile for your team (<30 minutes)

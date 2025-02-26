@@ -40,11 +40,9 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Getting Started
 
-### Extract Skills & Stats from your Code to build your profile
-
 [![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
 
-**For Enterprises to Generate profiles for your team, refer to [Team Profile Generation](README_org.md)**
+### Extract Skills & Stats from your Code to build your profile
 
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
@@ -65,8 +63,42 @@ This script:
 - Installs **dependencies**
 - Downloads **AI models**
 
-### 2 Extract Skills from Your Code
+### 2. Gather your Git Repositories & Git Email ID to Analyze
+#### Repo List
 
+- Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
+- If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
+
+> $ ls /Users/john/repos/<br>
+> backend<br>
+> frontend<br>
+> api
+
+```
+find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list.txt
+```
+
+> $ cat /Users/john/modelteam/repo_list.txt<br>
+> /Users/john/backend<br>
+> /Users/john/frontend<br>
+> /Users/john/api
+
+#### Finding Your Git Email ID
+
+- `git_email_id` should be the id you have in your git commits.
+- You can get this by using `git log` command as shown below
+  - Assuming your $USER (username) is there in your Author field
+
+``` 
+git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
+```
+
+> `$ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq`<br>
+> `1234567+john@users.noreply.github.com`<br>
+> `john@org.ai`<br>
+
+### 3. Extract Skills from Your Code
+- **This is to build profile for single user, to build team profile refer to [Team Profile Generation](README_org.md)**
 - For this step, no internet access is required. The script will analyze your git history to extract skills and stats
 ```
 python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
@@ -78,7 +110,7 @@ python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_t
 **Examples**
 
 ```
-python3 gen_git_stats.py -r /Users/john/repo_list.txt -g john@org.ai -n 5
+python3 gen_git_stats.py -r ~/modelteam/repo_list.txt -g john@org.ai -n 5
 ```
 
 ```
@@ -90,39 +122,7 @@ python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.git
 - **To Force re-run the job, delete the folder `model_team_profile/<git_email_id>` and run the script again**
 
 
-#### Defining Your Repositories
-
-- Clone the repos to your local machine and add the full paths to a text file, one line for each repo. e.g.
-
-> $ cat /Users/john/repo_list.txt<br>
-> /Users/john/backend<br>
-> /Users/john/frontend<br>
-> /Users/john/api
-
-- Alternatively, if all your repos are in a single directory, you can pass the directory path directly.
-
-> $ ls /Users/john/repos/<br>
-> backend<br>
-> frontend<br>
-> api
-
-#### Finding Your Git Email ID
-
-- `git_email_id` should be the id you have in your git commits.
-  - You can get this by using `git log` command as shown below
-
-``` 
-git log | grep $USER | head
-```
-
-> `git log | grep $USER | head -3`
-> `Author: john <john@org.ai>`<br>
-> `Author: john <1234567+john@users.noreply.github.com>`<br>
-> `Author: john <john@org.ai>`<br>
-
-- Use the git email id inside `<...>` in the above output
-
-### 3. Edit & Upload
+### 4. Edit & Upload
 
 ```
 python3 edit_skills.py -g <git_email_id> [--cli_mode]
