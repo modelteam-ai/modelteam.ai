@@ -35,7 +35,12 @@ def generate_git_issue(return_code, command):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
     if len(command) > 2:
-        command_name = " ".join(command[0:2])
+        if command[1] == "-m":
+            command_name = command[2]
+        elif command[0].endswith("python"):
+            command_name = command[1]
+        else:
+            command_name = " ".join(command[0:2])
     else:
         command_name = " ".join(command)
     title = urllib.parse.quote(f"Error:{command_name}")
