@@ -34,6 +34,8 @@ def run_command_stream(command, shell=False):
 def generate_git_issue(return_code, command):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
+    if command[0] == "caffeinate":
+        command = command[1:]
     if len(command) > 2:
         if command[1] == "-m":
             command_name = command[2]
