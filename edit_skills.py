@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from modelteam_utils.utils import sha256_hash
-from setup_utils import get_python_bin, run_command, get_profile_path_file_name
+from setup_utils import get_python_bin, run_command_stream, get_profile_path_file_name
 
 
 def usage():
@@ -22,7 +22,7 @@ def run_edit_and_sign(input_path, user_key, cli_mode, config):
 
     if cli_mode:
         edit_and_sign_command.append('--cli_mode')
-    run_command(edit_and_sign_command)
+    run_command_stream(edit_and_sign_command)
 
 
 def main():

@@ -1,63 +1,56 @@
-import itertools
 import os
 import platform
 import shutil
+import signal
 import subprocess
 import sys
-import threading
-import time
+import urllib.parse
 import venv
 from datetime import datetime
 
-def spinner():
-    for char in itertools.cycle("|/-\\"):  # Spinner animation characters
-        if not spinning:  # Stop spinner when the flag is set to False
-            break
-        sys.stdout.write(f"\r{char} ")  # Write spinner character
-        sys.stdout.flush()
-        time.sleep(0.3)  # Control the speed of the spinner
-    sys.stdout.write("\r   \r")  # Clear spinner when done
-
 
 def run_command_stream(command, shell=False):
-    date = datetime.now().strftime("%Y-%m-%d")
-    with open(f"log_{date}.txt", "a") as logfile:
-        process = subprocess.Popen(
-            command,
-            shell=shell,
-            stdout=None,
-            stderr=None,
-            text=True
-        )
-        return_code = process.wait()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, command)
+    process = subprocess.Popen(
+        command,
+        shell=shell,
+        stdout=None,
+        stderr=None,
+        text=True
+    )
+
+    def handle_interrupt(signum, frame):
+        generate_git_issue(130, command)
+        process.terminate()  # Ensure the process is terminated
+        sys.exit(130)  # Exit with code 130 (SIGINT)
+
+    signal.signal(signal.SIGINT, handle_interrupt)
+
+    return_code = process.wait()
+    if return_code != 0:
+        generate_git_issue(return_code, command)
+        raise subprocess.CalledProcessError(return_code, command)
 
 
-def run_command(command, shell=False, show_spinner=False):
-    global spinning
-    date = datetime.now().strftime("%Y-%m-%d")
-    with open(f"log_{date}.txt", "a") as logfile:
-        process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        if show_spinner:
-            spinning = True
-            spinner_thread = threading.Thread(target=spinner, daemon=True)
-            spinner_thread.start()
-        for line in iter(process.stdout.readline, ''):
-            if 'MallocStackLogging' in line:
-                continue
-            if show_spinner:
-                sys.stdout.write("\r   \r")  # Clear spinner before printing the output
-            print(line, end='')
-            logfile.write(line)
+def generate_git_issue(return_code, command):
+    blue_text = "\033[94m"
+    reset_text = "\033[0m"
+    if command[0] == "caffeinate":
+        command = command[1:]
+    if len(command) > 2:
+        if command[1] == "-m":
+            command_name = command[2]
+        elif command[0].endswith("python"):
+            command_name = command[1]
+        else:
+            command_name = " ".join(command[0:2])
+    else:
+        command_name = " ".join(command)
+    title = urllib.parse.quote(f"Error:{command_name}")
 
-        process.stdout.close()
-        return_code = process.wait()
-        if show_spinner:
-            spinning = False
-            spinner_thread.join()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, command)
+    print(f"Error: Command {command} failed with return code {return_code}.")
+    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}"
+    print(
+        f"Please raise an issue at {blue_text}{link}{reset_text} with the error message. Or email us at support@modelteam.ai")
 
 
 def get_python_bin(create_venv=False):
