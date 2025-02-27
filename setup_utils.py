@@ -2,6 +2,7 @@ import itertools
 import os
 import platform
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -28,8 +29,17 @@ def run_command_stream(command, shell=False):
         stderr=None,
         text=True
     )
+
+    def handle_interrupt(signum, frame):
+        generate_git_issue(130, command[2] if len(command) > 2 else command[0])
+        process.terminate()  # Ensure the process is terminated
+        sys.exit(130)  # Exit with code 130 (SIGINT)
+
+    signal.signal(signal.SIGINT, handle_interrupt)
+
     return_code = process.wait()
     if return_code != 0:
+        generate_git_issue(return_code, command[2])
         raise subprocess.CalledProcessError(return_code, command)
 
 
@@ -37,36 +47,9 @@ def generate_git_issue(return_code, command):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
     print(f"Error: Command {command} failed with return code {return_code}.")
-    title = f"Error: Command {command} failed with return code {return_code}."
-    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}"
-    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the above error message.")
-
-
-def run_command(command, shell=False, show_spinner=False):
-    global spinning
-    date = datetime.now().strftime("%Y-%m-%d")
-    with open(f"log_{date}.txt", "a") as logfile:
-        process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        if show_spinner:
-            spinning = True
-            spinner_thread = threading.Thread(target=spinner, daemon=True)
-            spinner_thread.start()
-        for line in iter(process.stdout.readline, ''):
-            if 'MallocStackLogging' in line:
-                continue
-            if show_spinner:
-                sys.stdout.write("\r   \r")  # Clear spinner before printing the output
-            print(line, end='')
-            logfile.write(line)
-
-        process.stdout.close()
-        return_code = process.wait()
-        if show_spinner:
-            spinning = False
-            spinner_thread.join()
-        if return_code != 0:
-            generate_git_issue(return_code, command)
-            raise subprocess.CalledProcessError(return_code, command)
+    title = f"Error+{command}."
+    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}&body=Error+message+"
+    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the above error message. Or email us at support@modelteam.ai")
 
 
 def get_python_bin(create_venv=False):
