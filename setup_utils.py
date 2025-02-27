@@ -1,12 +1,10 @@
-import itertools
 import os
 import platform
 import shutil
 import signal
 import subprocess
 import sys
-import threading
-import time
+import urllib.parse
 import venv
 from datetime import datetime
 
@@ -21,7 +19,7 @@ def run_command_stream(command, shell=False):
     )
 
     def handle_interrupt(signum, frame):
-        generate_git_issue(130, command[2] if len(command) > 2 else command[0])
+        generate_git_issue(130, command)
         process.terminate()  # Ensure the process is terminated
         sys.exit(130)  # Exit with code 130 (SIGINT)
 
@@ -29,17 +27,23 @@ def run_command_stream(command, shell=False):
 
     return_code = process.wait()
     if return_code != 0:
-        generate_git_issue(return_code, command[2] if len(command) > 2 else command[0])
+        generate_git_issue(return_code, command)
         raise subprocess.CalledProcessError(return_code, command)
 
 
 def generate_git_issue(return_code, command):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
+    if len(command) > 2:
+        command_name = " ".join(command[0:2])
+    else:
+        command_name = " ".join(command)
+    title = urllib.parse.quote(f"Error:{command_name}")
+
     print(f"Error: Command {command} failed with return code {return_code}.")
-    title = f"Error+{command}."
-    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}&body=Error+message+"
-    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the error message. Or email us at support@modelteam.ai")
+    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}"
+    print(
+        f"Please raise an issue at {blue_text}{link}{reset_text} with the error message. Or email us at support@modelteam.ai")
 
 
 def get_python_bin(create_venv=False):
