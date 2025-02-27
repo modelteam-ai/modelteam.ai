@@ -11,16 +11,6 @@ import venv
 from datetime import datetime
 
 
-def spinner():
-    for char in itertools.cycle("|/-\\"):  # Spinner animation characters
-        if not spinning:  # Stop spinner when the flag is set to False
-            break
-        sys.stdout.write(f"\r{char} ")  # Write spinner character
-        sys.stdout.flush()
-        time.sleep(0.3)  # Control the speed of the spinner
-    sys.stdout.write("\r   \r")  # Clear spinner when done
-
-
 def run_command_stream(command, shell=False):
     process = subprocess.Popen(
         command,
@@ -39,7 +29,7 @@ def run_command_stream(command, shell=False):
 
     return_code = process.wait()
     if return_code != 0:
-        generate_git_issue(return_code, command[2])
+        generate_git_issue(return_code, command[2] if len(command) > 2 else command[0])
         raise subprocess.CalledProcessError(return_code, command)
 
 
@@ -49,7 +39,7 @@ def generate_git_issue(return_code, command):
     print(f"Error: Command {command} failed with return code {return_code}.")
     title = f"Error+{command}."
     link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}&body=Error+message+"
-    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the above error message. Or email us at support@modelteam.ai")
+    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the error message. Or email us at support@modelteam.ai")
 
 
 def get_python_bin(create_venv=False):
