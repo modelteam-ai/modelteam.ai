@@ -9,6 +9,7 @@ import time
 import venv
 from datetime import datetime
 
+
 def spinner():
     for char in itertools.cycle("|/-\\"):  # Spinner animation characters
         if not spinning:  # Stop spinner when the flag is set to False
@@ -20,18 +21,25 @@ def spinner():
 
 
 def run_command_stream(command, shell=False):
-    date = datetime.now().strftime("%Y-%m-%d")
-    with open(f"log_{date}.txt", "a") as logfile:
-        process = subprocess.Popen(
-            command,
-            shell=shell,
-            stdout=None,
-            stderr=None,
-            text=True
-        )
-        return_code = process.wait()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, command)
+    process = subprocess.Popen(
+        command,
+        shell=shell,
+        stdout=None,
+        stderr=None,
+        text=True
+    )
+    return_code = process.wait()
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, command)
+
+
+def generate_git_issue(return_code, command):
+    blue_text = "\033[94m"
+    reset_text = "\033[0m"
+    print(f"Error: Command {command} failed with return code {return_code}.")
+    title = f"Error: Command {command} failed with return code {return_code}."
+    link = f"https://github.com/modelteam-ai/modelteam.ai/issues/new?title={title}"
+    print(f"Please raise an issue at {blue_text}{link}{reset_text} with the above error message.")
 
 
 def run_command(command, shell=False, show_spinner=False):
@@ -57,6 +65,7 @@ def run_command(command, shell=False, show_spinner=False):
             spinning = False
             spinner_thread.join()
         if return_code != 0:
+            generate_git_issue(return_code, command)
             raise subprocess.CalledProcessError(return_code, command)
 
 
