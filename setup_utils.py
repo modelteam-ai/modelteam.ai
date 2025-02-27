@@ -10,6 +10,13 @@ from datetime import datetime
 
 
 def run_command_stream(command, shell=False):
+    print("!!!IMPORTANT!!! Please turn off sleep mode so that the job is not interrupted.", flush=True)
+    if shutil.which("caffeinate"):
+        if sys.platform == "linux":
+            command = ["caffeinate"] + command
+        elif sys.platform == "darwin":
+            command = ["caffeinate", "-dimsu"] + command
+
     process = subprocess.Popen(
         command,
         shell=shell,
@@ -35,7 +42,10 @@ def generate_git_issue(return_code, command):
     blue_text = "\033[94m"
     reset_text = "\033[0m"
     if command[0] == "caffeinate":
-        command = command[1:]
+        if command[1] == "-dimsu":
+            command = command[2:]
+        else:
+            command = command[1:]
     if len(command) > 2:
         if command[1] == "-m":
             command_name = command[2]
@@ -128,10 +138,6 @@ def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_
         cmd += ["--user_emails", email_id]
     if team_name:
         cmd += ["--team_name", team_name, "--compress_output"]
-    if sys.platform in ["darwin", "linux"] and shutil.which("caffeinate"):
-        cmd = ["caffeinate"] + cmd
-    else:
-        print("WARNING!!! Caffeinate is not available on this system. Please turn off sleep mode manually.")
 
     # Run the process
     run_command_stream(cmd)
