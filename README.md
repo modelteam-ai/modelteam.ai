@@ -85,8 +85,14 @@ find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list
 - You can get this by using `git log` command as shown below
   - Assuming your $USER (username) is there in your Author field
 
+```
+git config --get user.email
+```
+
+or
+
 ``` 
-git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
+git log | grep Author | grep -i $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
 ```
 
 > `$ git log | grep Author | grep $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq`<br>
