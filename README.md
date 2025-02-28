@@ -35,8 +35,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 - You should have made contributions for a **minimum period of 3 months**.
 
 ## Getting Started
-
-[![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=PjoKii541VI)
+[![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=s1MHhtoiMCk)
 
 ### Extract Skills & Stats from your Code to build your profile
 
