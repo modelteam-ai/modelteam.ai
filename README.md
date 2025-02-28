@@ -1,7 +1,3 @@
-<div align="center">
-  <img src="images/sampleProfile2.png" alt="ModelTeam">
-</div>
-
 # ModelTeam: AI-Powered Skill Validation for Engineers
 
 **[ModelTeam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
@@ -40,7 +36,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Getting Started
 
-[![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=GqwijKCqfRE)
+[![Build your Modelteam profile](images/engVideo.png)](https://www.youtube.com/watch?v=PjoKii541VI)
 
 ### Extract Skills & Stats from your Code to build your profile
 
