@@ -39,6 +39,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ### Extract Skills & Stats from your Code to build your profile
 
+- Create an account in [modelteam](https://app.modelteam.ai/) if you don't have one
 - Run the following commands to generate your profile.
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile

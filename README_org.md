@@ -61,7 +61,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 [![Build your Team profile](images/orgVideo.png)](https://www.youtube.com/watch?v=JDGxgT9rwo0)
 
-- Create an account in [ModelTeam](https://app.modelteam.ai/org/)
+- Create an account in [modelteam](https://app.modelteam.ai/org/)
 - Run the following commands to generate your profile
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates a JSON file for creating your modelteam.ai verified profile
