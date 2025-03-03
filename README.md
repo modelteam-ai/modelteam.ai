@@ -44,20 +44,20 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
-### 1. Install ModelTeam Locally
+### 1. Install ModelTeam Locally (in a virtual environment)
 
 ```
 mkdir ~/modelteam && cd ~/modelteam
 git clone https://github.com/modelteam-ai/modelteam.ai.git
-cd modelteam.ai
+cd ~/modelteam/modelteam.ai
 python3 setup.py
 ```
 
 This script:
 
-- Sets up a **virtual environment**
-- Installs **dependencies**
-- Downloads **AI models**
+- Sets up a virtual environment. **So, it doesn't affect your system Python**
+- Installs dependencies in the virtual environment
+- Downloads AI models
 
 ### 2. Gather your Git Repositories & Git Email ID to Analyze
 #### Repo List
@@ -103,6 +103,7 @@ git log | grep Author | grep -i $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq
 - **This is to build profile for single user, to build team profile refer to [Team Profile Generation](README_org.md)**
 - For this step, no internet access is required. The script will analyze your git history to extract skills and stats
 ```
+cd ~/modelteam/modelteam.ai
 python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_to_look_back>]
 ```
 
@@ -112,10 +113,12 @@ python3 gen_git_stats.py -r <repo_list> -g <git_email_id> [-n <number_of_years_t
 **Examples**
 
 ```
+cd ~/modelteam/modelteam.ai
 python3 gen_git_stats.py -r ~/modelteam/repo_list.txt -g john@org.ai -n 5
 ```
 
 ```
+cd ~/modelteam/modelteam.ai
 python3 gen_git_stats.py -r /Users/john/repos/ -g 1234567+john@users.noreply.github.com -n 5
 ```
 
