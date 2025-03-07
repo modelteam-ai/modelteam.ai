@@ -124,10 +124,18 @@ git log | grep Author | grep -i $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq
 ### 3. Extract Skills from Your Code
 - **This is to build team profile, for individuals to fenerate their profiles, refer to [Profile Generation](README.md)**
 - For this step, no internet access is required. Everything stays on your local machine
+
+**For the entire team**
 ```
 cd ~/modelteam/modelteam.ai
-python3 gen_team_git_stats.py -r <repo_list> [-g "<gitemail1>,<gitemail2>,..."] -t "<team_name>" [-n <number_of_years>]
+python3 gen_team_git_stats.py -r <repo_list> -t "<team_name>" [-n <number_of_years>]
 ```
+**Or for a part of the team** 
+```
+cd ~/modelteam/modelteam.ai
+python3 gen_team_git_stats.py -r <repo_list> -g "<gitemail1>,<gitemail2>,..." -t "<team_name>" [-n <number_of_years>]
+```
+
 - Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating
   profiles only for the team members who are actively contributing to the repositories and are relevant to the team's skills.
 - Generates your team profile. Takes a list of git email ids or team name and optionally number of years to consider
