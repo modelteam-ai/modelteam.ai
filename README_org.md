@@ -59,7 +59,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Getting Started
 
-[![Build your Team profile](images/orgVideo.png)](https://www.youtube.com/watch?v=JDGxgT9rwo0)
+[![Build your Team profile](images/orgVideo.png)](https://www.youtube.com/watch?v=pLCDo61H-Hk)
 
 - Create an account in [modelteam](https://app.modelteam.ai/org/)
 - Run the following commands to generate your profile
