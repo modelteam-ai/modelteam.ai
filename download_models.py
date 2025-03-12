@@ -15,7 +15,7 @@ model_team_config.read(args.config)
 device = "cpu"  # for GPU usage or "cpu" for CPU usage
 code = """
 def hello_world():
-    print("Hello World! Thanks for using ModelTeam.AI!")
+    print("Hello World! Thanks for using modelteam!")
 """
 print("Downloading Base Model https://huggingface.co/Salesforce/codet5p-770m", flush=True)
 checkpoint = "Salesforce/codet5p-770m"

@@ -12,7 +12,7 @@ def main():
         print("Please install python version >= 3.9")
         exit(1)
 
-    print("Getting latest ModelTeam code")
+    print("Getting latest modelteam code")
     run_command_stream(["git", "pull"])
 
     print("Setting Virtual Environment and installing dependencies", flush=True)
@@ -27,7 +27,7 @@ def main():
     print("Downloading models..")
     run_command_stream([python_bin, "download_models.py", "--config", "config.ini"])
 
-    print("ModelTeam setup complete")
+    print("modelteam setup complete")
 
 
 if __name__ == "__main__":

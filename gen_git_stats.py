@@ -27,7 +27,7 @@ def validate_input(git_email_id, num_years, repo_list):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create a ModelTeam profile.")
+    parser = argparse.ArgumentParser(description="Create a modelteam profile.")
     parser.add_argument("-r", "--repos", required=True,
                         help="Path to the file containing paths of git folders or Path to directory containing git folders")
     parser.add_argument("-g", "--git_email_id", required=True, help="Git ID of the user present in git log")

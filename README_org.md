@@ -2,15 +2,15 @@
   <img src="images/sampleProfile2.png" alt="modelteam">
 </div>
 
-# ModelTeam: AI-Powered Skill Validation for Engineers
+# modelteam: AI-Powered Skill Validation for Engineers
 
-**[ModelTeam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
-By analyzing real-world coding contributions, ModelTeam provides insights into expertise and code quality. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
+**[modelteam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
+By analyzing real-world coding contributions, modelteam provides insights into expertise and code quality. Our platform helps teams identify and retain top talent and ensures the best engineers are matched to the
 right roles, optimizing performance and success.
 
 [View Sample Profile](https://app.modelteam.ai/profile?id=1da842a06520c30722ff3efb96d67a482cd689e6d43b87c882d4b690975a7c31)
 
-ModelTeam is trained on contributions from over a million engineers across multiple open-source projects, supporting
+modelteam is trained on contributions from over a million engineers across multiple open-source projects, supporting
 analysis in **15+ programming languages**.
 
 ## Security & Privacy
@@ -66,7 +66,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates a JSON file for creating your modelteam.ai verified profile
 
-### 1. Install ModelTeam Locally (in a virtual environment)
+### 1. Install modelteam Locally (in a virtual environment)
 
 ```
 mkdir ~/modelteam && cd ~/modelteam

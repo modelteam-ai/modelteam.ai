@@ -115,7 +115,7 @@ def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_
 
     # Create the output directory
     os.makedirs(output_path, exist_ok=True)
-    print(f"Creating ModelTeam profile in {output_path} directory")
+    print(f"Creating modelteam profile in {output_path} directory")
     python_bin = get_python_bin(create_venv=False)
     os.environ["HF_HUB_OFFLINE"] = "1"
     cmd = [

@@ -1,11 +1,11 @@
-# ModelTeam: AI-Powered Skill Validation for Engineers
+# modelteam: AI-Powered Skill Validation for Engineers
 
-**[ModelTeam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
-By analyzing real-world coding contributions, ModelTeam provides insights into expertise and code quality.
+**[modelteam](https://modelteam.ai)** is an AI-driven platform that helps engineers validate and showcase their skills.
+By analyzing real-world coding contributions, modelteam provides insights into expertise and code quality.
 
 [View Sample Profile](https://app.modelteam.ai/profile?id=1da842a06520c30722ff3efb96d67a482cd689e6d43b87c882d4b690975a7c31)
 
-ModelTeam is trained on contributions from over a million engineers across multiple open-source projects, supporting
+modelteam is trained on contributions from over a million engineers across multiple open-source projects, supporting
 analysis in **15+ programming languages**.
 
 ## Security & Privacy
@@ -44,7 +44,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
     - Our AI models run locally on your machine and does not send any data outside your machine.
     - Generates PDF profile for your personal use and a JSON file for creating your modelteam.ai verified profile
 
-### 1. Install ModelTeam Locally (in a virtual environment)
+### 1. Install modelteam Locally (in a virtual environment)
 
 ```
 mkdir ~/modelteam && cd ~/modelteam
@@ -135,7 +135,7 @@ python3 edit_skills.py -g <git_email_id> [--cli_mode]
 - Verify the generated skill stats file and edit it using [edit_skills.py](edit_skills.py) (Don't edit the JSON file
   directly)
     - Remove any confidential skills. Marking skills as irrelevant will help us improve our models
-- Create an account in [ModelTeam](https://app.modelteam.ai/) if you don't have one
+- Create an account in [modelteam](https://app.modelteam.ai/) if you don't have one
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your [experience](https://app.modelteam.ai/experience)
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
 - If you are using linux server without GUI, use --cli_mode
