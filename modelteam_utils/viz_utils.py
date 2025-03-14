@@ -175,7 +175,7 @@ def generate_pdf_report(merged_json_file, pdf_stats_file, output_path):
     if merged_lang_stats:
         for lang in merged_lang_stats:
             ts_stats = merged_lang_stats[lang]
-            ts_file = os.path.join(output_path, f"{lang}_ts.png")
+            ts_file = os.path.join(output_path, f"{lang.replace('/', '_')}_ts.png")
             generate_ts_plot(ts_stats, ts_file, lang, quarters)
             image_files.append(ts_file)
     if merged_skills:
