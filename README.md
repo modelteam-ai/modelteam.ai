@@ -74,7 +74,7 @@ This script:
 - Downloads AI models
 
 ### 2. Gather your Git Repositories & Git Email ID to Analyze
-#### Repo List
+#### 2.1 Repo List
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
 - If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
@@ -117,7 +117,7 @@ dir /s /b %USERPROFILE% | findstr "\\.git$" > %USERPROFILE%\modelteam\repo_list.
 </details>
 
 
-#### Finding Your Git Email ID
+#### 2.2 Finding Your Git Email ID
 
 - `git_email_id` should be the id you have in your git commits.
 - You can get this by using `git log` command as shown below
