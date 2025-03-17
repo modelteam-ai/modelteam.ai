@@ -63,6 +63,8 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
     - Generates a JSON file for creating your modelteam.ai verified profile
 
 ### 1. Install modelteam Locally (in a virtual environment)
+<details open>
+  <summary><b>Mac/Linux</b></summary>
 
 ```
 mkdir ~/modelteam && cd ~/modelteam
@@ -70,6 +72,16 @@ git clone https://github.com/modelteam-ai/modelteam.ai.git
 cd modelteam.ai
 python3 setup.py
 ```
+</details>
+<details> <summary><b>Windows</b></summary>
+
+```
+mkdir %USERPROFILE%\modelteam && cd %USERPROFILE%\modelteam
+git clone https://github.com/modelteam-ai/modelteam.ai.git
+cd %USERPROFILE%\modelteam\modelteam.ai
+python setup.py
+```
+</details>
 
 This script:
 
@@ -82,6 +94,9 @@ This script:
 
 - Clone the repos to your local machine and add the full paths to a text file, one line for each repo.
 - If all your repos are in a single directory, you can pass the directory path directly and skip the below step.
+
+<details open>
+  <summary><b>Mac/Linux</b></summary>
 
 > $ ls /Users/john/repos/<br>
 > backend<br>
@@ -97,6 +112,25 @@ find ~ 2>/dev/null | grep "/\.git$" | sed 's/\/\.git$//' > ~/modelteam/repo_list
 > /Users/john/frontend<br>
 > /Users/john/api
 
+</details>
+<details> <summary><b>Windows</b></summary>
+
+> $ dir C:\Users\john\repos<br>
+> backend<br>
+> frontend<br>
+> api
+
+```
+dir /s /b %USERPROFILE% | findstr "\\.git$" > %USERPROFILE%\modelteam\repo_list.txt
+```
+
+> $ type C:\Users\john\modelteam\repo_list.txt<br>
+> C:\Users\john\backend<br>
+> C:\Users\john\frontend<br>
+> C:\Users\john\api
+
+</details>
+
 #### Finding Your Git Email ID (Skip this if you are building for the entire team)
 
 - `git_email_id` should be the id you have in your git commits.
@@ -109,6 +143,9 @@ git config --get user.email
 
 or
 
+<details open>
+  <summary><b>Mac/Linux</b></summary>
+
 ``` 
 git log | grep Author | grep -i $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq 
 ```
@@ -117,20 +154,54 @@ git log | grep Author | grep -i $USER | sed 's/.*<\(.*\)>.*/\1/' | sort | uniq
 > `1234567+john@users.noreply.github.com`<br>
 > `john@org.ai`<br>
 
+</details>
+<details> <summary><b>Windows</b></summary>
+
+```
+git log --author=%USERNAME% --pretty=format:"%%ae"
+```
+</details>
+
 ### 3. Extract Skills from Your Code
 - **This is to build team profile, for individuals to fenerate their profiles, refer to [Profile Generation](README.md)**
 - For this step, no internet access is required. Everything stays on your local machine
 
 **For the entire team**
+<details open>
+  <summary><b>Mac/Linux</b></summary>
+
 ```
 cd ~/modelteam/modelteam.ai
 python3 gen_team_git_stats.py -r <repo_list> -t "<team_name>" [-n <number_of_years>]
 ```
+</details>
+<details> <summary><b>Windows</b></summary>
+
+```
+cd %USERPROFILE%\modelteam\modelteam.ai
+python3 gen_team_git_stats.py -r <repo_list> -t "<team_name>" [-n <number_of_years>]
+```
+
+</details>
+
 **Or for a part of the team** 
+
+<details open>
+  <summary><b>Mac/Linux</b></summary>
+
 ```
 cd ~/modelteam/modelteam.ai
 python3 gen_team_git_stats.py -r <repo_list> -g "<gitemail1>,<gitemail2>,..." -t "<team_name>" [-n <number_of_years>]
 ```
+</details>
+<details> <summary><b>Windows</b></summary>
+
+```
+cd %USERPROFILE%\modelteam\modelteam.ai
+python3 gen_team_git_stats.py -r <repo_list> -g "<gitemail1>,<gitemail2>,..." -t "<team_name>" [-n <number_of_years>]
+``` 
+
+</details>
 
 - Extract Team stats using [gen_team_git_stats.py](gen_team_git_stats.py). If your team is big, we recommend generating
   profiles only for the team members who are actively contributing to the repositories and are relevant to the team's skills.
@@ -138,6 +209,10 @@ python3 gen_team_git_stats.py -r <repo_list> -g "<gitemail1>,<gitemail2>,..." -t
 - Number of years is optional and defaults to 3 years. It's recommended to reduce it as per your needs
 
 **Examples**
+
+<details open>
+  <summary>Macs/Linux</summary>
+
 ```
 cd ~/modelteam/modelteam.ai
 python3 gen_team_git_stats.py -r /Users/john/repos/ -t all_team -n 3
@@ -146,6 +221,19 @@ python3 gen_team_git_stats.py -r /Users/john/repos/ -t all_team -n 3
 cd ~/modelteam/modelteam.ai
 python3 gen_team_git_stats.py -r ~/repo_list.txt -g "user1@org.ai,user2@org.ai" -t part_team -n 3
 ```
+</details>
+<details> <summary>Windows</summary>
+
+```
+cd %USERPROFILE%\modelteam\modelteam.ai
+python3 gen_team_git_stats.py -r C:\Users\john\repos\ -t all_team -n 3
+```
+```
+cd %USERPROFILE%\modelteam\modelteam.ai
+python3 gen_team_git_stats.py -r %USERPROFILE%\repo_list.txt -g "
+```
+
+</details>
 
 - **To Force re-run the job, delete the folder `model_team_profile/<team_name>` and run the script again**
 
