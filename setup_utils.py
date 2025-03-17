@@ -10,7 +10,6 @@ from datetime import datetime
 
 
 def run_command_stream(command, shell=False):
-    print("!!!IMPORTANT!!! Please turn off sleep mode so that the job is not interrupted.", flush=True)
     if shutil.which("caffeinate"):
         if sys.platform == "linux":
             command = ["caffeinate"] + command
@@ -100,6 +99,7 @@ def sanitize_email(email):
 
 def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_name=None):
     """Run the ModelTeamGitParser script with the appropriate arguments."""
+    print("!!!IMPORTANT!!! Please turn off sleep mode so that the job is not interrupted.", flush=True)
     if is_dev_mode:
         config = "../config-dev.ini"
     else:
