@@ -6,9 +6,8 @@ from datetime import datetime, timedelta
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
-    QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox, QLineEdit
+    QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox, QLineEdit, QRadioButton
 
-from edit_skills import run_edit_and_sign
 from setup_utils import run_model_team_git_parser, get_profile_path_file_name
 
 button_style = """
@@ -44,6 +43,7 @@ class GitHelperTool(QDialog):
         # Initialize variables
         self.git_repos = []
         self.selected_repos = []
+        self.selected_authors = []
         self.team_name = ""
         # default path, user's home directory
         self.input_path = os.path.expanduser("~")
@@ -61,7 +61,7 @@ class GitHelperTool(QDialog):
             "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
         self.path_input = QLabel(self)
 
-        self.browse_button = QPushButton('1. Browse', self)
+        self.browse_button = QPushButton('Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
         self.browse_button.setMaximumSize(200, 30)
         # set button color to blue
@@ -69,13 +69,7 @@ class GitHelperTool(QDialog):
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
         self.repo_list = QListWidget(self)
 
-        self.scan_authors_button = QPushButton('2. Scan for Authors', self)
-        self.scan_authors_button.clicked.connect(self.scan_for_authors)
-        self.scan_authors_button.setStyleSheet(button_style)
-        self.scan_authors_button.setMaximumSize(200, 30)
-        self.scan_authors_button.setEnabled(False)
-
-        self.author_label = QLabel("Select Team Members", self)
+        self.author_label = QLabel("Pick Team Members", self)
         self.author_list = QListWidget(self)
 
         self.num_years_label = QLabel("Number of years", self)
@@ -84,7 +78,7 @@ class GitHelperTool(QDialog):
         self.num_years_input.setValue(self.num_years)
         self.num_years_input.valueChanged.connect(lambda x: setattr(self, 'num_years', x))
 
-        self.run_button = QPushButton('3. Generate Git Stats', self)
+        self.run_button = QPushButton('Generate Team Git Stats', self)
 
         self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
         self.force_rerun.setChecked(False)
@@ -96,18 +90,23 @@ class GitHelperTool(QDialog):
 
         self.output_terminal = QTextEdit(self)
         self.output_terminal.setReadOnly(True)
+        self.output_terminal.setMaximumHeight(50)
         # Add logo image (PNG)
         pixmap = QPixmap(os.path.join("images", "modelteam_logo.png"))
         logo_label = QLabel()
         logo_label.setPixmap(pixmap)
 
+        # Radio buttons
+        self.whole_team_radio = QRadioButton("Whole Team")
+        self.pick_team_radio = QRadioButton("Pick Team Members")
+        self.whole_team_radio.setChecked(True)
+
+        # Connect signals to toggle visibility
+        self.whole_team_radio.toggled.connect(self.toggle_author_selection)
+
         # Layout arrangement
         # path and browse button in same row
         self.layout.addWidget(logo_label)
-        self.team_name_layout = QHBoxLayout()
-        self.team_name_layout.addWidget(self.team_name_label)
-        self.team_name_layout.addWidget(self.team_name_input)
-        self.layout.addLayout(self.team_name_layout)
         self.input_layout = QVBoxLayout()
         self.input_layout.addWidget(self.path_label)
         self.path_layout = QHBoxLayout()
@@ -117,9 +116,21 @@ class GitHelperTool(QDialog):
         self.layout.addLayout(self.input_layout)
         self.layout.addWidget(self.repo_list_label)
         self.layout.addWidget(self.repo_list)
-        self.layout.addWidget(self.scan_authors_button)
+
         self.layout.addWidget(self.author_label)
         self.layout.addWidget(self.author_list)
+        self.author_label.hide()
+        self.author_list.hide()
+
+        self.radio_layout = QHBoxLayout()
+        self.radio_layout.addWidget(self.whole_team_radio)
+        self.radio_layout.addWidget(self.pick_team_radio)
+        self.layout.addLayout(self.radio_layout)
+
+        self.team_name_layout = QHBoxLayout()
+        self.team_name_layout.addWidget(self.team_name_label)
+        self.team_name_layout.addWidget(self.team_name_input)
+        self.layout.addLayout(self.team_name_layout)
         self.num_years_layout = QHBoxLayout()
         self.num_years_layout.addWidget(self.num_years_label, 2)
         self.num_years_layout.addWidget(self.num_years_input, 8)
@@ -131,6 +142,14 @@ class GitHelperTool(QDialog):
         self.run_layout.addWidget(self.force_rerun)
         self.layout.addLayout(self.run_layout)
         self.layout.addWidget(self.output_terminal)
+
+    def toggle_author_selection(self):
+        """Show author selection only if 'Pick Team Members' is selected"""
+        is_pick_team_selected = self.pick_team_radio.isChecked()
+        if is_pick_team_selected:
+            self.scan_for_authors()
+        self.author_label.setVisible(is_pick_team_selected)
+        self.author_list.setVisible(is_pick_team_selected)
 
     def browse_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory", directory=self.input_path)
@@ -162,10 +181,9 @@ class GitHelperTool(QDialog):
         if not self.git_repos:
             self.output_terminal.append("No Git repositories found.")
         else:
-            self.scan_authors_button.setEnabled(True)
+            self.run_button.setEnabled(True)
 
-    def scan_for_authors(self):
-        """Scan the selected repositories and populate the authors combo box."""
+    def get_selected_repos(self):
         selected_repos = []
 
         for i in range(self.repo_list.count()):
@@ -174,7 +192,11 @@ class GitHelperTool(QDialog):
                 selected_repos.append(item.text())
 
         self.selected_repos = selected_repos
+        return selected_repos
 
+    def scan_for_authors(self):
+        """Scan the selected repositories and populate the authors combo box."""
+        selected_repos = self.get_selected_repos()
         if not selected_repos:
             self.output_terminal.append("Please select at least one repository.")
             return
@@ -218,19 +240,7 @@ class GitHelperTool(QDialog):
         except subprocess.CalledProcessError:
             return ""
 
-    def run_git_command(self):
-        """Run the Git command using the selected repos and author."""
-        selected_author = self.author_combo.currentText()
-        self.team_name = self.team_name_input.text()
-        if not self.team_name:
-            self.output_terminal.append("Please enter your team name.")
-
-        if not self.selected_repos or not selected_author:
-            self.output_terminal.append("Please select at least one repository and an author.")
-            return
-        self.accept()
-
-    def get_selected_data(self):
+    def get_selected_authors(self):
         selected_authors = []
         for i in range(self.author_list.count()):
             item = self.author_list.item(i)
@@ -238,15 +248,36 @@ class GitHelperTool(QDialog):
                 selected_authors.append(item.text())
             if len(selected_authors) == 10:
                 break
+        self.selected_authors = selected_authors
+
+    def run_git_command(self):
+        """Run the Git command using the selected repos and author."""
+        self.team_name = self.team_name_input.text()
+        if not self.team_name or not self.team_name.strip():
+            self.output_terminal.append("Please enter your team name.")
+            return
+        self.get_selected_repos()
+        if not self.selected_repos:
+            self.output_terminal.append("Please select at least one repository.")
+            return
+        if self.pick_team_radio.isChecked():
+            self.get_selected_authors()
+            if self.selected_authors:
+                self.output_terminal.append("Please select team members.")
+                return
+        self.accept()
+
+    def get_selected_data(self):
         auth_csv = ""
-        if selected_authors:
-            auth_csv = ",".join(selected_authors)
+        if self.selected_authors and self.pick_team_radio.isChecked():
+            auth_csv = ",".join(self.selected_authors)
         return self.selected_repos, self.team_name, self.num_years, auth_csv, self.force_rerun.isChecked()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; }")
+    app.setStyleSheet(
+        "QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 14px; } QLineEdit { font-size: 14px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
         selected_repos, team_name, num_years, selected_authors, force_rerun = window.get_selected_data()
@@ -259,5 +290,7 @@ if __name__ == '__main__':
             os.remove(profile_path_file)
         output_path = run_model_team_git_parser(tmp_repo_file_name, selected_authors, int(num_years), False, team_name,
                                                 force_rerun)
+        if output_path:
+            print("Please upload the output file to \033[94mhttps://app.modelteam.ai/org/teams\033[0m")
     else:
         print("Dialog closed... error")

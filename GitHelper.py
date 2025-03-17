@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QFileDialog, \
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
     QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox
 
 from edit_skills import run_edit_and_sign
@@ -66,7 +66,7 @@ class GitHelperTool(QDialog):
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
         self.repo_list = QListWidget(self)
 
-        self.scan_authors_button = QPushButton('2. Scan for Authors', self)
+        self.scan_authors_button = QPushButton('2. Scan Git Email IDs', self)
         self.scan_authors_button.clicked.connect(self.scan_for_authors)
         self.scan_authors_button.setStyleSheet(button_style)
         self.scan_authors_button.setMaximumSize(200, 30)
@@ -81,7 +81,7 @@ class GitHelperTool(QDialog):
         self.num_years_input.setValue(self.num_years)
         self.num_years_input.valueChanged.connect(lambda x: setattr(self, 'num_years', x))
 
-        self.run_button = QPushButton('3. Generate Git Stats', self)
+        self.run_button = QPushButton('3. Generate User Git Stats', self)
 
         self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
         self.force_rerun.setChecked(False)
@@ -231,7 +231,7 @@ class GitHelperTool(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; }")
+    app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
         selected_repos, selected_author, num_years, force_rerun = window.get_selected_data()
