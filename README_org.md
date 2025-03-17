@@ -90,7 +90,7 @@ This script:
 - Downloads AI models
 
 <details open>
-  <summary><h3>Team Profile Builder Tool (Mac & Windows)</h3></summary>
+  <summary><h2>Team Profile Builder Tool (Mac & Windows)</h2></summary>
 
 ### 2. Team Profile Builder Tool
 - If you are using a Mac or Windows, you can use the GUI helper to run the scripts. It will guide you through the steps
@@ -117,7 +117,7 @@ python team_profile_helper.py
 
 </details>
 
-<details> <summary><h3>Detailed Team Profile Building Steps</h3></summary>
+<details> <summary><h2>Detailed Team Profile Building Steps</h2></summary>
 
 ### 2. Gather your Git Repositories
 #### Repo List
