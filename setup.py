@@ -6,10 +6,10 @@ from setup_utils import get_python_bin, run_command_stream
 
 
 def main():
-    # check if python version is >= 3.9
+    # check if python version is >= 3.9 and <= 3.12
     pv = python_version()
-    if int(pv.split(".")[0]) < 3 or int(pv.split(".")[1]) < 9:
-        print("Please install python version >= 3.9")
+    if int(pv.split(".")[0]) < 3 or int(pv.split(".")[1]) < 9 or int(pv.split(".")[1]) > 12:
+        print("Please install python version >= 3.9 and <= 3.12")
         exit(1)
 
     print("Getting latest modelteam code")

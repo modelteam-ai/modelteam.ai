@@ -23,7 +23,7 @@ Python, JavaScript, TypeScript, Java, Go, C, C++, PHP, Ruby, C#, Rust, Scala, Sw
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.9 - 3.12
 - Pip
 - Python-venv (if not included in Python installation)
 - Git (command line)
