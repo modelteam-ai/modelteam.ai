@@ -74,8 +74,9 @@ This script:
 - Downloads AI models
 
 <details open>
-  <summary><h3>2. Profile Builder Tool (Mac & Windows)</h3></summary>
+  <summary><h3>Profile Builder Tool (Mac & Windows)</h3></summary>
 
+### 2. Profile Builder Tool
 - If you are using a Mac or Windows, you can use the GUI helper to run the scripts. It will guide you through the steps
   to build your profile.
   1. Select the repos
@@ -97,6 +98,7 @@ python user_profile_helper.py
 
 
 <details> <summary><h3>Detailed Profile Building Steps</h3></summary>
+
 ### 2. Gather your Git Repositories & Git Email ID to Analyze
 #### 2.1 Repo List
 
