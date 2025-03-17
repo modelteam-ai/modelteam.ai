@@ -15,7 +15,7 @@ from setup_utils import run_model_team_git_parser
 class GitHelperTool(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Git Helper Tool')
+        self.setWindowTitle('modelteam Git Stats Helper')
         self.setGeometry(100, 100, 800, 800)
 
         # Initialize variables
@@ -103,6 +103,7 @@ class GitHelperTool(QDialog):
         self.repo_list.clear()
 
         for root, dirs, files in os.walk(self.input_path):
+            print("Scanning for Git repositories in " + root)
             if '.git' in dirs:
                 repo_path = root
                 self.git_repos.append(repo_path)
@@ -110,6 +111,9 @@ class GitHelperTool(QDialog):
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)  # Make it checkable
                 item.setCheckState(Qt.Checked)  # Default to checked
                 self.repo_list.addItem(item)  # Add item to the list
+                dirs[:] = []  # Don't recurse into subdirectories
+            else:
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
 
         if not self.git_repos:
             self.output_terminal.append("No Git repositories found.")

@@ -24,7 +24,7 @@ def main():
     # in windows set "HF_HUB_DISABLE_SYMLINKS_WARNING=1" to avoid warning
     if platform.system() == "Windows":
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-    print("Downloading models..")
+    print("Downloading models..", flush=True)
     run_command_stream([python_bin, "download_models.py", "--config", "config.ini"])
 
     print("modelteam setup complete")
