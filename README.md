@@ -90,6 +90,8 @@ or
 ```
 python user_profile_helper.py
 ```
+
+### 3. Upload
 - Create an account in [modelteam](https://app.modelteam.ai/) if you don't have one
 - Upload the file(mt_metrics_yyyy-mm-dd_*****.json.gz) back to your [experience](https://app.modelteam.ai/experience)
 - Our AI models will analyze the data and generate a profile for you (<30 minutes)
