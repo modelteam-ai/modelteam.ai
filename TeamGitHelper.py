@@ -15,7 +15,7 @@ from setup_utils import run_model_team_git_parser
 class GitHelperTool(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('modelteam Git Stats Helper')
+        self.setWindowTitle('modelteam Git Stats Helper (TeamProfile)')
         self.setGeometry(100, 100, 800, 800)
 
         # Initialize variables
