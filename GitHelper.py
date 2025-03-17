@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
@@ -30,16 +31,11 @@ class GitHelperTool(QDialog):
         self.setLayout(self.layout)
 
         # Widgets
-        self.path_label = QLabel("Select a directory to scan for Git repositories:", self)
         self.path_input = QLineEdit(self)
-        self.path_input.setText(self.input_path)
+        self.path_input.setPlaceholderText("Select parent directory to scan for Git repos. Choose home directory if you want to get all git repos.")
 
         self.browse_button = QPushButton('Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
-
-        self.scan_repo_button = QPushButton('Scan for Git Repositories', self)
-        self.scan_repo_button.clicked.connect(self.find_git_repos)
-        self.scan_repo_button.setMaximumSize(200, 30)
 
         self.repo_list = QListWidget(self)
 
@@ -70,12 +66,11 @@ class GitHelperTool(QDialog):
         # Layout arrangement
         # path and browse button in same row
         self.layout.addWidget(logo_label)
-        self.layout.addWidget(self.path_label)
+        # self.layout.addWidget(self.path_label)
         self.path_layout = QHBoxLayout()
         self.path_layout.addWidget(self.path_input)
         self.path_layout.addWidget(self.browse_button)
         self.layout.addLayout(self.path_layout)
-        self.layout.addWidget(self.scan_repo_button)
         self.layout.addWidget(self.repo_list)
         self.layout.addWidget(self.scan_authors_button)
         self.author_layout = QHBoxLayout()
@@ -98,10 +93,13 @@ class GitHelperTool(QDialog):
         if directory:
             self.path_input.setText(directory)
             self.input_path = directory
+            self.find_git_repos()
 
     def find_git_repos(self):
         """Find all Git repositories in the provided path."""
         self.git_repos = []
+        self.selected_repos = []
+        self.author_combo.clear()
         self.repo_list.clear()
 
         for root, dirs, files in os.walk(self.input_path):
@@ -139,11 +137,12 @@ class GitHelperTool(QDialog):
     def find_authors(self):
         """Find authors from the selected repositories."""
         authors = {}
+        since_date = (datetime.now() - timedelta(days=365 * self.num_years)).strftime('%Y-%m-%d')
 
         for repo in self.selected_repos:
             try:
                 # Change directory to the repository and get the authors' emails
-                result = subprocess.check_output(['git', 'log', '--pretty=format:%ae', '--abbrev-commit'], cwd=repo)
+                result = subprocess.check_output(['git', 'log', '--since', since_date, '--pretty=format:%ae', '--abbrev-commit'], cwd=repo)
                 author_list = result.decode("utf-8").splitlines()
                 deduped_authors = list(set(author_list))
                 for author in deduped_authors:
