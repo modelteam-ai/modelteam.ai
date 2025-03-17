@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
-    QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox
+    QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox, QLineEdit
 
 from edit_skills import run_edit_and_sign
 from setup_utils import run_model_team_git_parser, get_profile_path_file_name
@@ -44,7 +44,7 @@ class GitHelperTool(QDialog):
         # Initialize variables
         self.git_repos = []
         self.selected_repos = []
-        self.current_user = self.get_git_user_email()
+        self.team_name = ""
         # default path, user's home directory
         self.input_path = os.path.expanduser("~")
         self.num_years = 3
@@ -54,6 +54,9 @@ class GitHelperTool(QDialog):
         self.setLayout(self.layout)
 
         # Widgets
+        self.team_name_label = QLabel("Team Name", self)
+        self.team_name_input = QLineEdit(self)
+        self.team_name_input.setPlaceholderText("Enter your team name")
         self.path_label = QLabel(
             "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
         self.path_input = QLabel(self)
@@ -101,6 +104,10 @@ class GitHelperTool(QDialog):
         # Layout arrangement
         # path and browse button in same row
         self.layout.addWidget(logo_label)
+        self.team_name_layout = QHBoxLayout()
+        self.team_name_layout.addWidget(self.team_name_label)
+        self.team_name_layout.addWidget(self.team_name_input)
+        self.layout.addLayout(self.team_name_layout)
         self.input_layout = QVBoxLayout()
         self.input_layout.addWidget(self.path_label)
         self.path_layout = QHBoxLayout()
@@ -214,6 +221,9 @@ class GitHelperTool(QDialog):
     def run_git_command(self):
         """Run the Git command using the selected repos and author."""
         selected_author = self.author_combo.currentText()
+        self.team_name = self.team_name_input.text()
+        if not self.team_name:
+            self.output_terminal.append("Please enter your team name.")
 
         if not self.selected_repos or not selected_author:
             self.output_terminal.append("Please select at least one repository and an author.")
@@ -221,8 +231,17 @@ class GitHelperTool(QDialog):
         self.accept()
 
     def get_selected_data(self):
-        selected_author = self.author_combo.currentText()
-        return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
+        selected_authors = []
+        for i in range(self.author_list.count()):
+            item = self.author_list.item(i)
+            if item.checkState() == Qt.Checked:
+                selected_authors.append(item.text())
+            if len(selected_authors) == 10:
+                break
+        auth_csv = ""
+        if selected_authors:
+            auth_csv = ",".join(selected_authors)
+        return self.selected_repos, self.team_name, self.num_years, auth_csv, self.force_rerun.isChecked()
 
 
 if __name__ == '__main__':
@@ -230,19 +249,15 @@ if __name__ == '__main__':
     app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
-        selected_repos, selected_author, num_years, force_rerun = window.get_selected_data()
+        selected_repos, team_name, num_years, selected_authors, force_rerun = window.get_selected_data()
         tmp_repo_file_name = os.path.join(os.getcwd(), "repo_list_autogen.txt")
         with open(tmp_repo_file_name, "w") as f:
             for repo in selected_repos:
                 f.write(repo + "\n")
-        profile_path_file = get_profile_path_file_name(selected_author)
+        profile_path_file = get_profile_path_file_name(team_name)
         if os.path.exists(profile_path_file):
             os.remove(profile_path_file)
-        output_path = run_model_team_git_parser(tmp_repo_file_name, selected_author, int(num_years), False, None,
+        output_path = run_model_team_git_parser(tmp_repo_file_name, selected_authors, int(num_years), False, team_name,
                                                 force_rerun)
-        with open(profile_path_file, "w") as f:
-            f.write(output_path)
-        if output_path:
-            run_edit_and_sign(output_path, selected_author, False, False)
     else:
         print("Dialog closed... error")
