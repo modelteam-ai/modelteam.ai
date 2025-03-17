@@ -465,5 +465,5 @@ if __name__ == "__main__":
         pdf_file = generate_pdf_report(edited_file, pdf_stats_json, pdf_path)
         print_message(pdf_file, final_output_file)
     else:
-        print("Changes were not saved. Exiting... Please run the script again.")
+        print("Changes were NOT SAVED. Exiting... Please run the script again.")
         sys.exit(0)

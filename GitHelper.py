@@ -56,10 +56,11 @@ class GitHelperTool(QDialog):
         # Widgets
         self.path_label = QLabel(
             "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
-        self.path_input = QLineEdit(self)
+        self.path_input = QLabel(self)
 
         self.browse_button = QPushButton('1. Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
+        self.browse_button.setMaximumSize(200, 30)
         # set button color to blue
         self.browse_button.setStyleSheet(button_style)
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
@@ -102,11 +103,11 @@ class GitHelperTool(QDialog):
         self.layout.addWidget(logo_label)
         self.input_layout = QVBoxLayout()
         self.input_layout.addWidget(self.path_label)
-        self.input_layout.addWidget(self.path_input)
         self.path_layout = QHBoxLayout()
-        self.path_layout.addLayout(self.input_layout)
         self.path_layout.addWidget(self.browse_button)
-        self.layout.addLayout(self.path_layout)
+        self.path_layout.addWidget(self.path_input)
+        self.input_layout.addLayout(self.path_layout)
+        self.layout.addLayout(self.input_layout)
         self.layout.addWidget(self.repo_list_label)
         self.layout.addWidget(self.repo_list)
         self.layout.addWidget(self.scan_authors_button)
@@ -129,7 +130,7 @@ class GitHelperTool(QDialog):
     def browse_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory", directory=self.input_path)
         if directory:
-            self.path_input.setText(directory)
+            self.path_input.setText(f"({directory})")
             self.input_path = directory
             self.find_git_repos()
 
