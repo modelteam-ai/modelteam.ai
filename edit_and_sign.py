@@ -371,11 +371,11 @@ def print_message(pdf_file, final_output_file):
     print(star_line)
     print(f"📂 \033[1mFinal Output:\033[0m{final_output_file}")
     print_file_tree(os.getcwd(), final_output_file)
-    print(f"🚀 \033[1;91m\033[1mDon't forget to upload the file:\033[0m")
-    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
     print("🔹 Please note:")
     print(
         "The final profile will be generated on the server-side using another ML model that processes the JSON file you upload.")
+    print(f"🚀 \033[1;91m\033[1mDon't forget to upload the file:\033[0m")
+    print(f"🔗 {blue_text}https://app.modelteam.ai/experience{reset_text}")
     print(star_line)
 
 

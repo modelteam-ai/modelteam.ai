@@ -10,7 +10,23 @@ from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton,
 
 from edit_skills import run_edit_and_sign
 from setup_utils import run_model_team_git_parser
-
+button_style = """
+    QPushButton {
+        background-color: #0078D4;  /* Nice blue shade */
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 8px 16px;
+        border: 2px solid #005A9E;
+    }
+    QPushButton:hover {
+        background-color: #005A9E;
+    }
+    QPushButton:pressed {
+        background-color: #004578;
+    }
+"""
 
 class GitHelperTool(QDialog):
     def __init__(self):
@@ -31,16 +47,19 @@ class GitHelperTool(QDialog):
         self.setLayout(self.layout)
 
         # Widgets
+        self.path_label = QLabel("Parent directory to scan for Git repos. Choose home directory if you want to get all git repos.", self)
         self.path_input = QLineEdit(self)
-        self.path_input.setPlaceholderText("Select parent directory to scan for Git repos. Choose home directory if you want to get all git repos.")
 
-        self.browse_button = QPushButton('Browse', self)
+        self.browse_button = QPushButton('1. Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
+        # set button color to blue
+        self.browse_button.setStyleSheet(button_style)
 
         self.repo_list = QListWidget(self)
 
-        self.scan_authors_button = QPushButton('Scan for Authors', self)
+        self.scan_authors_button = QPushButton('2. Scan for Authors', self)
         self.scan_authors_button.clicked.connect(self.scan_for_authors)
+        self.scan_authors_button.setStyleSheet(button_style)
         self.scan_authors_button.setMaximumSize(200, 30)
 
         self.author_label = QLabel("Select an Author:", self)
@@ -52,7 +71,9 @@ class GitHelperTool(QDialog):
         self.num_years_input.setValue(self.num_years)
         self.num_years_input.valueChanged.connect(lambda x: setattr(self, 'num_years', x))
 
-        self.run_button = QPushButton('Generate Git Stats', self)
+        self.run_button = QPushButton('3. Generate Git Stats', self)
+
+        self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
         self.run_button.setMaximumSize(200, 30)
 
@@ -66,9 +87,11 @@ class GitHelperTool(QDialog):
         # Layout arrangement
         # path and browse button in same row
         self.layout.addWidget(logo_label)
-        # self.layout.addWidget(self.path_label)
+        self.input_layout = QVBoxLayout()
+        self.input_layout.addWidget(self.path_label)
+        self.input_layout.addWidget(self.path_input)
         self.path_layout = QHBoxLayout()
-        self.path_layout.addWidget(self.path_input)
+        self.path_layout.addLayout(self.input_layout)
         self.path_layout.addWidget(self.browse_button)
         self.layout.addLayout(self.path_layout)
         self.layout.addWidget(self.repo_list)
