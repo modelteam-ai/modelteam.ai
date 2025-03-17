@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QFileDialog, \
     QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog
 
@@ -61,9 +62,14 @@ class GitHelperTool(QDialog):
 
         self.output_terminal = QTextEdit(self)
         self.output_terminal.setReadOnly(True)
+        # Add logo image (PNG)
+        pixmap = QPixmap(os.path.join("images", "modelteam_logo.png"))
+        logo_label = QLabel()
+        logo_label.setPixmap(pixmap)
 
         # Layout arrangement
         # path and browse button in same row
+        self.layout.addWidget(logo_label)
         self.layout.addWidget(self.path_label)
         self.path_layout = QHBoxLayout()
         self.path_layout.addWidget(self.path_input)
@@ -80,7 +86,11 @@ class GitHelperTool(QDialog):
         self.num_years_layout.addWidget(self.num_years_label, 2)
         self.num_years_layout.addWidget(self.num_years_input, 8)
         self.layout.addLayout(self.num_years_layout)
-        self.layout.addWidget(self.run_button)
+        self.run_layout = QHBoxLayout()
+        self.run_layout.addWidget(self.run_button)
+        self.run_label = QLabel("<- This will continue in command line...", self)
+        self.run_layout.addWidget(self.run_label)
+        self.layout.addLayout(self.run_layout)
         self.layout.addWidget(self.output_terminal)
 
     def browse_directory(self):
