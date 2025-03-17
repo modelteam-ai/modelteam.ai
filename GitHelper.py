@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QFileDialog, \
-    QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog
+    QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox
 
 from edit_skills import run_edit_and_sign
-from setup_utils import run_model_team_git_parser
+from setup_utils import run_model_team_git_parser, get_profile_path_file_name
+
 button_style = """
     QPushButton {
         background-color: #0078D4;  /* Nice blue shade */
@@ -33,6 +34,7 @@ button_style = """
     }
 """
 
+
 class GitHelperTool(QDialog):
     def __init__(self):
         super().__init__()
@@ -52,7 +54,8 @@ class GitHelperTool(QDialog):
         self.setLayout(self.layout)
 
         # Widgets
-        self.path_label = QLabel("Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
+        self.path_label = QLabel(
+            "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
         self.path_input = QLineEdit(self)
 
         self.browse_button = QPushButton('1. Browse', self)
@@ -78,6 +81,9 @@ class GitHelperTool(QDialog):
         self.num_years_input.valueChanged.connect(lambda x: setattr(self, 'num_years', x))
 
         self.run_button = QPushButton('3. Generate Git Stats', self)
+
+        self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
+        self.force_rerun.setChecked(False)
 
         self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
@@ -116,6 +122,7 @@ class GitHelperTool(QDialog):
         self.run_layout.addWidget(self.run_button)
         self.run_label = QLabel("<- This will continue in command line...", self)
         self.run_layout.addWidget(self.run_label)
+        self.run_layout.addWidget(self.force_rerun)
         self.layout.addLayout(self.run_layout)
         self.layout.addWidget(self.output_terminal)
 
@@ -180,7 +187,8 @@ class GitHelperTool(QDialog):
         for repo in self.selected_repos:
             try:
                 # Change directory to the repository and get the authors' emails
-                result = subprocess.check_output(['git', 'log', '--since', since_date, '--pretty=format:%ae', '--abbrev-commit'], cwd=repo)
+                result = subprocess.check_output(
+                    ['git', 'log', '--since', since_date, '--pretty=format:%ae', '--abbrev-commit'], cwd=repo)
                 author_list = result.decode("utf-8").splitlines()
                 deduped_authors = list(set(author_list))
                 for author in deduped_authors:
@@ -217,7 +225,7 @@ class GitHelperTool(QDialog):
 
     def get_selected_data(self):
         selected_author = self.author_combo.currentText()
-        return self.selected_repos, selected_author, self.num_years
+        return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
 
 
 if __name__ == '__main__':
@@ -225,12 +233,18 @@ if __name__ == '__main__':
     app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
-        selected_repos, selected_author, num_years = window.get_selected_data()
+        selected_repos, selected_author, num_years, force_rerun = window.get_selected_data()
         tmp_repo_file_name = os.path.join(os.getcwd(), "repo_list_autogen.txt")
         with open(tmp_repo_file_name, "w") as f:
             for repo in selected_repos:
                 f.write(repo + "\n")
-        output_path = run_model_team_git_parser(tmp_repo_file_name, selected_author, int(num_years), False)
+        profile_path_file = get_profile_path_file_name(selected_author)
+        if os.path.exists(profile_path_file):
+            os.remove(profile_path_file)
+        output_path = run_model_team_git_parser(tmp_repo_file_name, selected_author, int(num_years), False, None,
+                                                force_rerun)
+        with open(profile_path_file, "w") as f:
+            f.write(output_path)
         if output_path:
             run_edit_and_sign(output_path, selected_author, False, False)
     else:

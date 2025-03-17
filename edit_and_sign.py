@@ -8,7 +8,8 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QTextOption
 from PyQt5.QtWidgets import (QWidget, QLabel, QRadioButton, QVBoxLayout, QHBoxLayout, QScrollArea,
-                             QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser)
+                             QPushButton, QButtonGroup, QMessageBox, QFrame, QApplication, QTextBrowser, QTextEdit,
+                             QCheckBox)
 
 from modelteam_utils.constants import USER, REPO, STATS, SKILLS, RELEVANT, NOT_RELEVANT, TOP_SECRET, PROFILES, \
     NR_SKILLS, TIMESTAMP, MT_PROFILE_JSON, PDF_STATS_JSON
@@ -19,6 +20,28 @@ from modelteam_utils.viz_utils import generate_pdf_report
 
 display_names = {}
 
+button_style = """
+    QPushButton {
+        background-color: #0078D4;  /* Nice blue shade */
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 8px 16px;
+        border: 2px solid #005A9E;
+    }
+    QPushButton:hover {
+        background-color: #005A9E;
+    }
+    QPushButton:pressed {
+        background-color: #004578;
+    }
+    QPushButton:disabled {
+        background-color: #C8C8C8;
+        color: #6A6A6A;
+        border: 2px solid #979797;
+    }
+"""
 
 def get_skill_display_name(skill):
     return display_names.get(skill, skill.title())
@@ -36,8 +59,15 @@ class App(QWidget):
         self.choices = {}
         self.init_ui()
 
+
+    def enable_save_button(self):
+        if self.t_n_c_checkbox.isChecked():
+            self.save_button.setEnabled(True)
+        else:
+            self.save_button.setEnabled(False)
+
     def init_ui(self):
-        self.setWindowTitle("Edit Profile")
+        self.setWindowTitle("Edit Skills")
         self.setStyleSheet("background-color: #333333; color: white;")
         self.setGeometry(100, 100, 800, 800)
         layout = QVBoxLayout()
@@ -59,14 +89,13 @@ class App(QWidget):
 <b>Repos:</b> {self.repocsv}<br>
 <b>Total Skills:</b> {len(self.skills)}</h4>
 <p style="font-size:12px; ">These are the skills that our models predicted after analyzing your code contributions.
-<br/><b>These skills will further be scored by another model on the server side.</b></p>
-<p style="font-size:14px; ">
+<br/><b>These skills will further be scored by another model on the server side.</b>
 <br><b>Not Relevant</b>: Our model will use this as feedback in future. Skill will be removed from your profile on the server.
 <br><b>Top Secret</b>: DON'T even send this skill it to the server.
 </p>
 </html>
 """)
-        repo_csv_label.setMaximumHeight(200)
+        repo_csv_label.setMaximumHeight(300)
         repo_csv_label.setHtml(explanation)
         repo_csv_label.setWordWrapMode(QTextOption.WordWrap)
         repo_csv_label.setStyleSheet("color: white;")
@@ -88,8 +117,22 @@ class App(QWidget):
         for skill in self.skills:
             self.add_choice_widget(scroll_layout, skill, self.default_choices.get(skill, RELEVANT), toggle)
             toggle = not toggle
-
+        t_n_c_text = f"""
+<h4>Terms and Conditions. Please accept to proceed.</h4>
+<ol>
+<li>I am the owner of the id {self.email} associated with this profile</li>
+<li>I own the code contributions associated with this id</li>
+<li>I will remove any confidential skills from the profile in this step before uploading</li>
+"""
         layout.addWidget(scroll_area)
+        self.t_n_c_label = QTextBrowser()
+        self.t_n_c_label.setMaximumHeight(150)
+        self.t_n_c_label.setHtml(t_n_c_text)
+        self.t_n_c_checkbox = QCheckBox("I accept the terms and conditions")
+        self.t_n_c_checkbox.setStyleSheet("color: white;")
+        self.t_n_c_checkbox.stateChanged.connect(self.enable_save_button)
+        layout.addWidget(self.t_n_c_label)
+        layout.addWidget(self.t_n_c_checkbox)
         button_layout = QHBoxLayout()
         button_layout.setSpacing(10)
         button_layout.setContentsMargins(20, 20, 20, 20)
@@ -99,8 +142,8 @@ class App(QWidget):
         font = self.cancel_button.font()
         font.setBold(True)
         self.cancel_button.setFont(font)
-        self.cancel_button.setStyleSheet("background-color: #ff6600; color: white;")
-        self.cancel_button.clicked.connect(self.close)
+        self.cancel_button.setStyleSheet(button_style)
+        self.cancel_button.clicked.connect(self.close_window)
         button_layout.addWidget(self.cancel_button)
         self.save_button = QPushButton("Save Choices")
         font = self.save_button.font()
@@ -108,8 +151,9 @@ class App(QWidget):
         self.save_button.setFont(font)
         self.save_button.setFixedWidth(150)
         self.save_button.setFixedHeight(30)
-        self.save_button.setStyleSheet("background-color: #ff6600; color: white;")
+        self.save_button.setStyleSheet(button_style)
         self.save_button.clicked.connect(self.save_choices)
+        self.save_button.setEnabled(False)
         button_layout.addWidget(self.save_button)
         layout.addLayout(button_layout)
 
@@ -174,6 +218,12 @@ class App(QWidget):
             json.dump(choices_dict, f)
         self.close()
 
+    def close_window(self):
+        # cleanup choice file
+        if os.path.exists(self.choice_file):
+            os.remove(self.choice_file)
+        self.close()
+
 
 def edit_profile(merged_profile, choices_file, cli_mode):
     repos = []
@@ -198,6 +248,9 @@ def edit_profile(merged_profile, choices_file, cli_mode):
         with open(choices_file, 'r') as f:
             default_choices = json.load(f)
     if cli_mode:
+        if display_t_and_c(merged_profile[USER]) != "y":
+            print("Please accept the terms and conditions to proceed.")
+            sys.exit(0)
         cli_choices(choices_file, email, repos, skill_list, default_choices)
         return 0, bad_skills
     else:
@@ -399,9 +452,6 @@ if __name__ == "__main__":
     display_names = load_skill_config(skill_list, only_keys=False)
     with open(profile_json, "r") as f:
         merged_profile = json.load(f)
-    if display_t_and_c(merged_profile[USER]) != "y":
-        print("Please accept the terms and conditions to proceed.")
-        sys.exit(0)
     result, bad_skills = edit_profile(merged_profile, choices_file, args.cli_mode)
     if result == 0 and os.path.exists(choices_file):
         print("Changes were saved. Applying changes...")
@@ -416,4 +466,4 @@ if __name__ == "__main__":
         print_message(pdf_file, final_output_file)
     else:
         print("Changes were not saved. Exiting... Please run the script again.")
-        sys.exit(1)
+        sys.exit(0)
