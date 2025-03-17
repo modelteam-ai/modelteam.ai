@@ -117,7 +117,7 @@ python team_profile_helper.py
 
 </details>
 
-<details> <summary><h2>Detailed Team Profile Building Steps</h2></summary>
+<details> <summary><h2>Detailed Team Profile Building Steps (Linux / CLI)</h2></summary>
 
 ### 2. Gather your Git Repositories
 #### Repo List

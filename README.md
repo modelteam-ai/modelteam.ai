@@ -99,7 +99,7 @@ python user_profile_helper.py
 </details>
 
 
-<details> <summary><h2>Detailed Profile Building Steps</h2></summary>
+<details> <summary><h2>Detailed Profile Building Steps (Linux / CLI)</h2></summary>
 
 ### 2. Gather your Git Repositories & Git Email ID to Analyze
 #### 2.1 Repo List
