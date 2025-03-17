@@ -6,6 +6,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QFileDialog, \
     QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog
 
+from edit_skills import run_edit_and_sign
+from setup_utils import run_model_team_git_parser
+
 
 class GitHelperTool(QDialog):
     def __init__(self):
@@ -175,11 +178,12 @@ if __name__ == '__main__':
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
         selected_repos, selected_author, num_years = window.get_selected_data()
-        print(selected_repos, selected_author, num_years)
-        # tmp_repo_file_name = os.path.join(os.getcwd(), f"repo_list_{os.urandom(4).hex()}.txt")
-        # with open(tmp_repo_file_name, "w") as f:
-        #     for repo in selected_repos:
-        #         f.write(repo + "\n")
-        # output_path = run_model_team_git_parser(tmp_repo_file_name, selected_author, int(num_years), False)
+        tmp_repo_file_name = os.path.join(os.getcwd(), f"repo_list_{os.urandom(4).hex()}.txt")
+        with open(tmp_repo_file_name, "w") as f:
+            for repo in selected_repos:
+                f.write(repo + "\n")
+        output_path = run_model_team_git_parser(tmp_repo_file_name, selected_author, int(num_years), False)
+        if output_path:
+            run_edit_and_sign(output_path, selected_author, False, False)
     else:
         print("Dialog closed... error")

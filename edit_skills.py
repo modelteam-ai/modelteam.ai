@@ -11,7 +11,12 @@ def usage():
     print("e.g. edit_skills.py -g user@org.ai")
 
 
-def run_edit_and_sign(input_path, user_key, cli_mode, config):
+def run_edit_and_sign(input_path, git_email_id, cli_mode, dev):
+    if dev:
+        config = "../config-dev.ini"
+    else:
+        config = "config.ini"
+    user_key = sha256_hash(git_email_id)
     python_bin = get_python_bin(create_venv=False)
     edit_and_sign_command = [
         python_bin, "-m", "edit_and_sign",
@@ -34,10 +39,6 @@ def main():
     args = parser.parse_args()
     git_email_id = args.git_email_id
     cli_mode = args.cli_mode
-    if args.dev:
-        config = "../config-dev.ini"
-    else:
-        config = "config.ini"
     profile_path_file = get_profile_path_file_name(git_email_id)
     try:
         with open(profile_path_file, "r") as f:
@@ -46,8 +47,7 @@ def main():
         print(f"{profile_path_file} not found. First run gen_git_stats.py")
         sys.exit(1)
     print("Loading...", flush=True)
-    key = sha256_hash(git_email_id)
-    run_edit_and_sign(input_path, key, cli_mode, config)
+    run_edit_and_sign(input_path, git_email_id, cli_mode, args.dev)
 
 
 if __name__ == "__main__":
