@@ -251,6 +251,7 @@ class GitHelperTool(QDialog):
                 selected_authors.append(item.text())
             if len(selected_authors) == 10:
                 break
+        print("Selected authors:", selected_authors, flush=True)
         self.selected_authors = selected_authors
 
     def run_git_command(self):
@@ -266,6 +267,7 @@ class GitHelperTool(QDialog):
         if self.pick_team_radio.isChecked():
             self.get_selected_authors()
             if self.selected_authors:
+                print("Selected authors:", self.selected_authors, flush=True)
                 self.output_terminal.append("Please select team members.")
                 return
         self.accept()
