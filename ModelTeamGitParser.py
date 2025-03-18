@@ -469,9 +469,7 @@ class ModelTeamGitParser:
         pbar = None
         if args.show_progress:
             total = repo_level_data[SS_LC]
-            if total == 0:
-                pbar = tqdm(desc=model_label, unit="lines")
-            else:
+            if total and total > 0:
                 pbar = tqdm(total=total, desc=model_label, unit="lines")
         for user in user_profiles:
             user_profile = user_profiles[user]
@@ -531,7 +529,7 @@ class ModelTeamGitParser:
             has_features += len(features)
         if pbar:
             # some lines get reduced while breaking into chunks
-            if pbar.total > pbar.n:
+            if pbar.total and pbar.total > pbar.n:
                 pbar.update(pbar.total - pbar.n)
             pbar.close()
         return has_features

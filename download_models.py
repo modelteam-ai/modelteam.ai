@@ -17,6 +17,7 @@ code = """
 def hello_world():
     print("Hello World! Thanks for using modelteam!")
 """
+print("!!!IMPORTANT!!! Please turn off sleep mode so that the job is not interrupted.", flush=True)
 print("Downloading Base Model https://huggingface.co/Salesforce/codet5p-770m", flush=True)
 checkpoint = "Salesforce/codet5p-770m"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
