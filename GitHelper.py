@@ -39,6 +39,7 @@ class GitHelperTool(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('modelteam Git Stats Helper')
+        self.setStyleSheet("background-color: #333333; color: white;")
         self.setGeometry(100, 100, 800, 800)
 
         # Initialize variables
@@ -229,41 +230,8 @@ class GitHelperTool(QDialog):
         return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
 
 
-def set_dark_theme(app):
-    dark_palette = QPalette()
-
-    # Background color
-    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
-
-    # Base colors
-    dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
-    dark_palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
-
-    # Text color
-    dark_palette.setColor(QPalette.Text, QColor(255, 255, 255))
-    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    dark_palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
-    dark_palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
-
-    # Disabled colors
-    dark_palette.setColor(QPalette.Disabled, QPalette.Text, QColor(127, 127, 127))
-    dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(127, 127, 127))
-
-    # Highlight colors
-    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    dark_palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
-
-    app.setPalette(dark_palette)
-    app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
-
-
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    set_dark_theme(app)
     app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:

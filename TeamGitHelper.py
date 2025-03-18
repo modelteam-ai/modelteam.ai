@@ -8,7 +8,6 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
     QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox, QLineEdit, QRadioButton
 
-from GitHelper import set_dark_theme
 from setup_utils import run_model_team_git_parser, get_profile_path_file_name
 
 button_style = """
@@ -39,6 +38,7 @@ class GitHelperTool(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('modelteam Git Stats Helper (TeamProfile)')
+        self.setStyleSheet("background-color: #333333; color: white;")
         self.setGeometry(100, 100, 800, 800)
 
         # Initialize variables
@@ -277,7 +277,6 @@ class GitHelperTool(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    set_dark_theme(app)
     app.setStyleSheet(
         "QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 14px; } QLineEdit { font-size: 14px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()
