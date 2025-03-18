@@ -245,6 +245,7 @@ class GitHelperTool(QDialog):
         selected_authors = []
         for i in range(self.author_list.count()):
             item = self.author_list.item(i)
+            print(item.text(), item.checkState())
             if item.checkState() == Qt.Checked:
                 selected_authors.append(item.text())
             if len(selected_authors) == 10:
