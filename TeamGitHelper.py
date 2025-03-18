@@ -8,6 +8,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
     QListWidget, QLabel, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox, QLineEdit, QRadioButton
 
+from GitHelper import set_dark_theme
 from setup_utils import run_model_team_git_parser, get_profile_path_file_name
 
 button_style = """
@@ -63,7 +64,7 @@ class GitHelperTool(QDialog):
 
         self.browse_button = QPushButton('Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
-        self.browse_button.setMaximumSize(200, 30)
+        self.browse_button.setMaximumSize(200, 50)
         # set button color to blue
         self.browse_button.setStyleSheet(button_style)
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
@@ -85,7 +86,7 @@ class GitHelperTool(QDialog):
 
         self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
-        self.run_button.setMaximumSize(200, 30)
+        self.run_button.setMaximumSize(200, 50)
         self.run_button.setEnabled(False)
 
         self.output_terminal = QTextEdit(self)
@@ -276,6 +277,7 @@ class GitHelperTool(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    set_dark_theme(app)
     app.setStyleSheet(
         "QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 14px; } QLineEdit { font-size: 14px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()

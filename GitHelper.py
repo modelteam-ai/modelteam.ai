@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timedelta
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, \
     QListWidget, QLabel, QComboBox, QTextEdit, QListWidgetItem, QSpinBox, QDialog, QCheckBox
 
@@ -60,7 +60,7 @@ class GitHelperTool(QDialog):
 
         self.browse_button = QPushButton('1. Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
-        self.browse_button.setMaximumSize(200, 30)
+        self.browse_button.setMaximumSize(200, 50)
         # set button color to blue
         self.browse_button.setStyleSheet(button_style)
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
@@ -69,7 +69,7 @@ class GitHelperTool(QDialog):
         self.scan_authors_button = QPushButton('2. Scan Git Email IDs', self)
         self.scan_authors_button.clicked.connect(self.scan_for_authors)
         self.scan_authors_button.setStyleSheet(button_style)
-        self.scan_authors_button.setMaximumSize(200, 30)
+        self.scan_authors_button.setMaximumSize(200, 50)
         self.scan_authors_button.setEnabled(False)
 
         self.author_label = QLabel("Select an Author", self)
@@ -88,7 +88,7 @@ class GitHelperTool(QDialog):
 
         self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
-        self.run_button.setMaximumSize(200, 30)
+        self.run_button.setMaximumSize(200, 50)
         self.run_button.setEnabled(False)
 
         self.output_terminal = QTextEdit(self)
@@ -229,8 +229,41 @@ class GitHelperTool(QDialog):
         return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
 
 
+def set_dark_theme(app):
+    dark_palette = QPalette()
+
+    # Background color
+    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+
+    # Base colors
+    dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
+    dark_palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
+
+    # Text color
+    dark_palette.setColor(QPalette.Text, QColor(255, 255, 255))
+    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
+    dark_palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
+
+    # Disabled colors
+    dark_palette.setColor(QPalette.Disabled, QPalette.Text, QColor(127, 127, 127))
+    dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(127, 127, 127))
+
+    # Highlight colors
+    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+    dark_palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+
+    app.setPalette(dark_palette)
+    app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
+
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    set_dark_theme(app)
     app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; } QSpinBox { font-size: 14px; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
