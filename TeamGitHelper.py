@@ -58,13 +58,14 @@ class GitHelperTool(QDialog):
         self.team_name_label = QLabel("Team Name", self)
         self.team_name_input = QLineEdit(self)
         self.team_name_input.setPlaceholderText("Enter your team name")
-        self.path_label = QLabel(
-            "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
+        QLabel(
+            "Parent directory to scan for Git repos. You can pick and choose which repos to include in your profile.\n(Choose home directory if you want to get all git repos)",
+            self)
         self.path_input = QLabel(self)
 
         self.browse_button = QPushButton('Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
-        self.browse_button.setMaximumSize(200, 50)
+        self.browse_button.setMaximumSize(250, 50)
         # set button color to blue
         self.browse_button.setStyleSheet(button_style)
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
@@ -86,7 +87,7 @@ class GitHelperTool(QDialog):
 
         self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
-        self.run_button.setMaximumSize(200, 50)
+        self.run_button.setMaximumSize(250, 50)
         self.run_button.setEnabled(False)
 
         self.output_terminal = QTextEdit(self)
@@ -277,8 +278,11 @@ class GitHelperTool(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyleSheet(
-        "QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 14px; } QLineEdit { font-size: 14px; } QSpinBox { font-size: 14px; }")
+    app.setStyleSheet("QListWidget { font-size: 12px; border: 1px solid white; } "
+                      "QLabel { font-size: 12px; font-weight: bold; } "
+                      "QTextEdit { font-size: 12px; border: 1px solid white; } "
+                      "QSpinBox { font-size: 14px; border: 1px solid white; } "
+                      "QComboBox { font-size: 14px; border: 1px solid white; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
         selected_repos, team_name, num_years, selected_authors, force_rerun = window.get_selected_data()

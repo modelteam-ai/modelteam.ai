@@ -56,12 +56,12 @@ class GitHelperTool(QDialog):
 
         # Widgets
         self.path_label = QLabel(
-            "Parent directory to scan for Git repos. (Choose home directory if you want to get all git repos)", self)
+            "Parent directory to scan for Git repos. You can pick and choose which repos to include in your profile.\n(Choose home directory if you want to get all git repos)", self)
         self.path_input = QLabel(self)
 
         self.browse_button = QPushButton('1. Browse', self)
         self.browse_button.clicked.connect(self.browse_directory)
-        self.browse_button.setMaximumSize(200, 50)
+        self.browse_button.setMaximumSize(250, 50)
         # set button color to blue
         self.browse_button.setStyleSheet(button_style)
         self.repo_list_label = QLabel("Pick repos to add to your profile", self)
@@ -70,11 +70,12 @@ class GitHelperTool(QDialog):
         self.scan_authors_button = QPushButton('2. Scan Git Email IDs', self)
         self.scan_authors_button.clicked.connect(self.scan_for_authors)
         self.scan_authors_button.setStyleSheet(button_style)
-        self.scan_authors_button.setMaximumSize(200, 50)
+        self.scan_authors_button.setMaximumSize(250, 50)
         self.scan_authors_button.setEnabled(False)
 
         self.author_label = QLabel("Select an Author", self)
         self.author_combo = QComboBox(self)
+        self.author_note = QLabel("If you have multiple git email IDs, run multiple times to build profile one by one", self)
 
         self.num_years_label = QLabel("Number of years", self)
         self.num_years_input = QSpinBox(self)
@@ -89,7 +90,7 @@ class GitHelperTool(QDialog):
 
         self.run_button.setStyleSheet(button_style)
         self.run_button.clicked.connect(self.run_git_command)
-        self.run_button.setMaximumSize(200, 50)
+        self.run_button.setMaximumSize(250, 50)
         self.run_button.setEnabled(False)
 
         self.output_terminal = QTextEdit(self)
@@ -116,6 +117,7 @@ class GitHelperTool(QDialog):
         self.author_layout.addWidget(self.author_label, 2)
         self.author_layout.addWidget(self.author_combo, 8)
         self.layout.addLayout(self.author_layout)
+        self.layout.addWidget(self.author_note)
         self.num_years_layout = QHBoxLayout()
         self.num_years_layout.addWidget(self.num_years_label, 2)
         self.num_years_layout.addWidget(self.num_years_input, 8)
@@ -232,7 +234,11 @@ class GitHelperTool(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyleSheet("QLabel { font-size: 12px; font-weight: bold; } QTextEdit { font-size: 12px; } QSpinBox { font-size: 14px; }")
+    app.setStyleSheet("QListWidget { font-size: 12px; border: 1px solid white; } "
+                      "QLabel { font-size: 12px; font-weight: bold; } "
+                      "QTextEdit { font-size: 12px; border: 1px solid white; } "
+                      "QSpinBox { font-size: 14px; border: 1px solid white; } "
+                      "QComboBox { font-size: 14px; border: 1px solid white; }")
     window = GitHelperTool()
     if window.exec_() == QDialog.Accepted:
         selected_repos, selected_author, num_years, force_rerun = window.get_selected_data()
