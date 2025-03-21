@@ -82,7 +82,7 @@ class GitHelperTool(QDialog):
 
         self.run_button = QPushButton('Generate Team Git Stats', self)
 
-        self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
+        self.force_rerun = QCheckBox("Cleanup and Force Re-run\n(Needs confirmation in command line)", self)
         self.force_rerun.setChecked(False)
 
         self.run_button.setStyleSheet(button_style)

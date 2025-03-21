@@ -85,7 +85,7 @@ class GitHelperTool(QDialog):
 
         self.run_button = QPushButton('3. Generate User Git Stats', self)
 
-        self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
+        self.force_rerun = QCheckBox("Cleanup and Force Re-run\n(Needs confirmation in command line)", self)
         self.force_rerun.setChecked(False)
 
         self.run_button.setStyleSheet(button_style)
@@ -233,7 +233,7 @@ class GitHelperTool(QDialog):
 
     def get_selected_data(self):
         selected_author = self.author_combo.currentText()
-        return selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
+        return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
 
 
 if __name__ == '__main__':

@@ -114,7 +114,7 @@ def run_model_team_git_parser(repo_list, email_id, num_years, is_dev_mode, team_
         output_path = os.path.join(email_path, curr_date)
 
     if force_rerun and os.path.exists(output_path) and output_path != "/":
-        print(f"Deleting the existing profile in {output_path} directory")
+        print(f"\033[91mDeleting the existing profile in {output_path} directory\033[0m")
         print("Are you sure you want to delete the existing profile? (yes/no)")
         user_input = input()
         if user_input.lower() == "yes":
