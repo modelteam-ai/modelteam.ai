@@ -220,6 +220,7 @@ class GitHelperTool(QDialog):
                 for author in author_list:
                     if not author:
                         continue
+                    author = author.strip().lower()
                     if author in authors:
                         authors[author] += 1
                     else:
@@ -233,14 +234,6 @@ class GitHelperTool(QDialog):
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)  # Make it checkable
             item.setCheckState(Qt.Checked)  # Default to checked
             self.author_list.addItem(item)
-
-    def get_git_user_email(self):
-        """Get the current Git user email."""
-        try:
-            result = subprocess.check_output(["git", "config", "--global", "user.email"], stderr=subprocess.STDOUT)
-            return result.decode("utf-8").strip()
-        except subprocess.CalledProcessError:
-            return ""
 
     def get_selected_authors(self):
         selected_authors = []

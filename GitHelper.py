@@ -198,6 +198,7 @@ class GitHelperTool(QDialog):
                 for author in deduped_authors:
                     if not author:
                         continue
+                    author = author.strip().lower()
                     if author in authors:
                         authors[author] += 1
                     else:
@@ -214,7 +215,7 @@ class GitHelperTool(QDialog):
         """Get the current Git user email."""
         try:
             result = subprocess.check_output(["git", "config", "--global", "user.email"], stderr=subprocess.STDOUT)
-            return result.decode("utf-8").strip()
+            return result.decode("utf-8").strip().lower()
         except subprocess.CalledProcessError:
             return ""
 

@@ -82,6 +82,7 @@ class ModelTeamGitParser:
             user_months = {}
             for line in lines:
                 (author_email, commit_timestamp, commit_hash) = line.split('\x01')
+                author_email = author_email.strip().lower()
                 # TODO: Check if this is needed
                 if usernames and author_email not in usernames:
                     print(f"ERROR: EmailID mismatch. Given email {usernames} but found {author_email}")
@@ -105,7 +106,7 @@ class ModelTeamGitParser:
     def get_commit_log_command(repo_path, usernames, num_months):
         if usernames:
             usernames_pattern = " ".join([f"--author={user}" for user in usernames])
-            return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H"  {usernames_pattern} --since="{num_months} months ago"'
+            return f'git -C {repo_path} log --regexp-ignore-case --pretty=format:"%ae%x01%ct%x01%H"  {usernames_pattern} --since="{num_months} months ago"'
         else:
             return f'git -C {repo_path} log --pretty=format:"%ae%x01%ct%x01%H" --since="{num_months} months ago"'
 
@@ -780,7 +781,7 @@ if __name__ == "__main__":
         print("Warning: No user email provided. Will generate stats for all users\nThis will take a very long time",
               flush=True)
     else:
-        usernames = set([x.strip() for x in usernames.split(",")])
+        usernames = set([x.strip().lower() for x in usernames.split(",")])
         if len(usernames) > 5:
             print("Warning: Too many users. This will take a very long time", flush=True)
 
