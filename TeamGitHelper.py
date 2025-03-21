@@ -58,7 +58,7 @@ class GitHelperTool(QDialog):
         self.team_name_label = QLabel("Team Name", self)
         self.team_name_input = QLineEdit(self)
         self.team_name_input.setPlaceholderText("Enter your team name")
-        QLabel(
+        self.path_label = QLabel(
             "Parent directory to scan for Git repos. You can pick and choose which repos to include in your profile.\n(Choose home directory if you want to get all git repos)",
             self)
         self.path_input = QLabel(self)
@@ -82,7 +82,7 @@ class GitHelperTool(QDialog):
 
         self.run_button = QPushButton('Generate Team Git Stats', self)
 
-        self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
+        self.force_rerun = QCheckBox("Cleanup and Force Re-run\n(Needs confirmation in command line)", self)
         self.force_rerun.setChecked(False)
 
         self.run_button.setStyleSheet(button_style)
@@ -220,6 +220,7 @@ class GitHelperTool(QDialog):
                 for author in author_list:
                     if not author:
                         continue
+                    author = author.strip().lower()
                     if author in authors:
                         authors[author] += 1
                     else:
@@ -233,14 +234,6 @@ class GitHelperTool(QDialog):
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)  # Make it checkable
             item.setCheckState(Qt.Checked)  # Default to checked
             self.author_list.addItem(item)
-
-    def get_git_user_email(self):
-        """Get the current Git user email."""
-        try:
-            result = subprocess.check_output(["git", "config", "--global", "user.email"], stderr=subprocess.STDOUT)
-            return result.decode("utf-8").strip()
-        except subprocess.CalledProcessError:
-            return ""
 
     def get_selected_authors(self):
         selected_authors = []

@@ -85,7 +85,7 @@ class GitHelperTool(QDialog):
 
         self.run_button = QPushButton('3. Generate User Git Stats', self)
 
-        self.force_rerun = QCheckBox("Cleanup and Force Re-run", self)
+        self.force_rerun = QCheckBox("Cleanup and Force Re-run\n(Needs confirmation in command line)", self)
         self.force_rerun.setChecked(False)
 
         self.run_button.setStyleSheet(button_style)
@@ -163,15 +163,7 @@ class GitHelperTool(QDialog):
             self.scan_authors_button.setEnabled(True)
 
     def scan_for_authors(self):
-        """Scan the selected repositories and populate the authors combo box."""
-        selected_repos = []
-
-        for i in range(self.repo_list.count()):
-            item = self.repo_list.item(i)
-            if item.checkState() == Qt.Checked:
-                selected_repos.append(item.text())
-
-        self.selected_repos = selected_repos
+        selected_repos = self.get_selected_repos()
 
         if not selected_repos:
             self.output_terminal.append("Please select at least one repository.")
@@ -182,6 +174,16 @@ class GitHelperTool(QDialog):
         self.author_combo.clear()
         self.author_combo.addItems(authors[:20])  # Display only the first 10 authors
         self.run_button.setEnabled(True)
+
+    def get_selected_repos(self):
+        """Scan the selected repositories and populate the authors combo box."""
+        selected_repos = []
+        for i in range(self.repo_list.count()):
+            item = self.repo_list.item(i)
+            if item.checkState() == Qt.Checked:
+                selected_repos.append(item.text())
+        self.selected_repos = selected_repos
+        return selected_repos
 
     def find_authors(self):
         """Find authors from the selected repositories."""
@@ -198,6 +200,7 @@ class GitHelperTool(QDialog):
                 for author in deduped_authors:
                     if not author:
                         continue
+                    author = author.strip().lower()
                     if author in authors:
                         authors[author] += 1
                     else:
@@ -214,15 +217,16 @@ class GitHelperTool(QDialog):
         """Get the current Git user email."""
         try:
             result = subprocess.check_output(["git", "config", "--global", "user.email"], stderr=subprocess.STDOUT)
-            return result.decode("utf-8").strip()
+            return result.decode("utf-8").strip().lower()
         except subprocess.CalledProcessError:
             return ""
 
     def run_git_command(self):
         """Run the Git command using the selected repos and author."""
         selected_author = self.author_combo.currentText()
+        selected_repos = self.get_selected_repos()
 
-        if not self.selected_repos or not selected_author:
+        if not selected_repos or not selected_author:
             self.output_terminal.append("Please select at least one repository and an author.")
             return
         self.accept()
