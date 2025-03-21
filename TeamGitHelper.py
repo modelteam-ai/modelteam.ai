@@ -58,7 +58,7 @@ class GitHelperTool(QDialog):
         self.team_name_label = QLabel("Team Name", self)
         self.team_name_input = QLineEdit(self)
         self.team_name_input.setPlaceholderText("Enter your team name")
-        QLabel(
+        self.path_label = QLabel(
             "Parent directory to scan for Git repos. You can pick and choose which repos to include in your profile.\n(Choose home directory if you want to get all git repos)",
             self)
         self.path_input = QLabel(self)
