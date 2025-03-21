@@ -163,15 +163,7 @@ class GitHelperTool(QDialog):
             self.scan_authors_button.setEnabled(True)
 
     def scan_for_authors(self):
-        """Scan the selected repositories and populate the authors combo box."""
-        selected_repos = []
-
-        for i in range(self.repo_list.count()):
-            item = self.repo_list.item(i)
-            if item.checkState() == Qt.Checked:
-                selected_repos.append(item.text())
-
-        self.selected_repos = selected_repos
+        selected_repos = self.get_selected_repos()
 
         if not selected_repos:
             self.output_terminal.append("Please select at least one repository.")
@@ -182,6 +174,16 @@ class GitHelperTool(QDialog):
         self.author_combo.clear()
         self.author_combo.addItems(authors[:20])  # Display only the first 10 authors
         self.run_button.setEnabled(True)
+
+    def get_selected_repos(self):
+        """Scan the selected repositories and populate the authors combo box."""
+        selected_repos = []
+        for i in range(self.repo_list.count()):
+            item = self.repo_list.item(i)
+            if item.checkState() == Qt.Checked:
+                selected_repos.append(item.text())
+        self.selected_repos = selected_repos
+        return selected_repos
 
     def find_authors(self):
         """Find authors from the selected repositories."""
@@ -222,15 +224,16 @@ class GitHelperTool(QDialog):
     def run_git_command(self):
         """Run the Git command using the selected repos and author."""
         selected_author = self.author_combo.currentText()
+        selected_repos = self.get_selected_repos()
 
-        if not self.selected_repos or not selected_author:
+        if not selected_repos or not selected_author:
             self.output_terminal.append("Please select at least one repository and an author.")
             return
         self.accept()
 
     def get_selected_data(self):
         selected_author = self.author_combo.currentText()
-        return self.selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
+        return selected_repos, selected_author, self.num_years, self.force_rerun.isChecked()
 
 
 if __name__ == '__main__':
