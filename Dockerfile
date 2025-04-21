@@ -15,13 +15,13 @@ WORKDIR /home/modelteam/app
 
 # Copy files and install dependencies
 COPY --chown=modelteam:modelteam . /home/modelteam/app
-RUN python setup.py install
+RUN python setup.py
 
 # Switch to root for cron setup
 USER root
 
 # Add cron job (escape inner quotes properly)
-RUN echo '0 0 * * 0 python3 /home/modelteam/app/gen_team_git_stats.py -r /home/modelteam/repos -t "<team_name>" >> /var/log/cron.log 2>&1' > /etc/cron.d/weeklyjob
+RUN echo "0 0 * * 0 su - modelteam -c 'python3 /home/modelteam/app/gen_team_git_stats.py -r /home/modelteam/repos -t modelteam' >> /var/log/cron.log 2>&1" > /etc/cron.d/weeklyjob
 
 # Correct permissions and apply cron job for modelteam
 RUN chmod 0644 /etc/cron.d/weeklyjob && \

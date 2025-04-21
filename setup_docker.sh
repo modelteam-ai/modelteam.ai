@@ -15,8 +15,8 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 sudo docker run hello-world
-docker build -t modelteam-docker .
-nohup docker run \
+sudo docker build -t modelteam-docker .
+nohup sudo docker run \
   -v "$PWD":/home/modelteam/app \
   -v "$HOME/repos":/home/modelteam/repos \
   modelteam-docker > docker.log 2>&1 &
