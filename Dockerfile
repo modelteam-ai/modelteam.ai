@@ -25,16 +25,13 @@ RUN echo "0 0 * * 0 su - modelteam -c 'python3 /home/modelteam/app/gen_team_git_
 
 # Correct permissions and apply cron job for modelteam
 RUN chmod 0644 /etc/cron.d/weeklyjob && \
-    crontab -u modelteam /etc/cron.d/weeklyjob
+    crontab /etc/cron.d/weeklyjob
 
 # Create log file with appropriate permissions
 RUN touch /var/log/cron.log && chown modelteam:modelteam /var/log/cron.log
 
 # Declare volume for external mount
 VOLUME ["/home/modelteam/repos"]
-
-# Switch back to modelteam user
-USER modelteam
 
 # Start cron and tail the log
 CMD ["sh", "-c", "cron && tail -f /var/log/cron.log"]
