@@ -6,13 +6,13 @@ import sys
 
 import requests
 
-from modelteam.modelteam_utils.constants import MT_PROFILE_JSON
+from modelteam_utils.constants import MT_PROFILE_JSON
 from setup_utils import run_model_team_git_parser
 
 
 def usage():
-    print("Usage: process_teams.py -r <repo_dir> -t <team_name> [-n <num_years>]")
-    print("e.g. process_teams.py -r /home/user/repos -t model_team -n 3")
+    print("Usage: process_teams.py -r <repo_dir> -c config_file [-n <num_years>]")
+    print("e.g. process_teams.py -r /home/user/repos -n 3 -c config.txt")
     print("Default num_years is 3")
     sys.exit(1)
 
@@ -45,24 +45,29 @@ def load_config(config):
     return org_hash, api_key
 
 
-def upload_profile(org_hash, api_key, merged_json):
-    url = "https://yourdomain.com/team"
+def upload_profile(org_hash, api_key, team_name, merged_json_path):
+    url = "http://127.0.0.1:5000/api/v1/org/team/teambot"
     headers = {
         "Authorization": f"Bearer {api_key}"
     }
     data = {
-        "org_hash": org_hash
+        "org_hash": org_hash,
+        "team_name": team_name
     }
-    files = {
-        "file": open(merged_json, "rb")
-    }
-    response = requests.put(url, headers=headers, data=data, files=files)
-    if response.status_code == 200:
-        print("Profile uploaded successfully.")
-    else:
-        print("Failed to upload profile.")
-        print("Response Code:", response.status_code)
+    with open(merged_json_path, "rb") as f:
+        files = {
+            "file": ("mt_profile.json.gz", f, "application/gzip")
+        }
+        response = requests.put(url, headers=headers, data=data, files=files)
+
+    if response.status_code in (200, 201):
+        print("✅ Profile uploaded successfully.")
         print("Response:", response.json())
+    else:
+        print("❌ Failed to upload profile.")
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+        sys.exit(1)
 
 
 def main():
@@ -90,7 +95,7 @@ def main():
         end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
         merged_json = os.path.join(output_path, MT_PROFILE_JSON)
         merged_json = f"{merged_json}_{end_date}.gz"
-        upload_profile(org_hash, api_key, merged_json)
+        upload_profile(org_hash, api_key, team, merged_json)
 
 
 if __name__ == "__main__":
