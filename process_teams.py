@@ -1,4 +1,5 @@
 import argparse
+import configparser
 import datetime
 import os
 import re
@@ -32,21 +33,8 @@ def validate_input(num_years, repo_list, config):
         usage()
 
 
-def load_config(config):
-    """Load the configuration file and return the org_hash and api_key."""
-    org_hash = None
-    api_key = None
-    with open(config, 'r') as f:
-        for line in f:
-            if line.startswith("org_id"):
-                org_hash = line.split("=")[1].strip()
-            elif line.startswith("api_key"):
-                api_key = line.split("=")[1].strip()
-    return org_hash, api_key
-
-
-def upload_profile(org_hash, api_key, team_name, merged_json_path):
-    url = "http://127.0.0.1:5000/api/v1/org/team/teambot"
+def upload_profile(url, org_hash, api_key, team_name, merged_json_path):
+    url = f"{url}/api/v1/org/team/teambot"
     headers = {
         "Authorization": f"Bearer {api_key}"
     }
@@ -80,9 +68,13 @@ def main():
     args = parser.parse_args()
     repo_list = args.repos
     num_years = args.num_years
-    config = args.config
-    org_hash, api_key = load_config(config)
-    validate_input(num_years, repo_list, config)
+    config_file = args.config
+    validate_input(num_years, repo_list, config_file)
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    endpoint = config.get("api", "endpoint")
+    org_hash = config.get("api", "org_id")
+    api_key = config.get("api", "api_key")
     teams = os.listdir(repo_list)
     filtered_teams = [team for team in teams if os.path.isdir(os.path.join(repo_list, team))]
     if len(filtered_teams) == 0:
@@ -95,7 +87,7 @@ def main():
         end_date = datetime.datetime.fromtimestamp(end_ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d')
         merged_json = os.path.join(output_path, MT_PROFILE_JSON)
         merged_json = f"{merged_json}_{end_date}.gz"
-        upload_profile(org_hash, api_key, team, merged_json)
+        upload_profile(endpoint, org_hash, api_key, team, merged_json)
 
 
 if __name__ == "__main__":
